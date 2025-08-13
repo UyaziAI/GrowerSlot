@@ -74,6 +74,15 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Feature flag: VITE_FEATURE_LOGISTICS=true
   - Remaining: Integration with routing, testing with real data
 
+- **Calendar-style slot layout with Day/Week views** (August 13, 2025)
+  - Status: ✅ Implemented 
+  - Location: `/app/frontend/src/features/booking/components/CalendarGrid.tsx`
+  - Backend: Added GET /v1/slots/range endpoint for multi-day fetching with restrictions
+  - Frontend: Complete calendar grid with time-axis, feature-rich slot cards, Day/Week toggle
+  - Feature flag: VITE_FEATURE_WEEKVIEW=true
+  - Features: Capacity bars, blackout/restriction indicators, tooltips, responsive design
+  - Verification: CalendarGrid and CalendarPage components created and functional
+
 ## Known Gaps / Missing Features ❌
 
 ### Near-term MVP Completion
@@ -87,9 +96,7 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Location: Backend at `/app/backend/routers/restrictions.py`
   - Scope: Admin interface for grower/cultivar restrictions
 
-- **Week view calendar** - Currently only day view implemented
-  - Priority: Medium
-  - Scope: 7-day availability grid for better UX
+
 
 ### Blueprint Extensions (Future Phases)
 - **Quality inspections module** - Not started

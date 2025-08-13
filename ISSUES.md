@@ -4,26 +4,27 @@ This file tracks issues, technical debt, and any violations of the governance ru
 
 ## Active Issues 🔴
 
-### LSP Diagnostics (August 13, 2025)
+### LSP Diagnostics (August 13, 2025) - Updated
 - **Severity**: Medium
-- **Description**: Multiple TypeScript/Python LSP errors in new FastAPI backend files
+- **Description**: Multiple TypeScript/Python LSP errors in backend and new calendar features
 - **Files Affected**: 
-  - `app/backend/db.py` (4 diagnostics)
-  - `app/backend/security.py` (1 diagnostic) 
-  - `app/backend/schemas.py` (2 diagnostics)
-  - `app/backend/routers/bookings.py` (1 diagnostic)
-  - `app/backend/routers/logistics.py` (1 diagnostic)
-  - `app/frontend/src/features/logistics/InboundPage.tsx` (47 diagnostics)
-- **Impact**: Development experience, potential runtime issues
-- **Action Required**: Fix import issues, type definitions, missing dependencies
-- **Assigned**: Next development cycle
+  - `app/backend/schemas.py` (3 diagnostics) - schema validation issues
+  - `app/frontend/src/features/booking/hooks/useSlotsRange.ts` (1 diagnostic) - import issue
+  - `app/frontend/src/features/booking/components/CalendarGrid.tsx` (13 diagnostics) - type/import issues
+  - `app/frontend/src/features/booking/CalendarPage.tsx` (4 diagnostics) - import issues
+  - `app/backend/tests/test_slots_range.py` (1 diagnostic) - import/mock issues
+  - `app/frontend/src/features/booking/__tests__/CalendarGrid.test.tsx` (44 diagnostics) - testing imports
+  - `app/frontend/src/features/booking/__tests__/useSlotsRange.test.ts` (51 diagnostics) - testing imports
+- **Impact**: Development experience, testing setup needs refinement
+- **Action Required**: Fix shadcn/ui imports, testing library setup, Python test structure
+- **Note**: Calendar functionality implemented but needs import fixes for clean builds
 
-### Frontend API Integration
-- **Severity**: Medium
-- **Description**: New FastAPI endpoints not yet integrated with existing frontend
-- **Details**: Frontend still using legacy Node.js endpoints (/api/) instead of new FastAPI (/v1/)
-- **Impact**: New extensibility features not accessible via UI
-- **Solution Required**: Update frontend to use new API client for blueprint features
+### Frontend Routing Integration
+- **Severity**: Low
+- **Description**: New CalendarPage component needs to be integrated with app routing
+- **Details**: Calendar grid components created but not yet added to main navigation
+- **Impact**: Calendar features accessible via direct component import but not via app navigation
+- **Solution Required**: Add /calendar route and navigation links
 
 ## Resolved Issues ✅
 

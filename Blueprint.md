@@ -280,10 +280,17 @@ GET  /auth/me                  -> { user, roles, tenant_id }
 
 ```
 GET   /v1/slots?date=YYYY-MM-DD
+GET   /v1/slots/range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD  # range query (max 14 days)
 POST  /v1/slots/bulk                 # create slots for date/time window
 PATCH /v1/slots/{id}                 # blackout/capacity/notes
 GET   /v1/slots/{id}/usage           # { capacity, booked, remaining }
 ```
+
+**Range Endpoint Details:**
+- Returns slots for multiple days (max 14-day span)
+- Includes same slot data as single-day endpoint plus restrictions
+- Validates start_date <= end_date
+- Maintains backward compatibility with existing day endpoint
 
 Slot (response)
 
@@ -351,9 +358,11 @@ Admin Slots – bulk generation, blackout, restrictions, notes.
 
 Inbound (feature‑flagged) – read‑only consignments list with latest checkpoint.
 
+Calendar Grid – time-axis calendar layout with Day/Week views, feature-rich slot cards.
+
 RBAC guards: show Admin tools only if role==='admin'.
 
-Feature flags via import.meta.env.VITE_FEATURE_*.
+Feature flags via import.meta.env.VITE_FEATURE_* (LOGISTICS, WEEKVIEW, QUALITY, etc.).
 
 ## 8) Security & Tenancy
 
@@ -455,3 +464,16 @@ Optimization: suggest slots based on throughput & historical data.
 Internationalization: en/af; time‑zone aware scheduling.
 
 This file replaces separate blueprints and should be saved at repo root as "Blueprint.md"
+
+---
+
+## Changelog
+
+### August 13, 2025 - Calendar Grid Implementation
+- **feat:** Added GET /v1/slots/range endpoint for multi-day slot fetching (max 14 days)
+- **feat:** Implemented CalendarGrid component with Day/Week views and time-axis layout
+- **feat:** Added feature-rich slot cards showing capacity bars, restrictions, blackout status
+- **feat:** Created CalendarPage with view mode toggle and date navigation
+- **feat:** Added VITE_FEATURE_WEEKVIEW feature flag for progressive rollout
+- **docs:** Updated API contracts in §6.2 and frontend plan in §7
+- **compat:** Maintained full backward compatibility with existing GET /v1/slots?date= endpoint

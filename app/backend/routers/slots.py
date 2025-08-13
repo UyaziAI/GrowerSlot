@@ -9,7 +9,7 @@ import uuid
 
 from ..db import execute_query, execute_one, execute_transaction
 from ..security import get_current_user, require_role
-from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate
+from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest
 
 router = APIRouter()
 
@@ -176,6 +176,89 @@ async def update_slot(
         blackout=updated_slot['blackout'],
         notes=updated_slot['notes']
     )
+
+@router.get("/range", response_model=List[SlotResponse])
+async def get_slots_range(
+    start_date: str = Query(description="Start date YYYY-MM-DD"),
+    end_date: str = Query(description="End date YYYY-MM-DD"),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get slots for a date range (max 14 days) with usage information"""
+    try:
+        # Validate dates
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+        
+        if start_date_obj > end_date_obj:
+            raise HTTPException(status_code=400, detail="start_date must be <= end_date")
+        
+        date_diff = (end_date_obj - start_date_obj).days
+        if date_diff > 14:
+            raise HTTPException(status_code=400, detail="Date range cannot exceed 14 days")
+            
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    tenant_id = current_user["tenant_id"]
+    
+    # Query slots for date range with usage information and restrictions
+    query = """
+        SELECT s.id, s.tenant_id, s.date, s.start_time, s.end_time,
+               s.capacity, s.resource_unit, s.blackout, s.notes,
+               COALESCE(SUM(CASE WHEN b.status = 'confirmed' THEN b.quantity ELSE 0 END), 0) as booked_quantity,
+               COALESCE(
+                   JSON_AGG(
+                       DISTINCT JSONB_BUILD_OBJECT(
+                           'grower_id', sr.allowed_grower_id,
+                           'cultivar_id', sr.allowed_cultivar_id
+                       )
+                   ) FILTER (WHERE sr.id IS NOT NULL), 
+                   '[]'::json
+               ) as restrictions_data
+        FROM slots s
+        LEFT JOIN bookings b ON s.id = b.slot_id AND b.status = 'confirmed'
+        LEFT JOIN slot_restrictions sr ON s.id = sr.slot_id
+        WHERE s.tenant_id = $1 AND s.date BETWEEN $2 AND $3
+        GROUP BY s.id, s.tenant_id, s.date, s.start_time, s.end_time,
+                 s.capacity, s.resource_unit, s.blackout, s.notes
+        ORDER BY s.date, s.start_time
+    """
+    
+    slots = await execute_query(query, uuid.UUID(tenant_id), start_date_obj, end_date_obj)
+    
+    result = []
+    for slot in slots:
+        booked = float(slot['booked_quantity']) if slot['booked_quantity'] else 0
+        capacity = float(slot['capacity'])
+        
+        # Process restrictions data
+        restrictions = {"growers": [], "cultivars": []}
+        if slot['restrictions_data'] and slot['restrictions_data'] != [{}]:
+            for restriction in slot['restrictions_data']:
+                if restriction.get('grower_id'):
+                    restrictions["growers"].append(str(restriction['grower_id']))
+                if restriction.get('cultivar_id'):
+                    restrictions["cultivars"].append(str(restriction['cultivar_id']))
+        
+        result.append(SlotResponse(
+            id=str(slot['id']),
+            tenant_id=str(slot['tenant_id']),
+            date=slot['date'],
+            start_time=slot['start_time'],
+            end_time=slot['end_time'],
+            capacity=slot['capacity'],
+            resource_unit=slot['resource_unit'],
+            blackout=slot['blackout'],
+            notes=slot['notes'],
+            restrictions=restrictions if restrictions["growers"] or restrictions["cultivars"] else None,
+            usage={
+                "capacity": capacity,
+                "booked": booked,
+                "remaining": capacity - booked
+            }
+        ))
+    
+    return result
 
 @router.get("/{slot_id}/usage")
 async def get_slot_usage(

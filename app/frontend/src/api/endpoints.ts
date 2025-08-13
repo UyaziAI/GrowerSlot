@@ -89,6 +89,7 @@ export const authApi = {
 
 export const slotsApi = {
   getSlots: (date?: string): Promise<SlotResponse[]> => apiClient.getSlots(date),
+  getSlotsRange: (startDate: string, endDate: string): Promise<SlotResponse[]> => apiClient.getSlotsRange(startDate, endDate),
   bulkCreateSlots: (data: any): Promise<{ count: number; message: string }> => apiClient.bulkCreateSlots(data),
   updateSlot: (id: string, data: any): Promise<SlotResponse> => apiClient.updateSlot(id, data),
   getSlotUsage: (id: string): Promise<{ capacity: number; booked: number; remaining: number }> => apiClient.getSlotUsage(id),

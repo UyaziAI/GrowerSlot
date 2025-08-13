@@ -59,6 +59,20 @@ class BulkSlotCreate(BaseModel):
     capacity: Decimal
     notes: Optional[str] = None
 
+class SlotsRangeRequest(BaseModel):
+    start_date: date = Field(description="Start date for range query")
+    end_date: date = Field(description="End date for range query")
+    
+    def model_validate(self):
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must be <= end_date")
+        
+        date_diff = (self.end_date - self.start_date).days
+        if date_diff > 14:
+            raise ValueError("Date range cannot exceed 14 days")
+        
+        return self
+
 # Booking schemas
 class BookingCreate(BaseModel):
     slot_id: str
