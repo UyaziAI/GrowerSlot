@@ -26,6 +26,7 @@ export default function GrowerDashboard() {
 
   const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
     queryKey: ["/api/bookings"],
+    queryFn: () => api.getBookings(),
   });
 
   const cancelBookingMutation = useMutation({

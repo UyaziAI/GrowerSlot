@@ -8,6 +8,16 @@ A multi-tenant delivery slot booking platform designed for packhouses (initially
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **August 13, 2025**: Successfully debugged and fixed all application startup issues
+  - Fixed TypeScript schema errors (timestamptz → timestamp)
+  - Added missing type definitions for bcrypt and jsonwebtoken  
+  - Set up PostgreSQL database with complete schema and sample data
+  - Fixed authentication issues with correct password hashing
+  - Updated query client to properly handle JWT authentication headers
+  - Application now running successfully with working login for both grower and admin users
+
 ## System Architecture
 
 ### Frontend Architecture
