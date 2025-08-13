@@ -75,13 +75,14 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Remaining: Integration with routing, testing with real data
 
 - **Calendar-style slot layout with Day/Week views** (August 13, 2025)
-  - Status: ✅ Implemented 
-  - Location: `/app/frontend/src/features/booking/components/CalendarGrid.tsx`
-  - Backend: Added GET /v1/slots/range endpoint for multi-day fetching with restrictions
-  - Frontend: Complete calendar grid with time-axis, feature-rich slot cards, Day/Week toggle
-  - Feature flag: VITE_FEATURE_WEEKVIEW=true
-  - Features: Capacity bars, blackout/restriction indicators, tooltips, responsive design
-  - Verification: CalendarGrid and CalendarPage components created and functional
+  - Status: ✅ Fully Integrated into Grower Dashboard
+  - Location: `/client/src/features/booking/components/CalendarGrid.tsx`
+  - Backend: Added GET /api/slots/range endpoint with date validation and 14-day limit
+  - Frontend: Complete calendar grid replacing vertical slot list in grower dashboard
+  - Feature flag: VITE_FEATURE_WEEKVIEW=true enables week view toggle
+  - Features: Time-axis layout, capacity bars, blackout/restriction indicators, tooltips
+  - Integration: Successfully replaced vertical slot list with interactive calendar
+  - Responsive: Mobile-optimized layout with summary stats and navigation controls
 
 ## Known Gaps / Missing Features ❌
 

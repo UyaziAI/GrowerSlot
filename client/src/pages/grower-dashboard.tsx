@@ -2,27 +2,61 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays } from "lucide-react";
 import TopNavigation from "@/components/top-navigation";
 import SlotCard from "@/components/slot-card";
 import BookingModal from "@/components/booking-modal";
+import CalendarGrid from "@/features/booking/components/CalendarGrid";
+import { useSlotsRange, useSlotsSingle } from "@/features/booking/hooks/useSlotsRange";
 import { api } from "@/lib/api";
 import { authService } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { SlotWithUsage, BookingWithDetails } from "@shared/schema";
 
+type ViewMode = 'day' | 'week';
+
 export default function GrowerDashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
 
-  const { data: slots = [], isLoading: slotsLoading } = useQuery<SlotWithUsage[]>({
-    queryKey: ["/api/slots", selectedDate],
-    queryFn: () => api.getSlots(selectedDate),
-  });
+  const isWeekViewEnabled = import.meta.env.VITE_FEATURE_WEEKVIEW === 'true';
+
+  // Calculate date range based on view mode
+  const getDateRange = () => {
+    if (viewMode === 'day') {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      return { startDate: dateStr, endDate: dateStr };
+    } else {
+      // Week view - get start of week (Sunday) to end of week (Saturday)
+      const startOfWeek = new Date(selectedDate);
+      const dayOfWeek = startOfWeek.getDay();
+      startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      
+      return {
+        startDate: startOfWeek.toISOString().split('T')[0],
+        endDate: endOfWeek.toISOString().split('T')[0]
+      };
+    }
+  };
+
+  const { startDate, endDate } = getDateRange();
+  
+  // Use appropriate hook based on view mode
+  const {
+    data: slots = [],
+    isLoading: slotsLoading
+  } = viewMode === 'day' 
+    ? useSlotsSingle(startDate)
+    : useSlotsRange(startDate, endDate, isWeekViewEnabled);
 
   const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
     queryKey: ["/api/bookings"],
@@ -49,16 +83,17 @@ export default function GrowerDashboard() {
   });
 
   const handleDateChange = (direction: 'prev' | 'next') => {
-    const currentDate = new Date(selectedDate);
-    const newDate = new Date(currentDate);
-    
-    if (direction === 'prev') {
-      newDate.setDate(currentDate.getDate() - 1);
+    const newDate = new Date(selectedDate);
+    if (viewMode === 'day') {
+      newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
     } else {
-      newDate.setDate(currentDate.getDate() + 1);
+      newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
     }
-    
-    setSelectedDate(newDate.toISOString().split('T')[0]);
+    setSelectedDate(newDate);
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
   };
 
   const handleBookSlot = (slot: SlotWithUsage) => {
@@ -72,20 +107,11 @@ export default function GrowerDashboard() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return {
-      formatted: date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
-    };
-  };
-
-  const selectedDateFormatted = formatDate(selectedDate);
+  // Calculate summary stats
+  const totalSlots = slots.length;
+  const availableSlots = slots.filter(slot => !slot.blackout && (slot.remaining ?? 0) > 0).length;
+  const blackedOutSlots = slots.filter(slot => slot.blackout).length;
+  const restrictedSlots = slots.filter(slot => slot.restrictions && slot.restrictions.length > 0).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -93,71 +119,165 @@ export default function GrowerDashboard() {
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Dashboard Header */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Delivery Slots</h2>
-          <p className="text-gray-600">Book your delivery slots and manage existing bookings</p>
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Delivery Slots</h2>
+              <p className="text-gray-600">
+                View and book delivery slots {viewMode === 'week' ? 'by week' : 'by day'}
+              </p>
+            </div>
+            
+            {/* View Mode Toggle */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={viewMode === 'day' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('day')}
+                data-testid="day-view-button"
+              >
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Day
+              </Button>
+              {isWeekViewEnabled && (
+                <Button
+                  variant={viewMode === 'week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('week')}
+                  data-testid="week-view-button"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Week
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Date Selector */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-4">
+        {/* Navigation and Stats */}
+        <div className="flex flex-col lg:flex-row gap-6 mb-6">
+          {/* Date Navigation */}
+          <Card className="flex-1">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDateChange('prev')}
-                  data-testid="button-prev-date"
+                  data-testid="prev-date-button"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
+                
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900" data-testid="text-selected-date">
-                    {selectedDateFormatted.formatted}
-                  </h3>
-                  <p className="text-sm text-gray-500">{selectedDateFormatted.weekday}</p>
+                  <h2 className="text-lg font-semibold">
+                    {viewMode === 'day' 
+                      ? selectedDate.toLocaleDateString('en', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })
+                      : `Week of ${startDate} to ${endDate}`
+                    }
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goToToday}
+                    className="text-blue-600 hover:text-blue-800"
+                    data-testid="today-button"
+                  >
+                    Go to Today
+                  </Button>
                 </div>
+                
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDateChange('next')}
-                  data-testid="button-next-date"
+                  data-testid="next-date-button"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Summary Stats */}
+          <Card className="lg:w-96">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="text-green-700 bg-green-50">
+                  {availableSlots} Available
+                </Badge>
+                <Badge variant="outline" className="text-gray-700 bg-gray-50">
+                  {totalSlots} Total
+                </Badge>
+                {blackedOutSlots > 0 && (
+                  <Badge variant="outline" className="text-red-700 bg-red-50">
+                    {blackedOutSlots} Blackout
+                  </Badge>
+                )}
+                {restrictedSlots > 0 && (
+                  <Badge variant="outline" className="text-orange-700 bg-orange-50">
+                    {restrictedSlots} Restricted
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Calendar Grid */}
+        <Card className="p-0 overflow-hidden mb-6">
+          <CardContent className="p-6">
+            {slotsLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading slots...</p>
+              </div>
+            ) : (
+              <CalendarGrid
+                slots={slots}
+                viewMode={viewMode}
+                selectedDate={selectedDate}
+                onSlotClick={handleBookSlot}
+                className="w-full"
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Legend */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-gray-600">Legend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4 text-sm">
               <div className="flex items-center space-x-2">
-                <Button variant="default" size="sm">
-                  Day View
-                </Button>
-                <Button variant="outline" size="sm">
-                  Week View
-                </Button>
+                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <span>Available</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                <span>Limited (&lt;30% remaining)</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <span>Full</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-gray-500 rounded"></div>
+                <span>Blackout</span>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Slot Grid */}
-        <div className="grid gap-4 mb-8">
-          {slotsLoading ? (
-            <div className="text-center py-8">
-              <div className="text-gray-500">Loading slots...</div>
-            </div>
-          ) : slots.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-gray-500">No slots available for this date</div>
-            </div>
-          ) : (
-            slots.map((slot) => (
-              <SlotCard
-                key={slot.id}
-                slot={slot}
-                onBook={handleBookSlot}
-              />
-            ))
-          )}
-        </div>
 
         {/* My Bookings Section */}
         <Card>

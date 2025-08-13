@@ -10,17 +10,23 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 13, 2025**: Major restructuring to implement unified blueprint specification
-  - Created complete FastAPI backend structure at /app/backend with proper routers
-  - Added extensibility database tables: parties, products, consignments, checkpoints, domain_events, outbox
-  - Implemented transactional booking with SELECT FOR UPDATE for atomic capacity checking
-  - Added domain event emission and outbox pattern for webhook integrations
-  - Created logistics tracking API endpoints for consignments and checkpoints
-  - Set up proper migrations structure in /app/infra with automated runner script
-  - Added feature-flagged logistics UI components (InboundPage)
-  - Restructured frontend API client to support blueprint endpoint contracts
-  - Maintained backward compatibility with existing MVP slot booking functionality
-  - Added comprehensive README.md and .env.example following blueprint specifications
+- **August 13, 2025**: Calendar Implementation and Blueprint Architecture
+  - **Calendar-Style Booking**: Implemented Playtomic-inspired Day/Week calendar layout
+    - Replaced vertical slot list with interactive CalendarGrid component
+    - Added GET /api/slots/range endpoint with date validation and 14-day limits
+    - Created time-axis layout with capacity bars, status indicators, and tooltips
+    - Added Day/Week view toggle with VITE_FEATURE_WEEKVIEW feature flag
+    - Integrated summary stats, navigation controls, and responsive design
+  - **Backend Architecture**: Complete FastAPI backend structure at /app/backend
+    - Added extensibility database tables: parties, products, consignments, checkpoints, domain_events, outbox
+    - Implemented transactional booking with SELECT FOR UPDATE for atomic capacity checking
+    - Added domain event emission and outbox pattern for webhook integrations
+    - Created logistics tracking API endpoints for consignments and checkpoints
+    - Set up proper migrations structure in /app/infra with automated runner script
+  - **Frontend Integration**: Maintained backward compatibility while adding new features
+    - Feature-flagged logistics UI components (InboundPage)
+    - Restructured frontend API client to support blueprint endpoint contracts
+    - Added comprehensive README.md and .env.example following blueprint specifications
 
 ## System Architecture
 

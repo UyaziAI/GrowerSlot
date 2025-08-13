@@ -137,6 +137,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Slots range endpoint for calendar view
+  app.get("/api/slots/range", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { start_date, end_date } = req.query;
+      
+      if (!start_date || !end_date || typeof start_date !== "string" || typeof end_date !== "string") {
+        return res.status(400).json({ error: "start_date and end_date parameters required" });
+      }
+      
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+      
+      if (startDate > endDate) {
+        return res.status(400).json({ error: "start_date must be <= end_date" });
+      }
+      
+      const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 14) {
+        return res.status(400).json({ error: "Date range cannot exceed 14 days" });
+      }
+
+      const slots = await storage.getSlotsRange(req.user!.tenantId, start_date, end_date);
+      res.json(slots);
+    } catch (error) {
+      console.error("Get slots range error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.post("/api/slots/bulk", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       const bulkSlotSchema = z.object({

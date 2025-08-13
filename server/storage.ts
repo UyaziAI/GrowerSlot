@@ -29,6 +29,7 @@ export interface IStorage {
   
   // Slots
   getSlotsByDate(tenantId: string, date: string): Promise<SlotWithUsage[]>;
+  getSlotsRange(tenantId: string, startDate: string, endDate: string): Promise<SlotWithUsage[]>;
   getSlot(id: string): Promise<Slot | undefined>;
   createSlot(slot: InsertSlot): Promise<Slot>;
   updateSlot(id: string, updates: Partial<Slot>): Promise<Slot>;
@@ -131,6 +132,38 @@ export class DbStorage implements IStorage {
       .where(and(eq(slots.tenantId, tenantId), eq(slots.date, date)))
       .groupBy(slots.id)
       .orderBy(asc(slots.startTime));
+
+    return result.map(row => ({
+      ...row,
+      remaining: Number(row.capacity) - Number(row.booked),
+    }));
+  }
+
+  async getSlotsRange(tenantId: string, startDate: string, endDate: string): Promise<SlotWithUsage[]> {
+    const result = await this.db
+      .select({
+        id: slots.id,
+        tenantId: slots.tenantId,
+        date: slots.date,
+        startTime: slots.startTime,
+        endTime: slots.endTime,
+        capacity: slots.capacity,
+        resourceUnit: slots.resourceUnit,
+        blackout: slots.blackout,
+        notes: slots.notes,
+        createdBy: slots.createdBy,
+        booked: sql<number>`COALESCE(SUM(CASE WHEN ${bookings.status} = 'confirmed' THEN ${bookings.quantity} END), 0)`,
+        bookingCount: sql<number>`COUNT(CASE WHEN ${bookings.status} = 'confirmed' THEN 1 END)`,
+      })
+      .from(slots)
+      .leftJoin(bookings, eq(bookings.slotId, slots.id))
+      .where(and(
+        eq(slots.tenantId, tenantId),
+        gte(slots.date, startDate),
+        lte(slots.date, endDate)
+      ))
+      .groupBy(slots.id)
+      .orderBy(asc(slots.date), asc(slots.startTime));
 
     return result.map(row => ({
       ...row,
