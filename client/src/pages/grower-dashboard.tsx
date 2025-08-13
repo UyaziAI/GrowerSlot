@@ -1,105 +1,44 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays } from "lucide-react";
+import { CalendarDays, Plus, MapPin, Clock, Truck, Calendar } from "lucide-react";
+import { Link } from "wouter";
 import TopNavigation from "@/components/top-navigation";
-
-import BookingModal from "@/components/booking-modal";
-import CalendarGrid from "@/features/booking/components/CalendarGrid";
-import { useSlotsRange, useSlotsSingle } from "@/features/booking/hooks/useSlotsRange";
 import { api } from "@/lib/api";
 import { authService } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { SlotWithUsage, BookingWithDetails } from "@shared/schema";
-
-type ViewMode = 'day' | 'week';
+import { BookingWithDetails } from "@shared/schema";
 
 export default function GrowerDashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
-  const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
 
-  const isWeekViewEnabled = import.meta.env.VITE_FEATURE_WEEKVIEW === 'true';
-
-  // Calculate date range based on view mode
-  const getDateRange = () => {
-    if (viewMode === 'day') {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-      return { startDate: dateStr, endDate: dateStr };
-    } else {
-      // Week view - get start of week (Sunday) to end of week (Saturday)
-      const startOfWeek = new Date(selectedDate);
-      const dayOfWeek = startOfWeek.getDay();
-      startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
-      
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      
-      return {
-        startDate: startOfWeek.toISOString().split('T')[0],
-        endDate: endOfWeek.toISOString().split('T')[0]
-      };
-    }
-  };
-
-  const { startDate, endDate } = getDateRange();
-  
-  // Use appropriate hook based on view mode
-  const {
-    data: slots = [],
-    isLoading: slotsLoading
-  } = viewMode === 'day' 
-    ? useSlotsSingle(startDate)
-    : useSlotsRange(startDate, endDate, isWeekViewEnabled);
-
-  const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
-    queryKey: ["/api/bookings"],
+  // Fetch user's bookings
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+    queryKey: ['/api/bookings'],
     queryFn: () => api.getBookings(),
   });
 
+  // Cancel booking mutation
   const cancelBookingMutation = useMutation({
-    mutationFn: (id: string) => api.cancelBooking(id),
+    mutationFn: (bookingId: string) => api.cancelBooking(bookingId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been cancelled successfully.",
+        title: "Booking cancelled",
+        description: "Your booking has been successfully cancelled.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
     },
     onError: (error: any) => {
       toast({
-        title: "Cancellation Failed",
+        title: "Error",
         description: error.message || "Failed to cancel booking",
         variant: "destructive",
       });
     },
   });
-
-  const handleDateChange = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    if (viewMode === 'day') {
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-    } else {
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-    }
-    setSelectedDate(newDate);
-  };
-
-  const goToToday = () => {
-    setSelectedDate(new Date());
-  };
-
-  const handleBookSlot = (slot: SlotWithUsage) => {
-    setSelectedSlot(slot);
-    setIsBookingModalOpen(true);
-  };
 
   const handleCancelBooking = (bookingId: string) => {
     if (window.confirm('Are you sure you want to cancel this booking?')) {
@@ -107,11 +46,15 @@ export default function GrowerDashboard() {
     }
   };
 
-  // Calculate summary stats
-  const totalSlots = slots.length;
-  const availableSlots = slots.filter((slot: SlotWithUsage) => !slot.blackout && (slot.remaining ?? 0) > 0).length;
-  const blackedOutSlots = slots.filter((slot: SlotWithUsage) => slot.blackout).length;
-  const restrictedSlots = slots.filter((slot: SlotWithUsage) => slot.restrictions && (slot.restrictions.growers?.length > 0 || slot.restrictions.cultivars?.length > 0)).length;
+  // Get stats from bookings
+  const totalBookings = bookings.length;
+  const upcomingBookings = bookings.filter((booking: BookingWithDetails) => 
+    new Date(booking.slot.date) >= new Date()
+  ).length;
+  const completedBookings = totalBookings - upcomingBookings;
+  const totalQuantity = bookings.reduce((sum: number, booking: BookingWithDetails) => 
+    sum + parseFloat(booking.quantity), 0
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,159 +65,92 @@ export default function GrowerDashboard() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Delivery Slots</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
               <p className="text-gray-600">
-                View and book delivery slots {viewMode === 'week' ? 'by week' : 'by day'}
+                View your bookings and manage deliveries
               </p>
             </div>
             
-            {/* View Mode Toggle */}
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={viewMode === 'day' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('day')}
-                data-testid="day-view-button"
-              >
-                <CalendarDays className="h-4 w-4 mr-2" />
-                Day
+            {/* Quick Action */}
+            <Link href="/calendar">
+              <Button className="flex items-center space-x-2" data-testid="book-slot-button">
+                <Calendar className="h-4 w-4" />
+                <span>Book New Slot</span>
               </Button>
-              {isWeekViewEnabled && (
-                <Button
-                  variant={viewMode === 'week' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('week')}
-                  data-testid="week-view-button"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Week
-                </Button>
-              )}
-            </div>
+            </Link>
           </div>
         </div>
 
-        {/* Navigation and Stats */}
-        <div className="flex flex-col lg:flex-row gap-6 mb-6">
-          {/* Date Navigation */}
-          <Card className="flex-1">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDateChange('prev')}
-                  data-testid="prev-date-button"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                <div className="text-center">
-                  <h2 className="text-lg font-semibold">
-                    {viewMode === 'day' 
-                      ? selectedDate.toLocaleDateString('en', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })
-                      : `Week of ${startDate} to ${endDate}`
-                    }
-                  </h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={goToToday}
-                    className="text-blue-600 hover:text-blue-800"
-                    data-testid="today-button"
-                  >
-                    Go to Today
-                  </Button>
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDateChange('next')}
-                  data-testid="next-date-button"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Total Bookings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold">{totalBookings}</div>
             </CardContent>
           </Card>
 
-          {/* Summary Stats */}
-          <Card className="lg:w-96">
+          <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Summary</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <Clock className="h-4 w-4 mr-2" />
+                Upcoming
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="text-green-700 bg-green-50">
-                  {availableSlots} Available
-                </Badge>
-                <Badge variant="outline" className="text-gray-700 bg-gray-50">
-                  {totalSlots} Total
-                </Badge>
-                {blackedOutSlots > 0 && (
-                  <Badge variant="outline" className="text-red-700 bg-red-50">
-                    {blackedOutSlots} Blackout
-                  </Badge>
-                )}
-                {restrictedSlots > 0 && (
-                  <Badge variant="outline" className="text-orange-700 bg-orange-50">
-                    {restrictedSlots} Restricted
-                  </Badge>
-                )}
-              </div>
+              <div className="text-2xl font-bold text-blue-600">{upcomingBookings}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <Truck className="h-4 w-4 mr-2" />
+                Completed
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-green-600">{completedBookings}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                Total Quantity
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold">{totalQuantity.toFixed(1)} tons</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Calendar Grid */}
-        <Card className="p-0 overflow-hidden mb-6">
-          <CardContent className="p-6">
-            {slotsLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading slots...</p>
-              </div>
-            ) : (
-              <CalendarGrid
-                slots={slots}
-                viewMode={viewMode}
-                selectedDate={selectedDate}
-                onSlotClick={handleBookSlot}
-                className="w-full"
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Legend */}
+        {/* Quick Actions */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-gray-600">Legend</CardTitle>
+            <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-500 rounded"></div>
-                <span>Available</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                <span>Limited (&lt;30% remaining)</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-red-500 rounded"></div>
-                <span>Full</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-gray-500 rounded"></div>
-                <span>Blackout</span>
-              </div>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/calendar">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>View Calendar</span>
+                </Button>
+              </Link>
+              <Link href="/calendar">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Book Delivery Slot</span>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -285,67 +161,87 @@ export default function GrowerDashboard() {
             <CardTitle>My Bookings</CardTitle>
           </CardHeader>
           <CardContent>
-            {bookings.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
-                No bookings found
+            {bookingsLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading bookings...</p>
+              </div>
+            ) : bookings.length === 0 ? (
+              <div className="text-center py-12">
+                <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings yet</h3>
+                <p className="text-gray-600 mb-4">Start by booking your first delivery slot</p>
+                <Link href="/calendar">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Book Your First Slot
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="space-y-4">
-                {bookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0"
-                    data-testid={`booking-${booking.id}`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {new Date(booking.slotDate).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}, {booking.slotStartTime.slice(0, 5)}-{booking.slotEndTime.slice(0, 5)}
+                {bookings.map((booking: BookingWithDetails) => {
+                  const isUpcoming = new Date(booking.slot.date) >= new Date();
+                  const slotDate = new Date(booking.slot.date);
+                  
+                  return (
+                    <div
+                      key={booking.id}
+                      className="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50"
+                      data-testid={`booking-${booking.id}`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <div className="font-medium">
+                              {slotDate.toLocaleDateString('en', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {booking.slot.startTime} - {booking.slot.endTime}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-medium">{booking.quantity} tons</div>
+                            <div className="text-sm text-gray-600">
+                              {booking.cultivar?.name || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <Badge variant={isUpcoming ? "default" : "secondary"}>
+                              {isUpcoming ? "Upcoming" : "Completed"}
+                            </Badge>
+                          </div>
                         </div>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {booking.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
-                        </span>
+                        {booking.notes && (
+                          <div className="mt-2 text-sm text-gray-600">
+                            Notes: {booking.notes}
+                          </div>
+                        )}
                       </div>
-                      <div className="mt-1 text-sm text-gray-600">
-                        {booking.quantity} tons
-                        {booking.cultivarName && ` • ${booking.cultivarName}`}
-                      </div>
+                      {isUpcoming && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={cancelBookingMutation.isPending}
+                          data-testid={`cancel-booking-${booking.id}`}
+                        >
+                          {cancelBookingMutation.isPending ? "Cancelling..." : "Cancel"}
+                        </Button>
+                      )}
                     </div>
-                    {booking.status === 'confirmed' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCancelBooking(booking.id)}
-                        disabled={cancelBookingMutation.isPending}
-                        className="text-red-600 hover:text-red-800"
-                        data-testid="button-cancel-booking"
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      <BookingModal
-        slot={selectedSlot}
-        isOpen={isBookingModalOpen}
-        onClose={() => {
-          setIsBookingModalOpen(false);
-          setSelectedSlot(null);
-        }}
-      />
     </div>
   );
 }
