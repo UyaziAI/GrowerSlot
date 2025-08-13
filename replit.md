@@ -10,13 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 13, 2025**: Successfully debugged and fixed all application startup issues
-  - Fixed TypeScript schema errors (timestamptz → timestamp)
-  - Added missing type definitions for bcrypt and jsonwebtoken  
-  - Set up PostgreSQL database with complete schema and sample data
-  - Fixed authentication issues with correct password hashing
-  - Updated query client to properly handle JWT authentication headers
-  - Application now running successfully with working login for both grower and admin users
+- **August 13, 2025**: Major restructuring to implement unified blueprint specification
+  - Created complete FastAPI backend structure at /app/backend with proper routers
+  - Added extensibility database tables: parties, products, consignments, checkpoints, domain_events, outbox
+  - Implemented transactional booking with SELECT FOR UPDATE for atomic capacity checking
+  - Added domain event emission and outbox pattern for webhook integrations
+  - Created logistics tracking API endpoints for consignments and checkpoints
+  - Set up proper migrations structure in /app/infra with automated runner script
+  - Added feature-flagged logistics UI components (InboundPage)
+  - Restructured frontend API client to support blueprint endpoint contracts
+  - Maintained backward compatibility with existing MVP slot booking functionality
+  - Added comprehensive README.md and .env.example following blueprint specifications
 
 ## System Architecture
 
@@ -28,21 +32,31 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: JWT-based authentication with localStorage persistence
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
-- **Language**: TypeScript with ESM modules
-- **API Design**: RESTful API with JWT middleware for authentication
-- **Database ORM**: Drizzle ORM for type-safe database operations
-- **Validation**: Zod schemas for runtime type validation
+- **Primary**: FastAPI (Python) with asyncpg for PostgreSQL (Blueprint Implementation)
+- **Legacy**: Node.js with Express.js framework (Original MVP)
+- **API Design**: RESTful API with versioned endpoints (/v1/) and JWT middleware
+- **Database**: Raw SQL with asyncpg for optimal performance and transactional safety
+- **Validation**: Pydantic schemas for request/response validation
+- **Concurrency**: SELECT FOR UPDATE for atomic booking operations
+- **Events**: Domain events and outbox pattern for reliable webhook delivery
 
 ### Database Design
-- **Database**: PostgreSQL with Neon serverless hosting
-- **Schema**: Multi-tenant architecture with the following core entities:
+- **Database**: PostgreSQL with comprehensive extensibility architecture
+- **Core Entities** (MVP):
   - Tenants (packhouses)
   - Growers with role-based access (grower/admin)
   - Cultivars for crop type management
   - Slots with capacity tracking and blackout functionality
-  - Bookings with transactional capacity checks
+  - Bookings with atomic transactional capacity checks
   - Slot restrictions for grower/cultivar-specific rules
+- **Extensibility Entities** (Blueprint):
+  - Parties (generic stakeholders: growers, transporters, buyers, warehouses)
+  - Products and variants (future cultivar mapping)
+  - Consignments (logistics tracking linked to bookings)
+  - Checkpoints (tracking events: gate_in, weigh, quality_check, delivered)
+  - Domain Events (audit trail and webhook source)
+  - Outbox (reliable webhook delivery pattern)
+  - Rules (JSON-based workflow configurations)
 
 ### Authentication & Authorization
 - **Strategy**: JWT tokens with role-based access control
