@@ -194,7 +194,7 @@ export class DbStorage implements IStorage {
   }
 
   async getBookingsByGrower(growerId: string): Promise<BookingWithDetails[]> {
-    return await this.db
+    const results = await this.db
       .select({
         id: bookings.id,
         slotId: bookings.slotId,
@@ -216,6 +216,11 @@ export class DbStorage implements IStorage {
       .leftJoin(cultivars, eq(bookings.cultivarId, cultivars.id))
       .where(eq(bookings.growerId, growerId))
       .orderBy(desc(bookings.createdAt));
+      
+    return results.map(result => ({
+      ...result,
+      cultivarName: result.cultivarName || undefined
+    }));
   }
 
   async getBookingsBySlot(slotId: string): Promise<Booking[]> {

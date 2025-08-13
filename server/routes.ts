@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
@@ -9,7 +9,7 @@ import { insertBookingSchema, insertSlotSchema } from "@shared/schema";
 // JWT middleware
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
 
-interface AuthRequest extends Express.Request {
+interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
@@ -19,7 +19,7 @@ interface AuthRequest extends Express.Request {
   };
 }
 
-const authenticateToken = async (req: AuthRequest, res: Express.Response, next: Express.NextFunction) => {
+const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -49,7 +49,7 @@ const authenticateToken = async (req: AuthRequest, res: Express.Response, next: 
   }
 };
 
-const requireAdmin = (req: AuthRequest, res: Express.Response, next: Express.NextFunction) => {
+const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ error: "Admin access required" });
   }
@@ -252,7 +252,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/bookings", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const bookings = await storage.getBookingsByGrower(req.user!.growerId);
+      if (!req.user?.growerId) {
+        return res.status(400).json({ error: "Grower ID required" });
+      }
+      const bookings = await storage.getBookingsByGrower(req.user.growerId);
       res.json(bookings);
     } catch (error) {
       console.error("Get bookings error:", error);

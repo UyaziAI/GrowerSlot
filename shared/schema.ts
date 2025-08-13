@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, uuid, numeric, boolean, date, time, timestamptz, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, uuid, numeric, boolean, date, time, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,7 +8,7 @@ export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   timezone: text("timezone").default("Africa/Johannesburg"),
-  createdAt: timestamptz("created_at").default(sql`now()`),
+  createdAt: timestamp("created_at").default(sql`now()`),
 });
 
 // Growers
@@ -65,7 +65,7 @@ export const bookings = pgTable("bookings", {
   cultivarId: uuid("cultivar_id").references(() => cultivars.id),
   quantity: numeric("quantity", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("confirmed"), // confirmed/cancelled
-  createdAt: timestamptz("created_at").default(sql`now()`),
+  createdAt: timestamp("created_at").default(sql`now()`),
 }, (table) => ({
   slotIdx: index("bookings_slot_idx").on(table.slotId),
   tenantIdx: index("bookings_tenant_idx").on(table.tenantId),
