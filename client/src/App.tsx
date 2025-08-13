@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { authService } from "./lib/auth";
 import LoginPage from "@/pages/login";
 import GrowerDashboard from "@/pages/grower-dashboard";
+import CalendarPage from "@/pages/calendar-page";
+import BookingRedirect from "@/pages/booking-redirect";
 import AdminDashboard from "@/pages/admin-dashboard";
 import NotFound from "@/pages/not-found";
 
@@ -19,8 +21,12 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={isAdmin ? AdminDashboard : GrowerDashboard} />
+      <Route path="/" component={isAdmin ? AdminDashboard : CalendarPage} />
+      <Route path="/calendar" component={CalendarPage} />
+      <Route path="/booking" component={BookingRedirect} />
+      <Route path="/slots" component={BookingRedirect} />
       <Route path="/dashboard" component={isAdmin ? AdminDashboard : GrowerDashboard} />
+      <Route path="/grower-dashboard" component={GrowerDashboard} />
       {isAdmin && <Route path="/admin" component={AdminDashboard} />}
       <Route component={NotFound} />
     </Switch>

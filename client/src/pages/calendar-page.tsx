@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar, CalendarDays } from "lucide-react";
 import TopNavigation from "@/components/top-navigation";
-
 import BookingModal from "@/components/booking-modal";
 import CalendarGrid from "@/features/booking/components/CalendarGrid";
 import { useSlotsRange, useSlotsSingle } from "@/features/booking/hooks/useSlotsRange";
@@ -16,7 +15,7 @@ import { SlotWithUsage, BookingWithDetails } from "@shared/schema";
 
 type ViewMode = 'day' | 'week';
 
-export default function GrowerDashboard() {
+export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
@@ -58,30 +57,6 @@ export default function GrowerDashboard() {
     ? useSlotsSingle(startDate)
     : useSlotsRange(startDate, endDate, isWeekViewEnabled);
 
-  const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
-    queryKey: ["/api/bookings"],
-    queryFn: () => api.getBookings(),
-  });
-
-  const cancelBookingMutation = useMutation({
-    mutationFn: (id: string) => api.cancelBooking(id),
-    onSuccess: () => {
-      toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been cancelled successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Cancellation Failed",
-        description: error.message || "Failed to cancel booking",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleDateChange = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedDate);
     if (viewMode === 'day') {
@@ -99,12 +74,6 @@ export default function GrowerDashboard() {
   const handleBookSlot = (slot: SlotWithUsage) => {
     setSelectedSlot(slot);
     setIsBookingModalOpen(true);
-  };
-
-  const handleCancelBooking = (bookingId: string) => {
-    if (window.confirm('Are you sure you want to cancel this booking?')) {
-      cancelBookingMutation.mutate(bookingId);
-    }
   };
 
   // Calculate summary stats
@@ -276,64 +245,6 @@ export default function GrowerDashboard() {
                 <span>Blackout</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* My Bookings Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>My Bookings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {bookings.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
-                No bookings found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {bookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0"
-                    data-testid={`booking-${booking.id}`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {new Date(booking.slotDate).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}, {booking.slotStartTime.slice(0, 5)}-{booking.slotEndTime.slice(0, 5)}
-                        </div>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {booking.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
-                        </span>
-                      </div>
-                      <div className="mt-1 text-sm text-gray-600">
-                        {booking.quantity} tons
-                        {booking.cultivarName && ` • ${booking.cultivarName}`}
-                      </div>
-                    </div>
-                    {booking.status === 'confirmed' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCancelBooking(booking.id)}
-                        disabled={cancelBookingMutation.isPending}
-                        className="text-red-600 hover:text-red-800"
-                        data-testid="button-cancel-booking"
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

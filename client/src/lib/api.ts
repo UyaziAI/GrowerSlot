@@ -46,9 +46,11 @@ export const api = {
   // Slots
   getSlots: (date: string) =>
     apiRequest(`/slots?date=${date}`),
-
+    
   getSlotsRange: (startDate: string, endDate: string) =>
     apiRequest(`/slots/range?start_date=${startDate}&end_date=${endDate}`),
+
+
 
   bulkCreateSlots: (data: any) =>
     apiRequest('/slots/bulk', {
