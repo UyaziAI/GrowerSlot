@@ -9,6 +9,7 @@ import GrowerDashboard from "@/pages/grower-dashboard";
 import CalendarPage from "@/pages/calendar-page";
 import BookingRedirect from "@/pages/booking-redirect";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminSlotsPage from "@/pages/admin-slots";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/dashboard" component={isAdmin ? AdminDashboard : GrowerDashboard} />
       <Route path="/grower-dashboard" component={GrowerDashboard} />
       {isAdmin && <Route path="/admin" component={AdminDashboard} />}
+      {isAdmin && <Route path="/admin/slots" component={AdminSlotsPage} />}
       <Route component={NotFound} />
     </Switch>
   );

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Mail } from "lucide-react";
 import TopNavigation from "@/components/top-navigation";
 import CalendarGrid from "@/features/booking/components/CalendarGrid";
 import { useSlotsRange, useSlotsSingle } from "@/features/booking/hooks/useSlotsRange";
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Slot Overview</TabsTrigger>
-            <TabsTrigger value="management">Slot Management</TabsTrigger>
+            <TabsTrigger value="management">Quick Actions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -297,17 +297,62 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="management" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Slot Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  <p>Slot management features coming soon...</p>
-                  <p className="text-sm mt-2">Use the calendar above to view current slot status</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="h-5 w-5 mr-2" />
+                    Full Slot Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">
+                    Access comprehensive slot management tools including bulk creation, editing, and restrictions.
+                  </p>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => window.location.href = '/admin/slots'}
+                    data-testid="goto-slot-management"
+                  >
+                    Manage Slots
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2" />
+                    Reports & Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">
+                    View detailed reports on slot utilization, booking patterns, and performance metrics.
+                  </p>
+                  <Button variant="outline" className="w-full" disabled>
+                    Coming Soon
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Mail className="h-5 w-5 mr-2" />
+                    Notifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">
+                    Configure automated notifications for slot availability, capacity alerts, and booking confirmations.
+                  </p>
+                  <Button variant="outline" className="w-full" disabled>
+                    Configure
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

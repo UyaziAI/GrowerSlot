@@ -50,8 +50,6 @@ export const api = {
   getSlotsRange: (startDate: string, endDate: string) =>
     apiRequest(`/slots/range?start_date=${startDate}&end_date=${endDate}`),
 
-
-
   bulkCreateSlots: (data: any) =>
     apiRequest('/slots/bulk', {
       method: 'POST',
@@ -61,6 +59,15 @@ export const api = {
   updateSlot: (id: string, data: any) =>
     apiRequest(`/slots/${id}`, {
       method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  getSlotUsage: (id: string) =>
+    apiRequest(`/slots/${id}/usage`),
+
+  applyRestrictions: (data: any) =>
+    apiRequest('/restrictions/apply', {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
 

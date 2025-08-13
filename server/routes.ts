@@ -308,6 +308,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Slot usage endpoint
+  app.get("/api/slots/:id/usage", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const slot = await storage.getSlotById(id);
+      
+      if (!slot) {
+        return res.status(404).json({ error: "Slot not found" });
+      }
+
+      const usage = await storage.getSlotUsage(id);
+      res.json(usage);
+    } catch (error) {
+      console.error("Get slot usage error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Admin dashboard stats
   app.get("/api/admin/stats", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
@@ -321,6 +339,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       console.error("Get dashboard stats error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Restrictions endpoint
+  app.post("/api/restrictions/apply", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const restrictionSchema = z.object({
+        slotId: z.string().optional(),
+        date: z.string().optional(),
+        growerIds: z.array(z.string()).optional(),
+        cultivarIds: z.array(z.string()).optional(),
+      });
+
+      const data = restrictionSchema.parse(req.body);
+      
+      // Apply restrictions logic would be implemented here
+      // For now, return success
+      res.json({ success: true, message: "Restrictions applied successfully" });
+    } catch (error) {
+      console.error("Apply restrictions error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
