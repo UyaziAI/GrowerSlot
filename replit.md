@@ -10,13 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 13, 2025**: Calendar Implementation and Blueprint Architecture
+- **August 13, 2025**: Calendar Implementation Complete - Legacy UI Removed
   - **Calendar-Style Booking**: Implemented Playtomic-inspired Day/Week calendar layout
-    - Replaced vertical slot list with interactive CalendarGrid component
+    - Replaced ALL vertical slot lists with interactive CalendarGrid component  
     - Added GET /api/slots/range endpoint with date validation and 14-day limits
     - Created time-axis layout with capacity bars, status indicators, and tooltips
     - Added Day/Week view toggle with VITE_FEATURE_WEEKVIEW feature flag
     - Integrated summary stats, navigation controls, and responsive design
+    - **FIXED**: Runtime error from number formatting with safe toNum() helper
+    - **MIGRATION**: Both Admin and Grower now use calendar as primary interface
   - **Backend Architecture**: Complete FastAPI backend structure at /app/backend
     - Added extensibility database tables: parties, products, consignments, checkpoints, domain_events, outbox
     - Implemented transactional booking with SELECT FOR UPDATE for atomic capacity checking

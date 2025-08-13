@@ -5,10 +5,26 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { SlotWithUsage } from "@shared/schema";
 
+// Helper to normalize numeric fields
+const toNum = (v: unknown, fallback = 0): number => {
+  const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const normalizeSlot = (s: any): SlotWithUsage => ({
+  ...s,
+  capacity: toNum(s.capacity, 0),
+  booked: toNum(s.booked, 0),
+  remaining: toNum(s.remaining ?? (toNum(s.capacity, 0) - toNum(s.booked, 0)), 0),
+});
+
 export function useSlotsRange(startDate: string, endDate: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['/api/slots/range', startDate, endDate],
-    queryFn: () => api.getSlotsRange(startDate, endDate),
+    queryFn: async () => {
+      const slots = await api.getSlotsRange(startDate, endDate);
+      return Array.isArray(slots) ? slots.map(normalizeSlot) : [];
+    },
     enabled: enabled && !!startDate && !!endDate,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 30, // 30 seconds for real-time updates
@@ -18,7 +34,10 @@ export function useSlotsRange(startDate: string, endDate: string, enabled: boole
 export function useSlotsSingle(date: string, enabled: boolean = true) {
   return useQuery<SlotWithUsage[]>({
     queryKey: ['/api/slots', date],
-    queryFn: () => api.getSlots(date),
+    queryFn: async () => {
+      const slots = await api.getSlots(date);
+      return Array.isArray(slots) ? slots.map(normalizeSlot) : [];
+    },
     enabled: enabled && !!date,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 30, // 30 seconds

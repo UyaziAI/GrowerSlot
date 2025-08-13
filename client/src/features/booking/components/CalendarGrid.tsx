@@ -26,17 +26,27 @@ interface SlotCardProps {
 }
 
 function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
-  const capacity = slot.capacity;
-  const booked = slot.booked ?? 0;
-  const remaining = slot.remaining ?? capacity;
+  // Helpers for numeric conversion
+  const toNum = (v: unknown, fallback = 0): number => {
+    const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  // Calculate derived values with safe numeric conversion
+  const capacityNum = toNum(slot.capacity, 0);
+  const bookedNum = toNum(slot.booked, 0);
+  const remainingNum = toNum(slot.remaining ?? (capacityNum - bookedNum), 0);
+  const unit = slot.resourceUnit ?? 'tons';
+  const safeCap = Math.max(capacityNum, 0);
   
-  const utilizationPercent = capacity > 0 ? (booked / capacity) * 100 : 0;
+  // Avoid divide-by-zero for progress bars
+  const utilizationPercent = safeCap > 0 ? Math.min(100, Math.max(0, (bookedNum / safeCap) * 100)) : 0;
   
   // Status determination
   const isBlackedOut = slot.blackout;
-  const isRestricted = slot.restrictions && slot.restrictions.length > 0;
-  const isFull = remaining <= 0;
-  const isLimited = remaining > 0 && remaining < capacity * 0.3; // Less than 30% remaining
+  const isRestricted = slot.restrictions && (slot.restrictions.growers?.length > 0 || slot.restrictions.cultivars?.length > 0);
+  const isFull = remainingNum <= 0;
+  const isLimited = remainingNum > 0 && remainingNum < capacityNum * 0.3; // Less than 30% remaining
   
   const getStatusColor = () => {
     if (isBlackedOut) return "bg-gray-500";
@@ -97,9 +107,9 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
                     data-testid={`capacity-bar-${slot.id}`}
                   />
                   <div className="flex justify-between text-xs text-gray-600">
-                    <span>{booked.toFixed(1)}/{capacity.toFixed(1)} tons</span>
-                    <span className={`font-medium ${remaining <= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {remaining.toFixed(1)} remaining
+                    <span>{bookedNum.toFixed(1)}/{capacityNum.toFixed(1)} {unit}</span>
+                    <span className={`font-medium ${remainingNum <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {remainingNum.toFixed(1)} remaining
                     </span>
                   </div>
                 </div>
@@ -123,9 +133,9 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
             
             {!isBlackedOut && (
               <div className="text-sm mb-2">
-                <div>Capacity: {capacity} tons</div>
-                <div>Booked: {booked} tons</div>
-                <div>Remaining: {remaining} tons</div>
+                <div>Capacity: {capacityNum.toFixed(1)} {unit}</div>
+                <div>Booked: {bookedNum.toFixed(1)} {unit}</div>
+                <div>Remaining: {remainingNum.toFixed(1)} {unit}</div>
                 <div>Utilization: {utilizationPercent.toFixed(1)}%</div>
               </div>
             )}
@@ -133,7 +143,7 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
             {isRestricted && slot.restrictions && (
               <div className="text-sm text-orange-600 mb-2">
                 <div className="font-medium">Restrictions:</div>
-                <div>• {slot.restrictions.length} restriction(s) applied</div>
+                <div>• Grower/cultivar restrictions applied</div>
               </div>
             )}
             
