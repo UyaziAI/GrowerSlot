@@ -58,7 +58,8 @@ export default function CalendarPage() {
       
       // Ensure virtualizer is measured before centering
       await nextFrame();
-      timelineRef.current?.centerOnDate(initialDate);
+      await nextFrame(); // Additional frame for layout settlement
+      timelineRef.current?.centerOnDate(initialDate, { behavior: 'instant' });
     };
     
     initializeDate();

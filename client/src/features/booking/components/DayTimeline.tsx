@@ -2,7 +2,7 @@
  * DayTimeline - Continuous horizontally scrollable day strip with virtualization
  * Replaces WeekScroller with infinite scrolling and snap-to-center selection
  */
-import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'framer-motion';
 import { SlotWithUsage } from "@shared/schema";
@@ -105,17 +105,33 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   className = '' 
 }, ref) => {
   const parentRef = useRef<HTMLDivElement>(null);
-  const [dates] = useState(() => generateDateRange(selectedDate));
+  // Generate date range dynamically to ensure current dates are always included
+  const dates = useMemo(() => {
+    // Always include today and selected date in range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const normalizedSelected = new Date(selectedDate);
+    normalizedSelected.setHours(0, 0, 0, 0);
+    
+    // Find the earliest date to center range around
+    const earliestDate = today.getTime() < normalizedSelected.getTime() ? today : normalizedSelected;
+    
+    return generateDateRange(earliestDate);
+  }, [selectedDate]);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
 
   // Find indices for selected and focused dates
+  const selectedDateStr = selectedDate.toISOString().split('T')[0];
+  const focusedDateStr = focusedDate.toISOString().split('T')[0];
+  
   const selectedIndex = dates.findIndex(
-    date => date.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0]
+    date => date.toISOString().split('T')[0] === selectedDateStr
   );
   
   const focusedIndex = dates.findIndex(
-    date => date.toISOString().split('T')[0] === focusedDate.toISOString().split('T')[0]
+    date => date.toISOString().split('T')[0] === focusedDateStr
   );
 
   // Virtualization setup
@@ -193,23 +209,32 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     const container = parentRef.current;
     if (!container) return;
     
+    console.log('centerOnDate called with:', date.toISOString().split('T')[0]);
+    
     // Settle layout and ensure virtualizer is measured
     await Promise.resolve();
     virtualizer.measure();
     
+    const targetDateStr = date.toISOString().split('T')[0];
     const targetIndex = dates.findIndex(
-      d => d.toISOString().split('T')[0] === date.toISOString().split('T')[0]
+      d => d.toISOString().split('T')[0] === targetDateStr
     );
+    
+    console.log('Target index found:', targetIndex, 'out of', dates.length, 'dates');
     
     if (targetIndex !== -1) {
       const offset = virtualizer.getOffsetForIndex(targetIndex);
       const itemWidth = 100; // Approximate pill width
-      const centerOffset = (offset ?? 0) - (container.clientWidth - itemWidth) / 2;
+      const centerOffset = Number(offset ?? 0) - (container.clientWidth - itemWidth) / 2;
+      
+      console.log('Scrolling to offset:', centerOffset, 'from offset:', offset);
       
       container.scrollTo({
         left: Math.max(0, centerOffset),
         behavior: opts?.behavior ?? 'smooth'
       });
+    } else {
+      console.log('Date not found in range. First date:', dates[0]?.toISOString().split('T')[0], 'Last date:', dates[dates.length - 1]?.toISOString().split('T')[0]);
     }
   }, [dates, virtualizer]);
 
