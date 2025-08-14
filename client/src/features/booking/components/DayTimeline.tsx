@@ -25,16 +25,19 @@ const SAFETY = 6;             // adequate safety margin for ring clipping preven
 const ITEM_TRACK = PILL_SIZE + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 84 + 4 + 4 + 6 = 98px
 
 // Even padding top/bottom for the scroll lane (px)
-const RAIL_PAD_Y = 10; // reduced to minimize timeline height while preventing clipping
+const RAIL_PAD_Y = 8; // further reduced for snug fit while preventing clipping
 
 // Rail/container heights
-const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 98 + 20 = 118px
+const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 98 + 16 = 114px
+
+// Sticky month header height
+const MONTH_HEADER_HEIGHT = 32; // height for sticky month header
 
 // Development verification
 if (import.meta.env.DEV) {
   console.log('DayTimeline fixed sizing constants:', { 
     PILL_SIZE, RING_SELECTED, SHADOW_SPACE, SAFETY,
-    ITEM_TRACK, RAIL_MIN_HEIGHT, RAIL_PAD_Y 
+    ITEM_TRACK, RAIL_MIN_HEIGHT, RAIL_PAD_Y, MONTH_HEADER_HEIGHT
   });
 }
 
@@ -110,6 +113,17 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   const parentRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
+  
+  // Track current visible month for sticky header
+  const [currentMonth, setCurrentMonth] = useState<string>('');
+  
+  // Update current month based on selected date
+  useEffect(() => {
+    if (selectedDate) {
+      const monthLabel = dayjs(selectedDate).tz(tenantTz).format('MMMM YYYY').toUpperCase();
+      setCurrentMonth(monthLabel);
+    }
+  }, [selectedDate, tenantTz]);
 
   // Dynamic EPOCH = today at midnight for optimal index range
   const EPOCH = useMemo(() => dayjs().tz(tenantTz).startOf('day'), [tenantTz]); // Today's midnight
@@ -313,7 +327,20 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   };
 
   return (
-    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: RAIL_MIN_HEIGHT }}>
+    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: RAIL_MIN_HEIGHT + MONTH_HEADER_HEIGHT }}>
+      {/* Sticky Month Header */}
+      <div 
+        className="sticky top-0 z-20 w-full bg-white border-b border-gray-200 flex items-center justify-center"
+        style={{ height: MONTH_HEADER_HEIGHT }}
+        role="banner"
+        aria-live="polite"
+        aria-label={`Current month: ${currentMonth}`}
+      >
+        <h2 className="text-sm font-bold text-gray-700 tracking-wide">
+          {currentMonth}
+        </h2>
+      </div>
+      
       <div
         ref={parentRef}
         className="overflow-x-auto overflow-y-visible flex items-center [-webkit-overflow-scrolling:touch] scrollbar-hide"

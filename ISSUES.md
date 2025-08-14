@@ -53,19 +53,20 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
 
-### Timeline Pill Sizing for Long Labels and Compact Layout (August 14, 2025) - RESOLVED
-- **Issue**: Pills too small for longer labels like "155.5" causing overflow, and timeline taking excessive vertical space
-- **Root Cause**: 72px pills insufficient for longer availability numbers, and excessive padding creating large timeline
+### Timeline Navigation and Clean Pill Design (August 14, 2025) - RESOLVED
+- **Issue**: Pills cluttered with info icons, lack of month context during horizontal scrolling, suboptimal sizing
+- **Root Cause**: Info icons (Ban, AlertCircle, FileText) cluttering pill display, no sticky month reference
 - **Resolution**: 
-  - Increased pill size to w-[84px] h-[84px] flex-shrink-0 to accommodate longer labels
+  - Removed all info icons from pills for clean day/date/availability-only display
+  - Implemented sticky month header (32px height) with dynamic month updates during scroll
+  - Increased pill size to w-[84px] h-[84px] flex-shrink-0 to accommodate longer labels like "155.5"
   - Expanded badge sizes from max-w-[40px] to max-w-[56px] for better label display
-  - Reduced rail padding from 14px to 10px for more compact timeline appearance
-  - Maintained content overflow protection: truncation, absolute positioned flags
-  - Removed all transform scaling (whileHover, whileTap, animate scale) to prevent clipping
-  - Selection indicated via visual highlight only (border-blue-500, bg-blue-50, ring-2)
+  - Reduced rail padding to 8px for snug fit while accommodating sticky header
+  - Added accessibility support: aria-live="polite" for month header, screen reader announcements
+  - Maintained content overflow protection and visual-only selection highlighting
   - Enhanced centering with scrollIntoView({ inline: 'center' }) and focus() for accessibility
-  - Balanced container dimensions: ITEM_TRACK (98px), RAIL_MIN_HEIGHT (118px) with compact 10px padding
-- **Status**: Optimized pill size for long labels with compact timeline layout achieved
+  - Final container dimensions: ITEM_TRACK (98px), RAIL_MIN_HEIGHT (114px), total height (146px)
+- **Status**: Clean pill design with sticky month header navigation context achieved
 
 ### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
 - **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality

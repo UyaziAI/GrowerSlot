@@ -152,20 +152,7 @@ export default function DayPill({
               </div>
             </div>
 
-            {/* Flags Row - Positioned absolutely to not affect layout */}
-            {(hasBlackouts || hasRestrictions || hasNotes) && (
-              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
-                {hasBlackouts && (
-                  <Ban className="w-2 h-2 text-red-500" aria-label="Blackout periods" />
-                )}
-                {hasRestrictions && (
-                  <AlertCircle className="w-2 h-2 text-orange-500" aria-label="Restrictions apply" />
-                )}
-                {hasNotes && (
-                  <FileText className="w-2 h-2 text-blue-500" aria-label="Special notes" />
-                )}
-              </div>
-            )}
+
 
             {/* Today Indicator */}
             {isToday && (

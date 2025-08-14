@@ -69,13 +69,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Technical: Optimized ±30 day initial load, expands to ±2 years for jump-to-date
   - Verification: Timeline centering working, jump-to-date functional
 
-- **Optimized pill sizing for long labels with compact timeline** (August 14, 2025)
-  - Status: ✅ Implementation complete with long label accommodation
+- **Sticky month header with clean pill design** (August 14, 2025)
+  - Status: ✅ Implementation complete with sticky header and clean pills
   - Location: `/client/src/features/booking/components/DayPill.tsx`, `/client/src/features/booking/components/DayTimeline.tsx`
-  - Features: Increased fixed size (w-[84px] h-[84px]), expanded badges (max-w-[56px]), visual-only selection
-  - UX: Enhanced centering with scrollIntoView() and focus management for accessibility
-  - Technical: Balanced container heights (ITEM_TRACK: 98px, RAIL_MIN_HEIGHT: 118px) with compact 10px padding
-  - Fix: Accommodates longer labels like "155.5" without overflow while maintaining compact timeline appearance
+  - Features: Sticky month header (32px), clean pills without info icons, fixed size (w-[84px] h-[84px])
+  - UX: Dynamic month updates on scroll, enhanced centering, accessibility with screen reader support
+  - Technical: Total height (146px = 114px rail + 32px header), 8px rail padding for snug fit
+  - Fix: Clean pill design with day/date/availability only, sticky header for better navigation context
   - Technical: overflow-y-visible, py-2 padding, 92px container height
   - Verification: Pills render fully without top/bottom cutoff, a11y compliant
 

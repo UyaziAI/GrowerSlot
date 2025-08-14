@@ -473,17 +473,19 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Optimized Pill Sizing for Long Labels with Compact Timeline
+### August 14, 2025 - Sticky Month Header Implementation with Clean Pill Design
 - **design:** Increased pill size to w-[84px] h-[84px] with flex-shrink-0 to accommodate longer labels like "155.5"
-- **content:** Content overflow protection with truncation, expanded badge sizes (max-w-[56px]), and absolute positioned flags
+- **content:** Removed info icons from pills, expanded badge sizes (max-w-[56px]), clean day/date/availability display only
+- **sticky header:** Implemented horizontally scrollable sticky month header (32px height) with dynamic month updates
+- **header features:** Full viewport width, background matching card, bold uppercase text, subtle bottom border
 - **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
 - **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
 - **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
 - **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering and focus management
-- **compact layout:** Reduced rail padding to 10px for more compact timeline while maintaining clipping prevention
-- **container:** Optimized dimensions - ITEM_TRACK (98px) and RAIL_MIN_HEIGHT (118px) with balanced 10px padding
-- **accessibility:** Added focus() call on selected pills for keyboard navigation compliance
-- **constants:** Optimized sizing - PILL_SIZE(84) + RING(2*2) + SHADOW(4) + SAFETY(6) = 98px track height
+- **compact layout:** Reduced rail padding to 8px for snug fit while accommodating sticky header
+- **container:** Final dimensions - ITEM_TRACK (98px), RAIL_MIN_HEIGHT (114px), total with header (146px)
+- **accessibility:** Screen reader announcements for month changes, maintained focus management
+- **constants:** Complete sizing - PILL_SIZE(84) + RAIL(114px) + MONTH_HEADER(32px) = 146px total height
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan
