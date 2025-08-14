@@ -15,25 +15,25 @@ import DayPill from './DayPill';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Uniform pill sizing constants (px)
-const PILL_UNIFORM = 72;      // uniform size for all pills
+// Fixed pill sizing constants (px)
+const PILL_SIZE = 72;         // exact fixed size for all pills (w-[72px] h-[72px])
 const RING_SELECTED = 2;      // Tailwind ring-2 (px) for selected state
 const SHADOW_SPACE = 4;       // space for shadows and subtle effects
-const SAFETY = 6;             // extra headroom for subpixel precision
+const SAFETY = 8;             // increased safety margin for ring clipping prevention
 
-// Uniform visual height = pill size + ring + shadow + safety
-const ITEM_TRACK = PILL_UNIFORM + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 72 + 4 + 4 + 6 = 86px
+// Track height = pill size + ring + shadow + safety
+const ITEM_TRACK = PILL_SIZE + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 72 + 4 + 4 + 8 = 88px
 
 // Even padding top/bottom for the scroll lane (px)
-const RAIL_PAD_Y = 12; // reduced from 16px to prevent clipping
+const RAIL_PAD_Y = 14; // increased to ensure no clipping of rings
 
 // Rail/container heights
-const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 86 + 24 = 110px
+const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 88 + 28 = 116px
 
 // Development verification
 if (import.meta.env.DEV) {
-  console.log('DayTimeline uniform sizing constants:', { 
-    PILL_UNIFORM, RING_SELECTED, SHADOW_SPACE, SAFETY,
+  console.log('DayTimeline fixed sizing constants:', { 
+    PILL_SIZE, RING_SELECTED, SHADOW_SPACE, SAFETY,
     ITEM_TRACK, RAIL_MIN_HEIGHT, RAIL_PAD_Y 
   });
 }

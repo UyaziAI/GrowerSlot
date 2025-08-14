@@ -53,17 +53,18 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
 
-### Timeline Pill Sizing and Clipping Issues (August 14, 2025) - RESOLVED
-- **Issue**: Day pills had inconsistent sizes and selected pills were vertically clipped despite uniform sizing
-- **Root Cause**: Transform scaling created size differences and insufficient padding caused ring clipping
+### Timeline Pill Sizing, Content Overflow, and Clipping Issues (August 14, 2025) - RESOLVED
+- **Issue**: Day pills had size variations from content overflow and persistent vertical clipping of highlighted pills
+- **Root Cause**: Min-width/height allowed content to grow pills, and insufficient safety margins caused ring clipping
 - **Resolution**: 
-  - Implemented uniform sizing: all pills use p-4 min-w-[72px] min-h-[72px] consistently
+  - Implemented exact fixed sizing: all pills use w-[72px] h-[72px] flex-shrink-0 consistently
+  - Added content overflow protection: truncation, fixed badge sizes (max-w-[40px]), absolute positioned flags
   - Removed all transform scaling (whileHover, whileTap, animate scale) to prevent clipping
   - Selection indicated via visual highlight only (border-blue-500, bg-blue-50, ring-2)
   - Enhanced centering with scrollIntoView({ inline: 'center' }) and focus() for accessibility
-  - Reduced timeline card and rail padding from 16px to 12px to prevent selected pill clipping
-  - Optimized container dimensions: ITEM_TRACK (86px), RAIL_MIN_HEIGHT (110px) with equal padding
-- **Status**: Uniform pill appearance with completely clipping-free layout at all zoom levels achieved
+  - Increased safety margins and rail padding to 14px to completely eliminate ring clipping
+  - Final container dimensions: ITEM_TRACK (88px), RAIL_MIN_HEIGHT (116px) with equal 14px padding
+- **Status**: Fixed pill dimensions with complete clipping elimination and content overflow protection achieved
 
 ### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
 - **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality

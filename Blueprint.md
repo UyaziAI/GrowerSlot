@@ -473,16 +473,17 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Uniform Pill Sizing Implementation with Clipping Fix
-- **design:** Implemented uniform pill sizing - all pills use identical p-4 min-w-[72px] min-h-[72px] regardless of state
+### August 14, 2025 - Fixed Pill Sizing Implementation with Complete Clipping Elimination
+- **design:** Implemented exact fixed pill sizing - all pills use w-[72px] h-[72px] with flex-shrink-0 regardless of state
+- **content:** Content overflow protection with truncation, fixed badge sizes, and absolute positioned flags
 - **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
 - **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
 - **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
 - **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering and focus management
-- **clipping fix:** Reduced timeline card padding and rail padding from 16px to 12px to prevent selected pill clipping
-- **container:** Optimized ITEM_TRACK (86px) and RAIL_MIN_HEIGHT (110px) with equal 12px top/bottom padding
+- **clipping elimination:** Increased safety margins and rail padding to 14px to completely prevent ring clipping
+- **container:** Final dimensions - ITEM_TRACK (88px) and RAIL_MIN_HEIGHT (116px) with equal 14px top/bottom padding
 - **accessibility:** Added focus() call on selected pills for keyboard navigation compliance
-- **constants:** Uniform sizing - PILL_UNIFORM(72) + RING(2*2) + SHADOW(4) + SAFETY(6) = 86px track height
+- **constants:** Fixed sizing - PILL_SIZE(72) + RING(2*2) + SHADOW(4) + SAFETY(8) = 88px track height
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan

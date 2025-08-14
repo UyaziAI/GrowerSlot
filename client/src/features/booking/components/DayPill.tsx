@@ -112,8 +112,8 @@ export default function DayPill({
         <TooltipTrigger asChild>
           <button
             className={`
-              relative flex items-center justify-center overflow-visible rounded-full border-2 transition-all duration-200 
-              p-4 min-w-[72px] min-h-[72px]
+              relative flex items-center justify-center overflow-hidden rounded-full border-2 transition-all duration-200 
+              w-[72px] h-[72px] flex-shrink-0
               ${isSelected 
                 ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-300' 
                 : isFocused 
@@ -129,37 +129,40 @@ export default function DayPill({
             data-testid={testId}
             style={{ zIndex: isSelected ? 10 : 1 }}
           >
-            {/* Main Content */}
-            <div className="text-center">
-              <div className="font-medium text-gray-600 uppercase tracking-wide text-xs">
+            {/* Main Content - Fixed container to prevent growth */}
+            <div className="text-center w-full h-full flex flex-col justify-center items-center overflow-hidden">
+              <div className="font-medium text-gray-600 uppercase tracking-wide text-xs truncate w-full px-1">
                 {weekday}
               </div>
-              <div className={`font-bold mt-1 text-xl ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+              <div className={`font-bold text-lg leading-none ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                 {dayNumber}
               </div>
               
-              {/* Availability Badge */}
-              <div className="mt-3">
-                <Badge 
-                  variant={getBadgeVariant()}
-                  className={`px-1.5 py-0.5 ${getBadgeColor()} text-xs`}
-                >
-                  {totalSlots === 0 ? '0' : `${remaining}`}
-                </Badge>
+              {/* Availability Badge - Fixed size to prevent growth */}
+              <div className="mt-1">
+                <div className={`
+                  inline-flex items-center justify-center px-1 py-0.5 rounded text-xs font-medium
+                  min-w-[20px] max-w-[40px] h-4 overflow-hidden
+                  ${getBadgeColor()}
+                `}>
+                  <span className="truncate text-xs leading-none">
+                    {totalSlots === 0 ? '0' : remaining > 999 ? '999+' : `${remaining}`}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Flags Row - Show when critical */}
+            {/* Flags Row - Positioned absolutely to not affect layout */}
             {(hasBlackouts || hasRestrictions || hasNotes) && (
-              <div className="flex justify-center gap-1 mt-2">
+              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
                 {hasBlackouts && (
-                  <Ban className="w-2.5 h-2.5 text-red-500" aria-label="Blackout periods" />
+                  <Ban className="w-2 h-2 text-red-500" aria-label="Blackout periods" />
                 )}
                 {hasRestrictions && (
-                  <AlertCircle className="w-2.5 h-2.5 text-orange-500" aria-label="Restrictions apply" />
+                  <AlertCircle className="w-2 h-2 text-orange-500" aria-label="Restrictions apply" />
                 )}
                 {hasNotes && (
-                  <FileText className="w-2.5 h-2.5 text-blue-500" aria-label="Special notes" />
+                  <FileText className="w-2 h-2 text-blue-500" aria-label="Special notes" />
                 )}
               </div>
             )}
