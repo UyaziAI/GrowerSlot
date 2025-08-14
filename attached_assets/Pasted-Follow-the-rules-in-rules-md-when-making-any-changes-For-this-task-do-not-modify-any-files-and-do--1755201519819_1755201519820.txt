@@ -1,0 +1,129 @@
+Follow the rules in rules.md when making any changes. For this task, do not modify any files and do not create new files. This is a read‑only diagnostic: print code and output a structured report only.
+
+Goal (read‑only)
+
+Produce a complete, human‑readable report showing how the Day Timeline scroller is built and why the center (selected) pill may appear clipped/top‑bottom or have uneven vertical padding.
+
+Absolutely no edits/commits to the codebase; only print and analyze.
+
+0) Exact files to PRINT verbatim (with file path headings)
+
+app/frontend/src/features/booking/DayTimeline.tsx
+
+app/frontend/src/features/booking/DayPill.tsx
+
+app/frontend/src/features/booking/DayTimeline.css (if exists)
+
+Where the timeline is rendered (choose all that apply and print):
+
+app/frontend/src/pages/BookingPage.tsx
+
+app/frontend/src/features/booking/BookingPage.tsx
+
+app/frontend/src/App.tsx (if it wires the page)
+
+UI shells that may set overflow/padding:
+
+app/frontend/src/components/ui/card.tsx and/or .../card.ts (if using shadcn)
+
+Any local ScrollArea wrapper components (e.g. app/frontend/src/components/scroll-area/*.tsx)
+
+Tailwind config, if custom plugins might affect sizing:
+
+app/frontend/tailwind.config.*
+
+Print each file as:
+
+--- BEGIN <relative/path> ---
+<file contents>
+--- END <relative/path> ---
+
+1) Repo SEARCH (print matches with 3 lines of context)
+
+Search the frontend for these patterns and print results using the same BEGIN/END framing:
+
+overflow-hidden
+
+overflow-y-
+
+ScrollArea.Viewport OR Viewport
+
+scale- OR transform: scale
+
+motion OR framer (possible animated scale)
+
+snap- (snap-x, snap-mandatory, snap-center)
+
+min-h-[ and h-[ (explicit heights)
+
+py- (lane/pill vertical padding)
+
+ring- OR focus-visible:ring
+
+Format each block as:
+
+--- BEGIN SEARCH:<pattern> ---
+<path>:<lineNo>  <matched line>
+  <-3,+3 lines of context if available->
+--- END SEARCH:<pattern> ---
+
+2) Static analysis (write a clear, structured REPORT)
+
+After printing the files and search results, output a “Timeline Construction Report” with these sections:
+
+A. Component & DOM structure
+
+Identify the component that renders the row of pills (the “lane”).
+
+List the ancestor chain (from the lane up to the Card/container) and note any overflow styles on each ancestor (especially overflow: hidden).
+
+B. Sizing & spacing
+
+For the lane: list the applied classes/props controlling vertical size (py-*, min-h-*, h-*, items-center, etc.).
+
+For the selected pill vs non‑selected pill: list the classes that change padding, font size/weight, border/ring, and any transform/scale.
+
+C. Scrolling & centering
+
+Confirm how centering is achieved: snap-x/snap-mandatory on lane and snap-center on pills vs scrollIntoView({ inline: 'center' }).
+
+Note any CSS that could fight centering (e.g., fixed heights, sticky parents).
+
+D. Likely clipping causes (ranked)
+
+Based on the printed code, rank the top 3 probable causes of vertical clipping or uneven top/bottom padding (examples: ancestor overflow: hidden, Radix ScrollArea.Viewport default overflow, transform scale on the selected pill, insufficient lane min-h, focus ring thickness exceeding lane height, etc.).
+
+For each cause, reference the exact file + line(s) from the printed code/search that support the finding.
+
+E. Measurements to verify (no code changes)
+
+Provide a short DevTools snippet the user can run at runtime (in the browser console) to log getComputedStyle of the selected pill and its lane for: height, padding-top, padding-bottom, line-height, border-width, and any transform.
+
+Include a one‑liner to walk up the DOM from the selected pill and log any ancestor where overflow-y is not visible.
+
+F. Conclusion
+
+Summarize which file(s)/class(es) most likely cause the clipping as‑is, and whether the issue is overflow chain, transform scaling, or insufficient lane height/padding mismatch.
+
+Important: This REPORT is analysis only. Do not modify files or propose diffs inside this run.
+
+3) Output order
+
+All requested files (Section 0)
+
+All search results (Section 1)
+
+The structured Timeline Construction Report (Section 2)
+
+End with:
+=== END OF READ-ONLY TIMELINE REPORT ===
+
+4) Safety rails
+
+Do not write/format code changes.
+
+Do not create temporary test files.
+
+Do not edit Tailwind or component files.
+
+This is a print & analyze only task.
