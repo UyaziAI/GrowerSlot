@@ -114,14 +114,10 @@ export default function DayPill({
         <TooltipTrigger asChild>
           <motion.button
             className={`
-              relative rounded-full transition-all duration-200 
+              relative rounded-full border-2 transition-all duration-200 
               ${large 
-                ? (isSelected 
-                  ? 'p-5 min-w-[80px] min-h-[80px] border-4' // Selected: larger padding and thicker border
-                  : 'p-4 min-w-[72px] min-h-[72px] border-2') // Normal: standard large size
-                : (isSelected 
-                  ? 'p-4 min-w-[68px] min-h-[68px] border-3' // Selected: larger padding and thicker border
-                  : 'p-3 min-w-[64px] min-h-[64px] border-2') // Normal: standard size
+                ? 'p-4 min-w-[72px] min-h-[72px]' // Large touch-friendly mode
+                : 'p-3 min-w-[64px]'
               }
               ${isSelected 
                 ? 'border-blue-500 bg-blue-50 shadow-lg ring-4 ring-blue-300 ring-opacity-50' 
@@ -136,9 +132,10 @@ export default function DayPill({
             aria-pressed={isSelected}
             aria-label={`${weekday}, ${dayNumber}. ${totalSlots} slots, ${remaining} available`}
             data-testid={testId}
-            whileHover={{ y: -1 }}
-            whileTap={{ y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             animate={{ 
+              scale: isSelected ? (large ? 1.08 : 1.05) : 1,
               opacity: isSelected ? 1 : 0.9 
             }}
             style={{ zIndex: isSelected ? 10 : 1 }}
@@ -146,30 +143,18 @@ export default function DayPill({
           >
             {/* Main Content */}
             <div className="text-center">
-              <div className={`font-medium text-gray-600 uppercase tracking-wide ${
-                large 
-                  ? (isSelected ? 'text-xs' : 'text-[10px]') 
-                  : (isSelected ? 'text-xs' : 'text-[10px]')
-              }`}>
+              <div className={`text-xs font-medium text-gray-600 uppercase tracking-wide ${large ? 'text-[10px]' : ''}`}>
                 {weekday}
               </div>
-              <div className={`font-bold mt-1 ${
-                large 
-                  ? (isSelected ? 'text-2xl' : 'text-xl') 
-                  : (isSelected ? 'text-xl' : 'text-lg')
-              } ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+              <div className={`font-bold mt-1 ${large ? 'text-xl' : 'text-lg'} ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                 {dayNumber}
               </div>
               
               {/* Availability Badge */}
-              <div className={`${large ? (isSelected ? 'mt-4' : 'mt-3') : (isSelected ? 'mt-3' : 'mt-2')}`}>
+              <div className={`${large ? 'mt-3' : 'mt-2'}`}>
                 <Badge 
                   variant={getBadgeVariant()}
-                  className={`px-1.5 py-0.5 ${getBadgeColor()} ${
-                    large 
-                      ? (isSelected ? 'text-xs' : 'text-[10px]') 
-                      : (isSelected ? 'text-xs' : 'text-[10px]')
-                  }`}
+                  className={`text-xs px-1.5 py-0.5 ${getBadgeColor()} ${large ? 'text-[10px]' : ''}`}
                 >
                   {totalSlots === 0 ? '0' : `${remaining}`}
                 </Badge>
