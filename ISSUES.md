@@ -4,20 +4,31 @@ This file tracks issues, technical debt, and any violations of the governance ru
 
 ## Active Issues 🔴
 
-### LSP Diagnostics (August 13, 2025) - Updated
+### Blueprint Implementation Verification (August 14, 2025) - NEW
 - **Severity**: Medium
-- **Description**: Multiple TypeScript/Python LSP errors in backend and new calendar features
-- **Files Affected**: 
-  - `app/backend/schemas.py` (3 diagnostics) - schema validation issues
-  - `app/frontend/src/features/booking/hooks/useSlotsRange.ts` (1 diagnostic) - import issue
-  - `app/frontend/src/features/booking/components/CalendarGrid.tsx` (13 diagnostics) - type/import issues
-  - `app/frontend/src/features/booking/CalendarPage.tsx` (4 diagnostics) - import issues
-  - `app/backend/tests/test_slots_range.py` (1 diagnostic) - import/mock issues
-  - `app/frontend/src/features/booking/__tests__/CalendarGrid.test.tsx` (44 diagnostics) - testing imports
-  - `app/frontend/src/features/booking/__tests__/useSlotsRange.test.ts` (51 diagnostics) - testing imports
-- **Impact**: Development experience, testing setup needs refinement
-- **Action Required**: Fix shadcn/ui imports, testing library setup, Python test structure
-- **Note**: Calendar functionality implemented but needs import fixes for clean builds
+- **Description**: Repository verification sweep identified minor discrepancies with blueprint specifications
+- **Found Issues**:
+  - API endpoints use `/api/` prefix instead of blueprint-specified `/v1/` prefix
+  - Missing `/api/export/bookings.csv` endpoint implementation
+  - FastAPI backend structure exists in `/app/backend/` but current implementation uses Node.js/Express
+  - Migration files exist but dual backend creates confusion
+- **Impact**: Blueprint contract alignment, future development clarity
+- **Action Required**: 
+  - Decide on single backend architecture (Node.js or FastAPI)
+  - Implement missing CSV export endpoint
+  - Consider API versioning strategy
+- **Priority**: Medium - functionality works but architecture drift present
+
+### API Contract Discrepancy (August 14, 2025) - NEW
+- **Severity**: Low
+- **Description**: Current API uses `/api/` prefix instead of blueprint-specified `/v1/` prefix
+- **Files Affected**: `server/routes.ts`, `client/src/lib/api.ts`
+- **Impact**: Future versioning strategy, blueprint compliance
+- **Solution Options**: 
+  1. Update all endpoints to use `/v1/` prefix
+  2. Add `/v1/` alias routes for backward compatibility
+  3. Update blueprint to reflect current `/api/` convention
+- **Recommendation**: Option 2 - maintain compatibility while adding v1 routes
 
 ### Frontend Routing Integration
 - **Severity**: Low
@@ -27,6 +38,11 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Solution Required**: Add /calendar route and navigation links
 
 ## Resolved Issues ✅
+
+### LSP Diagnostics (August 14, 2025) - RESOLVED
+- **Issue**: Multiple TypeScript/Python LSP errors in backend and calendar features
+- **Resolution**: All TypeScript imports and calendar implementation working correctly
+- **Verification**: LSP diagnostics show no current errors, Day/Week toggle functional
 
 ### Authentication Flow (August 13, 2025)
 - **Issue**: JWT authentication headers not properly included in API requests
@@ -42,6 +58,11 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Issue**: Risk of overbooking without proper concurrency controls
 - **Resolution**: Implemented SELECT FOR UPDATE pattern in booking endpoint
 - **Verification**: Tested with concurrent requests, proper 409 responses
+
+### Calendar Day/Week Toggle (August 14, 2025) - RESOLVED
+- **Issue**: Day/Week toggle not working, admin slot management missing
+- **Resolution**: Implemented fully functional calendar with admin management controls
+- **Verification**: Both Day/Week views working, admin can bulk create and edit slots
 
 ## Technical Debt 📋
 

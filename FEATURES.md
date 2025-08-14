@@ -74,15 +74,17 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Feature flag: VITE_FEATURE_LOGISTICS=true
   - Remaining: Integration with routing, testing with real data
 
-- **Calendar-style slot layout with Day/Week views** (August 13, 2025)
-  - Status: ✅ Fully Integrated into Grower Dashboard
+- **Calendar-style slot layout with Day/Week views** (August 14, 2025)
+  - Status: ✅ Fully Implemented and Verified
   - Location: `/client/src/features/booking/components/CalendarGrid.tsx`
   - Backend: Added GET /api/slots/range endpoint with date validation and 14-day limit
-  - Frontend: Complete calendar grid replacing vertical slot list in grower dashboard
+  - Frontend: Complete calendar grid replacing ALL vertical slot lists
   - Feature flag: VITE_FEATURE_WEEKVIEW=true enables week view toggle
   - Features: Time-axis layout, capacity bars, blackout/restriction indicators, tooltips
-  - Integration: Successfully replaced vertical slot list with interactive calendar
+  - Integration: Both Admin and Grower use calendar as exclusive interface
   - Responsive: Mobile-optimized layout with summary stats and navigation controls
+  - Admin Tools: Added /admin/slots page with bulk creation, editing, blackout controls
+  - Verification: Day/Week toggle working, admin controls functional, RBAC enforced
 
 ## Known Gaps / Missing Features ❌
 
@@ -100,6 +102,11 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 
 ### Blueprint Extensions (Future Phases)
+- **CSV Export endpoint** - Backend stub exists, needs implementation
+  - Priority: Medium (Phase 1)
+  - Scope: GET /api/export/bookings.csv for data export
+  - Location: Missing from server/routes.ts, mentioned in blueprint §6
+
 - **Quality inspections module** - Not started
   - Priority: Low (Phase 3)
   - Scope: Inspection templates, pass/fail gates
@@ -115,6 +122,11 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 - **Webhook delivery system** - Infrastructure ready
   - Priority: Medium (Phase 2)
   - Scope: Reliable webhook delivery from outbox table
+
+- **API versioning strategy** - Needs decision
+  - Priority: Medium (Phase 1)
+  - Scope: Blueprint specifies /v1/ prefix, current implementation uses /api/
+  - Decision needed: migrate to /v1/ or update blueprint
 
 ### Testing Gaps
 - **Integration tests** - Limited coverage
