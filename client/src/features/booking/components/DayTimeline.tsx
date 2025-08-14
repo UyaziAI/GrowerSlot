@@ -234,12 +234,14 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     <div className={`w-full ${className}`}>
       <div
         ref={parentRef}
-        className="overflow-x-auto scrollbar-hide"
+
+        className="overflow-x-auto overflow-y-hidden scrollbar-hide"
         style={{
           height: '120px',
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
-          overscrollBehaviorX: 'contain'
+          overscrollBehaviorX: 'contain',
+          overscrollBehaviorY: 'none' // Prevent vertical drift
         }}
         onKeyDown={handleKeyDown}
         tabIndex={0}

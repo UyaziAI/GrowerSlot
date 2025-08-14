@@ -33,18 +33,26 @@ export default function CalendarPage() {
         initialDate = new Date();
       }
     } else {
-      // No date param, default to today
+      // No date param, default to today (tenant timezone)
       initialDate = new Date();
     }
+    
+    // Normalize to start of day for consistent behavior
+    initialDate.setHours(0, 0, 0, 0);
     
     // Set both selected and focused to the same initial date
     setSelectedDate(initialDate);
     setFocusedDate(initialDate);
     
-    // Center the timeline on initial date after component mount
+    // Update URL to reflect the selected date only if no URL param was present
+    if (!dateParam) {
+      updateURL(initialDate);
+    }
+    
+    // Center the timeline on initial date and ensure it's visible after component mount
     setTimeout(() => {
       timelineRef.current?.centerOnDate(initialDate);
-    }, 100);
+    }, 200); // Increased timeout to ensure proper rendering
   }, []);
 
   // Update URL when date changes (no hard navigate)

@@ -10,7 +10,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 14, 2025**: DayTimeline Interaction Refinements Complete - Focused vs Selected State Separation
+- **August 14, 2025**: DayTimeline Initial Load & Interaction Refinements Complete
+  - **Initial Selection**: Page load now selects and opens today (tenant timezone) by default
+  - **URL Behavior**: Only updates URL if no ?date= parameter was provided on initial load
   - **Explicit Day Opening**: Scrolling now only highlights days; clicking/tapping explicitly opens Day Detail below
   - **Focused vs Selected States**: Split visual highlighting (focused) from data selection (selected) for precise interaction control
   - **Enhanced Navigation**: Today and Jump-to-date buttons both open selected day and center timeline smoothly

@@ -358,7 +358,7 @@ Admin Slots – bulk generation, blackout, restrictions, notes.
 
 Inbound (feature‑flagged) – read‑only consignments list with latest checkpoint.
 
-Continuous DayTimeline – horizontally scrollable day strip with snap-to-center selection, virtualized for performance, combined with animated Day Detail view below.
+Continuous DayTimeline – horizontally scrollable day strip with focused/selected state separation. Initial load selects today; explicit clicks open Day Detail; smooth centering on Today/Jump-to-date actions.
 
 RBAC guards: show Admin tools only if role==='admin'.
 
