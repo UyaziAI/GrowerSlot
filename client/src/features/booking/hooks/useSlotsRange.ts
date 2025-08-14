@@ -4,6 +4,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { SlotWithUsage } from "@shared/schema";
+import { authService } from "@/lib/auth";
 
 // Helper to normalize numeric fields
 const toNum = (v: unknown, fallback = 0): number => {
@@ -19,28 +20,34 @@ const normalizeSlot = (s: any): SlotWithUsage => ({
 });
 
 export function useSlotsRange(startDate: string, endDate: string, enabled: boolean = true) {
+  const user = authService.getUser();
+  const tenantId = user?.tenantId || '';
+  
   return useQuery({
-    queryKey: ['/api/slots/range', startDate, endDate],
+    queryKey: ['slots', 'range', tenantId, startDate, endDate],
     queryFn: async () => {
       const slots = await api.getSlotsRange(startDate, endDate);
       return Array.isArray(slots) ? slots.map(normalizeSlot) : [];
     },
-    enabled: enabled && !!startDate && !!endDate,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 30, // 30 seconds for real-time updates
+    enabled: enabled && !!startDate && !!endDate && !!tenantId,
+    staleTime: 0, // No stale time for admin views - always fresh data
+    refetchOnWindowFocus: true, // Aggressive refetching for admin
   });
 }
 
 export function useSlotsSingle(date: string, enabled: boolean = true) {
+  const user = authService.getUser();
+  const tenantId = user?.tenantId || '';
+  
   return useQuery<SlotWithUsage[]>({
-    queryKey: ['/api/slots', date],
+    queryKey: ['slots', tenantId, date],
     queryFn: async () => {
       const slots = await api.getSlots(date);
       return Array.isArray(slots) ? slots.map(normalizeSlot) : [];
     },
-    enabled: enabled && !!date,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 30, // 30 seconds
+    enabled: enabled && !!date && !!tenantId,
+    staleTime: 0, // No stale time for admin views
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -11,7 +11,7 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `/api${endpoint}`;
+  const url = `/v1${endpoint}`;
   const token = authService.getToken();
   
   const config: RequestInit = {
