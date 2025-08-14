@@ -25,10 +25,10 @@ const SAFETY = 6;             // extra headroom for subpixel precision
 const ITEM_TRACK = PILL_UNIFORM + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 72 + 4 + 4 + 6 = 86px
 
 // Even padding top/bottom for the scroll lane (px)
-const RAIL_PAD_Y = 16; // exact same on top and bottom
+const RAIL_PAD_Y = 12; // reduced from 16px to prevent clipping
 
 // Rail/container heights
-const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 86 + 32 = 118px
+const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 86 + 24 = 110px
 
 // Development verification
 if (import.meta.env.DEV) {

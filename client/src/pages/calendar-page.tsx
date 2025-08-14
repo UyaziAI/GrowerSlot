@@ -201,7 +201,7 @@ export default function CalendarPage() {
 
         {/* Day Timeline */}
         <Card className="mb-6 relative overflow-visible">
-          <CardContent className="overflow-visible" style={{ minHeight: '120px', padding: '16px 24px 16px 24px' }}>
+          <CardContent className="overflow-visible" style={{ minHeight: '110px', padding: '12px 24px 12px 24px' }}>
             <DayTimeline
               ref={timelineRef}
               selectedDate={selectedDate}

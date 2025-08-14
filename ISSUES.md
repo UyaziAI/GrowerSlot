@@ -53,16 +53,17 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
 
-### Timeline Pill Sizing Inconsistency (August 14, 2025) - RESOLVED
-- **Issue**: Day pills had inconsistent sizes (selected larger, flanks scaled) causing visual complexity and potential clipping
-- **Root Cause**: Transform scaling and variable padding created size differences between pill states
+### Timeline Pill Sizing and Clipping Issues (August 14, 2025) - RESOLVED
+- **Issue**: Day pills had inconsistent sizes and selected pills were vertically clipped despite uniform sizing
+- **Root Cause**: Transform scaling created size differences and insufficient padding caused ring clipping
 - **Resolution**: 
   - Implemented uniform sizing: all pills use p-4 min-w-[72px] min-h-[72px] consistently
   - Removed all transform scaling (whileHover, whileTap, animate scale) to prevent clipping
   - Selection indicated via visual highlight only (border-blue-500, bg-blue-50, ring-2)
   - Enhanced centering with scrollIntoView({ inline: 'center' }) and focus() for accessibility
-  - Optimized container dimensions: ITEM_TRACK (86px), RAIL_MIN_HEIGHT (118px)
-- **Status**: Uniform pill appearance with consistent, clipping-free layout achieved
+  - Reduced timeline card and rail padding from 16px to 12px to prevent selected pill clipping
+  - Optimized container dimensions: ITEM_TRACK (86px), RAIL_MIN_HEIGHT (110px) with equal padding
+- **Status**: Uniform pill appearance with completely clipping-free layout at all zoom levels achieved
 
 ### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
 - **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality

@@ -10,15 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 14, 2025**: Uniform Day Pill Sizing Implementation Complete
+- **August 14, 2025**: Uniform Day Pill Sizing Implementation Complete with Clipping Fix
   - **Uniform Design**: All day pills now use identical p-4 min-w-[72px] min-h-[72px] sizing regardless of state
   - **Selection Highlight**: Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
   - **No Transform Scaling**: Removed all whileHover, whileTap, and animate scale transforms to prevent vertical clipping
   - **Today Indicator**: Today marker maintained as subtle dot overlay without affecting pill dimensions
   - **Enhanced Centering**: Improved centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering
   - **Accessibility**: Added focus() call on selected pills for keyboard navigation compliance
-  - **Optimized Layout**: Reduced container heights - ITEM_TRACK (86px), RAIL_MIN_HEIGHT (118px) for uniform 72px pills
-  - **Clean Appearance**: Consistent, clipping-free layout across all browser zoom levels (90%-125%)
+  - **Clipping Fix**: Reduced timeline card and rail padding from 16px to 12px to eliminate selected pill clipping
+  - **Optimized Layout**: Final container heights - ITEM_TRACK (86px), RAIL_MIN_HEIGHT (110px) with equal 12px padding
+  - **Clean Appearance**: Consistent, completely clipping-free layout across all browser zoom levels (90%-125%)
 
 - **August 14, 2025**: Continuous Day Timeline Implementation Complete - Blueprint Specification Fulfilled
   - **DayTimeline Component**: Replaced WeekScroller with virtualized horizontal scrollable timeline using @tanstack/react-virtual

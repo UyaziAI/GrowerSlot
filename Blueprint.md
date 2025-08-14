@@ -473,13 +473,14 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Uniform Pill Sizing Implementation
+### August 14, 2025 - Uniform Pill Sizing Implementation with Clipping Fix
 - **design:** Implemented uniform pill sizing - all pills use identical p-4 min-w-[72px] min-h-[72px] regardless of state
 - **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
 - **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
 - **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
 - **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering and focus management
-- **container:** Optimized ITEM_TRACK (86px) and RAIL_MIN_HEIGHT (118px) for uniform 72px pills + ring space
+- **clipping fix:** Reduced timeline card padding and rail padding from 16px to 12px to prevent selected pill clipping
+- **container:** Optimized ITEM_TRACK (86px) and RAIL_MIN_HEIGHT (110px) with equal 12px top/bottom padding
 - **accessibility:** Added focus() call on selected pills for keyboard navigation compliance
 - **constants:** Uniform sizing - PILL_UNIFORM(72) + RING(2*2) + SHADOW(4) + SAFETY(6) = 86px track height
 
