@@ -78,7 +78,7 @@ export default function AdminSlotsPage() {
     : useSlotsRange(startDate, endDate, isWeekViewEnabled);
 
   const { data: stats } = useQuery({
-    queryKey: ["/api/admin/stats", startDate],
+    queryKey: ["admin", "stats", user?.tenantId, startDate],
     queryFn: () => api.getDashboardStats(startDate),
   });
 
@@ -89,7 +89,7 @@ export default function AdminSlotsPage() {
         title: "Slots Created",
         description: `Successfully created ${result.count} slots`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
+      queryClient.invalidateQueries({ queryKey: ["slots"] });
       setBulkForm({
         startDate: '',
         endDate: '',
@@ -112,7 +112,7 @@ export default function AdminSlotsPage() {
   const updateSlotMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.updateSlot(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
+      queryClient.invalidateQueries({ queryKey: ["slots"] });
       toast({
         title: "Slot Updated",
         description: "Slot has been updated successfully",

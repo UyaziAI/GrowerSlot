@@ -16,7 +16,7 @@ const fetchSlotsRange = async (
     end: endDate
   });
 
-  const response = await fetch(`/api/slots/range?${params}`, {
+  const response = await fetch(`/v1/slots/range?${params}`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('token')}`,
       'Content-Type': 'application/json'

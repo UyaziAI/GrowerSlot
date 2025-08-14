@@ -17,7 +17,7 @@ export default function GrowerDashboard() {
 
   // Fetch user's bookings
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
-    queryKey: ['/api/bookings'],
+    queryKey: ['bookings', user?.tenantId],
     queryFn: () => api.getBookings(),
   });
 
@@ -25,7 +25,7 @@ export default function GrowerDashboard() {
   const cancelBookingMutation = useMutation({
     mutationFn: (bookingId: string) => api.cancelBooking(bookingId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       toast({
         title: "Booking cancelled",
         description: "Your booking has been successfully cancelled.",

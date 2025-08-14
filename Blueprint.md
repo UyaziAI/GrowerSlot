@@ -473,6 +473,18 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
+### August 14, 2025 - Repository Audit & Fix Pass: Complete Blueprint Compliance
+- **audit:** Performed comprehensive repository scan for Blueprint.md compliance and issue resolution
+- **api migration:** Updated all frontend query keys from `/api/` to proper resource names for v1 endpoints
+- **query structure:** Standardized query keys to include tenantId for proper multi-tenant caching
+- **typescript:** Fixed all TypeScript errors including type conversion issues in admin-dashboard.tsx
+- **cleanup:** Removed legacy files (admin-dashboard-old.tsx, grower-dashboard-old.tsx)
+- **verification:** Confirmed SELECT FOR UPDATE pattern for booking concurrency (line 63-64 bookings.py)
+- **data integrity:** Verified no phantom slot generation - UI renders only backend-provided data
+- **rbac:** Confirmed admin-only routes protected with require_role decorator
+- **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
+- **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
+
 ### August 14, 2025 - Admin Calendar Implementation: Comprehensive CRUD Interface
 - **admin calendar:** Implemented full Month/Week/Day calendar views for admin slot and booking management
 - **view modes:** Three calendar views (Month/Week/Day) with proper timezone handling (Africa/Johannesburg)

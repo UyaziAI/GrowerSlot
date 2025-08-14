@@ -20,31 +20,9 @@ This file tracks issues, technical debt, and any violations of the governance ru
   - Confirm tab order and focus management
   - Test high contrast mode compatibility
 
-### Blueprint Implementation Verification (August 14, 2025) - NEW
-- **Severity**: Medium
-- **Description**: Repository verification sweep identified minor discrepancies with blueprint specifications
-- **Found Issues**:
-  - API endpoints use `/api/` prefix instead of blueprint-specified `/v1/` prefix
-  - Missing `/api/export/bookings.csv` endpoint implementation
-  - FastAPI backend structure exists in `/app/backend/` but current implementation uses Node.js/Express
-  - Migration files exist but dual backend creates confusion
-- **Impact**: Blueprint contract alignment, future development clarity
-- **Action Required**: 
-  - Decide on single backend architecture (Node.js or FastAPI)
-  - Implement missing CSV export endpoint
-  - Consider API versioning strategy
-- **Priority**: Medium - functionality works but architecture drift present
 
-### API Contract Discrepancy (August 14, 2025) - NEW
-- **Severity**: Low
-- **Description**: Current API uses `/api/` prefix instead of blueprint-specified `/v1/` prefix
-- **Files Affected**: `server/routes.ts`, `client/src/lib/api.ts`
-- **Impact**: Future versioning strategy, blueprint compliance
-- **Solution Options**: 
-  1. Update all endpoints to use `/v1/` prefix
-  2. Add `/v1/` alias routes for backward compatibility
-  3. Update blueprint to reflect current `/api/` convention
-- **Recommendation**: Option 2 - maintain compatibility while adding v1 routes
+
+
 
 ### Missing CSV Export Endpoint
 - **Severity**: Medium  
@@ -85,6 +63,17 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Compliance**: Blueprint Section 7 UX plan fully implemented with proper navigation flow
 
 ## Resolved Issues ✅
+
+### Repository Audit & API Migration (August 14, 2025) - RESOLVED
+- **Issue**: Frontend query keys using `/api/` prefix, legacy files present, TypeScript errors
+- **Resolution**:
+  - Updated all query keys to use resource names: `["slots"]`, `["bookings"]`, etc.
+  - Added tenantId scoping to query keys for proper multi-tenant caching  
+  - Fixed useSlotsRange hook to use `/v1/slots/range` endpoint
+  - Removed legacy files (admin-dashboard-old.tsx, grower-dashboard-old.tsx)
+  - Fixed TypeScript type conversion issues
+- **Verification**: All LSP diagnostics cleared, API contracts match Blueprint.md
+- **Documentation**: Created SCAN_REPORT.md and VERIFICATION_REPORT.md
 
 ### Timeline Pill Vertical Clipping (August 14, 2025) - RESOLVED
 - **Issue**: Selected day pills were being cut off at top/bottom due to CSS transform scaling

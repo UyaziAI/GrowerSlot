@@ -22,7 +22,8 @@ export default function BookingModal({ slot, isOpen, onClose }: BookingModalProp
   const queryClient = useQueryClient();
 
   const { data: cultivars = [] } = useQuery<Cultivar[]>({
-    queryKey: ["/api/cultivars"],
+    queryKey: ["cultivars"],
+    queryFn: () => api.getCultivars(),
     enabled: isOpen,
   });
 
@@ -34,8 +35,8 @@ export default function BookingModal({ slot, isOpen, onClose }: BookingModalProp
         title: "Booking Confirmed",
         description: "Your delivery slot has been booked successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["slots"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
       onClose();
       resetForm();
     },

@@ -86,7 +86,7 @@ export default function AdminDashboard() {
 
   // Admin stats with proper tenant scoping
   const { data: stats } = useQuery({
-    queryKey: ['/api/admin/stats', user?.tenantId, startDate],
+    queryKey: ['admin', 'stats', user?.tenantId, startDate],
     queryFn: () => api.getDashboardStats(startDate),
     enabled: !!user?.tenantId,
     staleTime: 0 // Always fresh for admin
@@ -446,7 +446,7 @@ export default function AdminDashboard() {
                     onClick={() => {
                       updateSlotMutation.mutate({
                         id: selectedSlot.id,
-                        data: { capacity: (selectedSlot.capacity || 0) + 50 }
+                        data: { capacity: Number(selectedSlot.capacity || 0) + 50 }
                       });
                     }}
                     disabled={updateSlotMutation.isPending}
