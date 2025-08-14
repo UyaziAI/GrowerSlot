@@ -2,7 +2,7 @@
  * DayTimeline - Continuous horizontally scrollable day strip with virtualization
  * Uses stable EPOCH-based indexing with tenant timezone normalization
  */
-import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
