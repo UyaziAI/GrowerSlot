@@ -473,15 +473,15 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Timeline Pill Layout Sizing Fix
-- **fix:** Day scroller rail height now derives from max visual pill size (scaled + ring) to prevent clipping; even vertical padding enforced
-- **scaling:** Restored transform scaling for center pill (1.06x) and flanks (1.03x) with inner pill-core wrapper
-- **container:** Computed ITEM_TRACK height (102px) from max scaled size + ring + safety margin
-- **rail:** RAIL_MIN_HEIGHT (134px) ensures no clipping at 90%-125% zoom levels
-- **padding:** Exact RAIL_PAD_Y (16px) symmetry for top/bottom padding parity
-- **layout:** Pills properly centered with overflow-visible chain and adequate headroom
-- **testability:** Added data-testid for timeline-rail and pill-selected elements
-- **constants:** Visual sizing derived from PILL_CENTER(88) * SCALE_CENTER(1.06) + RING(4*2) + SAFETY(6)
+### August 14, 2025 - Uniform Pill Sizing Implementation
+- **design:** Implemented uniform pill sizing - all pills use identical p-4 min-w-[72px] min-h-[72px] regardless of state
+- **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
+- **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
+- **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
+- **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering and focus management
+- **container:** Optimized ITEM_TRACK (86px) and RAIL_MIN_HEIGHT (118px) for uniform 72px pills + ring space
+- **accessibility:** Added focus() call on selected pills for keyboard navigation compliance
+- **constants:** Uniform sizing - PILL_UNIFORM(72) + RING(2*2) + SHADOW(4) + SAFETY(6) = 86px track height
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan

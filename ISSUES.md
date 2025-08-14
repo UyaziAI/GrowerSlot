@@ -53,16 +53,16 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
 
-### Timeline Pill Vertical Clipping (August 14, 2025) - RESOLVED
-- **Issue**: Selected day pills were being visually clipped at top/bottom due to insufficient rail height
-- **Root Cause**: Transform scaling increased visual size beyond layout container bounds
+### Timeline Pill Sizing Inconsistency (August 14, 2025) - RESOLVED
+- **Issue**: Day pills had inconsistent sizes (selected larger, flanks scaled) causing visual complexity and potential clipping
+- **Root Cause**: Transform scaling and variable padding created size differences between pill states
 - **Resolution**: 
-  - Computed ITEM_TRACK height (102px) from max scaled pill size + ring + safety margin
-  - Set RAIL_MIN_HEIGHT (134px) with exact symmetric padding (RAIL_PAD_Y = 16px)
-  - Restored transform scaling for center pill (1.06x) and flanks (1.03x) with inner wrapper
-  - Added overflow-visible chain throughout container hierarchy
-  - Implemented data-testid attributes for testing
-- **Status**: Pills now display without clipping at any zoom level (90%-125%)
+  - Implemented uniform sizing: all pills use p-4 min-w-[72px] min-h-[72px] consistently
+  - Removed all transform scaling (whileHover, whileTap, animate scale) to prevent clipping
+  - Selection indicated via visual highlight only (border-blue-500, bg-blue-50, ring-2)
+  - Enhanced centering with scrollIntoView({ inline: 'center' }) and focus() for accessibility
+  - Optimized container dimensions: ITEM_TRACK (86px), RAIL_MIN_HEIGHT (118px)
+- **Status**: Uniform pill appearance with consistent, clipping-free layout achieved
 
 ### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
 - **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality

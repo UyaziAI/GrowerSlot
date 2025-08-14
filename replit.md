@@ -10,16 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 14, 2025**: DayTimeline Initial Load & Interaction Refinements Complete
-  - **Initial Selection**: Page load now selects and opens today (tenant timezone) by default
-  - **URL Behavior**: Only updates URL if no ?date= parameter was provided on initial load
-  - **Explicit Day Opening**: Scrolling now only highlights days; clicking/tapping explicitly opens Day Detail below
-  - **Focused vs Selected States**: Split visual highlighting (focused) from data selection (selected) for precise interaction control
-  - **Enhanced Navigation**: Today and Jump-to-date buttons both open selected day and center timeline smoothly
-  - **Date Mapping Fix**: Implemented precise day-level calculations with stable EPOCH for consistent date↔index mapping
-  - **Centering Logic**: Added robust centerOnDate() method via forwardRef for programmatic timeline positioning
-  - **Visual Distinction**: Focused pills show subtle highlight; selected pills show stronger accent with thicker rings
-  - **Keyboard Support**: Arrow keys navigate through focused pills with explicit selection on Enter/Space
+- **August 14, 2025**: Uniform Day Pill Sizing Implementation Complete
+  - **Uniform Design**: All day pills now use identical p-4 min-w-[72px] min-h-[72px] sizing regardless of state
+  - **Selection Highlight**: Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
+  - **No Transform Scaling**: Removed all whileHover, whileTap, and animate scale transforms to prevent vertical clipping
+  - **Today Indicator**: Today marker maintained as subtle dot overlay without affecting pill dimensions
+  - **Enhanced Centering**: Improved centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering
+  - **Accessibility**: Added focus() call on selected pills for keyboard navigation compliance
+  - **Optimized Layout**: Reduced container heights - ITEM_TRACK (86px), RAIL_MIN_HEIGHT (118px) for uniform 72px pills
+  - **Clean Appearance**: Consistent, clipping-free layout across all browser zoom levels (90%-125%)
 
 - **August 14, 2025**: Continuous Day Timeline Implementation Complete - Blueprint Specification Fulfilled
   - **DayTimeline Component**: Replaced WeekScroller with virtualized horizontal scrollable timeline using @tanstack/react-virtual

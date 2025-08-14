@@ -15,35 +15,25 @@ import DayPill from './DayPill';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Visual sizing constants (px)
-const PILL_BASE = 64;         // small
-const PILL_MID = 72;          // flank baseline (before scale)
-const PILL_CENTER = 88;       // selected baseline (before scale)
-const SCALE_CENTER = 1.06;    // center visual scale (keep!)
-const SCALE_FLANK = 1.03;     // optional flank scale
-const RING_SELECTED = 4;      // Tailwind ring-4 (px)
-const SAFETY = 6;             // extra headroom for subpixel/shadow
+// Uniform pill sizing constants (px)
+const PILL_UNIFORM = 72;      // uniform size for all pills
+const RING_SELECTED = 2;      // Tailwind ring-2 (px) for selected state
+const SHADOW_SPACE = 4;       // space for shadows and subtle effects
+const SAFETY = 6;             // extra headroom for subpixel precision
 
-// Max visual height = biggest (scaled size + double ring) + safety
-const VISUAL_CENTER = Math.ceil(PILL_CENTER * SCALE_CENTER) + (RING_SELECTED * 2);
-const ITEM_TRACK = VISUAL_CENTER + SAFETY; // e.g. ~108px
+// Uniform visual height = pill size + ring + shadow + safety
+const ITEM_TRACK = PILL_UNIFORM + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 72 + 4 + 4 + 6 = 86px
 
 // Even padding top/bottom for the scroll lane (px)
 const RAIL_PAD_Y = 16; // exact same on top and bottom
 
 // Rail/container heights
-const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 108 + 32 = 140px
+const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 86 + 32 = 118px
 
-// Development guard for future scale tweaks
+// Development verification
 if (import.meta.env.DEV) {
-  const maxPlanned = Math.ceil(PILL_CENTER * SCALE_CENTER) + (RING_SELECTED * 2);
-  if (ITEM_TRACK < maxPlanned) {
-    // eslint-disable-next-line no-console
-    console.warn('[DayTimeline] ITEM_TRACK too small for planned scale/ring', { ITEM_TRACK, maxPlanned });
-  }
-  // Log computed constants for verification
-  console.log('DayTimeline sizing constants:', { 
-    PILL_BASE, PILL_MID, PILL_CENTER, SCALE_CENTER, RING_SELECTED, 
+  console.log('DayTimeline uniform sizing constants:', { 
+    PILL_UNIFORM, RING_SELECTED, SHADOW_SPACE, SAFETY,
     ITEM_TRACK, RAIL_MIN_HEIGHT, RAIL_PAD_Y 
   });
 }
@@ -245,7 +235,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     };
   }, [handleScrollEnd]);
 
-  // Centering logic using virtualizer's own scroll API
+  // Centering logic using scrollIntoView for better reliability
   const centerOnDate = useCallback(async (date: Date | string, opts?: ScrollToOptions) => {
     const container = parentRef.current;
     if (!container) {
@@ -254,8 +244,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     }
     
     const d = dayjs(date).tz(tenantTz).startOf('day');
-    console.log('centerOnDate called with:', d.format('YYYY-MM-DD'));
-    console.log('EPOCH:', EPOCH.format('YYYY-MM-DD'));
+    const dateStr = d.format('YYYY-MM-DD');
     
     // Settle layout and ensure virtualizer is measured
     await Promise.resolve();
@@ -263,65 +252,35 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     
     const dateIdx = indexFromDate(d);
     const virtualIdx = toVirtualIndex(dateIdx);
-    const targetDiff = d.diff(todayDayjs, 'day');
     const isWithinRange = virtualIdx >= 0 && virtualIdx < totalDays;
     
-    console.log('centerOnDate target:', d.format('YYYY-MM-DD'));
-    console.log('Target date index:', dateIdx, 'days from today (0=today, -1=yesterday, +1=tomorrow)');
-    console.log('Target days diff from today:', targetDiff);
-    console.log('Virtual index:', virtualIdx, 'within range:', isWithinRange);
-    console.log('Current range: daysBefore=', daysBefore, 'daysAfter=', daysAfter, 'totalDays=', totalDays);
-    console.log('Container width:', container.clientWidth, 'scrollLeft before:', container.scrollLeft);
-    
     if (!isWithinRange) {
-      console.warn('Target date outside current virtualizer range - may need range expansion');
+      console.warn('Target date outside current virtualizer range');
       return;
     }
     
-    // Use virtualizer's scroll API for reliable centering
-    try {
-      // Try scrollToIndex if available
-      if (typeof virtualizer.scrollToIndex === 'function') {
-        console.log('Using virtualizer.scrollToIndex with virtual index:', virtualIdx);
-        virtualizer.scrollToIndex(virtualIdx, { align: 'center' });
-      } else {
-        // Fallback: compute from virtual items
-        console.log('Using virtual items fallback with virtual index:', virtualIdx);
-        const items = virtualizer.getVirtualItems();
-        const item = items.find(v => v.index === virtualIdx);
-        
-        if (item) {
-          const target = item.start - (container.clientWidth - ITEM_WIDTH) / 2;
-          console.log('Virtual item found - start:', item.start, 'target scroll:', target);
-          
-          container.scrollTo({
-            left: Math.max(0, target),
-            behavior: opts?.behavior ?? 'smooth'
-          });
-        } else {
-          // Force virtualizer to create the item by estimating position
-          const estimatedStart = virtualIdx * ITEM_WIDTH;
-          const target = estimatedStart - (container.clientWidth - ITEM_WIDTH) / 2;
-          console.log('Virtual item not found - estimated start:', estimatedStart, 'target scroll:', target);
-          
-          container.scrollTo({
-            left: Math.max(0, target),
-            behavior: opts?.behavior ?? 'smooth'
-          });
-        }
+    // Try to find the target pill element
+    const targetPill = container.querySelector(`[data-testid="day-pill-${dateStr}"], [data-testid="pill-selected"]`);
+    
+    if (targetPill) {
+      // Use scrollIntoView for precise centering
+      targetPill.scrollIntoView({
+        behavior: opts?.behavior === 'instant' ? 'instant' : 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+      
+      // Set focus for accessibility
+      if (targetPill instanceof HTMLElement) {
+        targetPill.focus();
       }
-      
-      // Log final scroll position after a brief delay
-      setTimeout(() => {
-        console.log('Final scroll position:', container.scrollLeft);
-        const items = virtualizer.getVirtualItems();
-        console.log('Virtual items range:', items.length > 0 ? `${items[0].index}-${items[items.length-1].index}` : 'none');
-      }, 100);
-      
-    } catch (error) {
-      console.error('Error in centerOnDate:', error);
+    } else {
+      // Fallback: use virtualizer scrollToIndex
+      if (typeof virtualizer.scrollToIndex === 'function') {
+        virtualizer.scrollToIndex(virtualIdx, { align: 'center' });
+      }
     }
-  }, [virtualizer, tenantTz, indexFromDate, totalDays, EPOCH]);
+  }, [virtualizer, tenantTz, indexFromDate, totalDays]);
 
   // Expose centerOnDate method
   useImperativeHandle(ref, () => ({
@@ -389,9 +348,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             const isFocused = date.isSame(focusedDayjs, 'day');
             const aggregates = getAggregatesForDate(date, slots);
             
-            // Determine if this is a flank (adjacent to selected)
-            const selectedIndex = toVirtualIndex(indexFromDate(selectedDayjs));
-            const isFlank = Math.abs(virtualItem.index - selectedIndex) === 1;
+            // No flank logic needed with uniform sizing
 
             return (
               <div
@@ -414,7 +371,6 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                     date={date.toDate()}
                     isSelected={isSelected}
                     isFocused={isFocused}
-                    isFlank={isFlank}
                     aggregates={aggregates}
                     onClick={() => onDateSelect(dateStr)}
                     onKeyDown={(event: React.KeyboardEvent) => {
@@ -424,9 +380,6 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                       }
                     }}
                     data-testid={isSelected ? 'pill-selected' : `day-pill-${dateStr}`}
-                    large={true} // Enable large touch-friendly mode
-                    scaleCenter={SCALE_CENTER}
-                    scaleFlank={SCALE_FLANK}
                   />
                 </div>
               </div>

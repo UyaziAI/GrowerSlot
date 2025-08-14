@@ -25,28 +25,20 @@ interface DayPillProps {
   date: Date;
   isSelected: boolean;
   isFocused?: boolean; // Visual highlight from scroll
-  isFlank?: boolean; // Adjacent to selected pill
   aggregates: DayAggregates;
   onClick: () => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
   'data-testid'?: string;
-  large?: boolean; // Enable large touch-friendly mode
-  scaleCenter?: number; // Scale for selected pill
-  scaleFlank?: number; // Scale for flank pills
 }
 
 export default function DayPill({ 
   date, 
   isSelected, 
   isFocused = false,
-  isFlank = false,
   aggregates, 
   onClick, 
   onKeyDown, 
-  'data-testid': testId,
-  large = false,
-  scaleCenter = 1.06,
-  scaleFlank = 1.03
+  'data-testid': testId
 }: DayPillProps) {
   const { 
     totalSlots, 
@@ -118,81 +110,65 @@ export default function DayPill({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <motion.button
+          <button
             className={`
               relative flex items-center justify-center overflow-visible rounded-full border-2 transition-all duration-200 
-              ${large 
-                ? (isSelected ? 'p-5 min-w-[88px] min-h-[88px]' : 'p-4 min-w-[72px] min-h-[72px]') // Selected pills are larger via padding
-                : (isSelected ? 'p-4 min-w-[72px] min-h-[72px]' : 'p-3 min-w-[64px] min-h-[64px]')
-              }
+              p-4 min-w-[72px] min-h-[72px]
               ${isSelected 
-                ? 'border-blue-500 bg-blue-50 shadow-lg ring-4 ring-blue-300 ring-opacity-50' 
+                ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-300' 
                 : isFocused 
-                ? 'border-blue-300 bg-blue-50/30 shadow-md ring-2 ring-blue-200 ring-opacity-40'
+                ? 'border-blue-300 bg-blue-50/30 shadow-sm ring-1 ring-blue-200'
                 : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
               }
-              ${isToday && !isSelected && !isFocused ? 'ring-2 ring-blue-300 ring-opacity-30' : ''}
+              ${isToday && !isSelected && !isFocused ? 'ring-1 ring-blue-300 ring-opacity-50' : ''}
             `}
             onClick={onClick}
             onKeyDown={onKeyDown}
             aria-pressed={isSelected}
             aria-label={`${weekday}, ${dayNumber}. ${totalSlots} slots, ${remaining} available`}
             data-testid={testId}
-            animate={{ 
-              opacity: isSelected ? 1 : 0.9 
-            }}
             style={{ zIndex: isSelected ? 10 : 1 }}
-            transition={{ duration: 0.15 }}
           >
-            <motion.div
-              className="pill-core overflow-visible"
-              style={{ transformOrigin: 'center center' }}
-              animate={{ 
-                scale: isSelected ? scaleCenter : isFlank ? scaleFlank : 1 
-              }}
-              transition={{ duration: 0.15 }}
-            >
-              {/* Main Content */}
-              <div className="text-center">
-                <div className={`font-medium text-gray-600 uppercase tracking-wide ${isSelected ? (large ? 'text-xs' : 'text-xs') : (large ? 'text-[10px]' : 'text-xs')}`}>
-                  {weekday}
-                </div>
-                <div className={`font-bold mt-1 ${isSelected ? (large ? 'text-2xl' : 'text-xl') : (large ? 'text-xl' : 'text-lg')} ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
-                  {dayNumber}
-                </div>
-                
-                {/* Availability Badge */}
-                <div className={`${isSelected ? (large ? 'mt-4' : 'mt-3') : (large ? 'mt-3' : 'mt-2')}`}>
-                  <Badge 
-                    variant={getBadgeVariant()}
-                    className={`px-1.5 py-0.5 ${getBadgeColor()} ${isSelected ? (large ? 'text-xs' : 'text-xs') : (large ? 'text-[10px]' : 'text-xs')}`}
-                  >
-                    {totalSlots === 0 ? '0' : `${remaining}`}
-                  </Badge>
-                </div>
+            {/* Main Content */}
+            <div className="text-center">
+              <div className="font-medium text-gray-600 uppercase tracking-wide text-xs">
+                {weekday}
               </div>
+              <div className={`font-bold mt-1 text-xl ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+                {dayNumber}
+              </div>
+              
+              {/* Availability Badge */}
+              <div className="mt-3">
+                <Badge 
+                  variant={getBadgeVariant()}
+                  className={`px-1.5 py-0.5 ${getBadgeColor()} text-xs`}
+                >
+                  {totalSlots === 0 ? '0' : `${remaining}`}
+                </Badge>
+              </div>
+            </div>
 
-              {/* Flags Row - Only show in large mode or when critical */}
-              {large && (hasBlackouts || hasRestrictions || hasNotes) && (
-                <div className="flex justify-center gap-1 mt-2">
-                  {hasBlackouts && (
-                    <Ban className="w-2.5 h-2.5 text-red-500" aria-label="Blackout periods" />
-                  )}
-                  {hasRestrictions && (
-                    <AlertCircle className="w-2.5 h-2.5 text-orange-500" aria-label="Restrictions apply" />
-                  )}
-                  {hasNotes && (
-                    <FileText className="w-2.5 h-2.5 text-blue-500" aria-label="Special notes" />
-                  )}
-                </div>
-              )}
+            {/* Flags Row - Show when critical */}
+            {(hasBlackouts || hasRestrictions || hasNotes) && (
+              <div className="flex justify-center gap-1 mt-2">
+                {hasBlackouts && (
+                  <Ban className="w-2.5 h-2.5 text-red-500" aria-label="Blackout periods" />
+                )}
+                {hasRestrictions && (
+                  <AlertCircle className="w-2.5 h-2.5 text-orange-500" aria-label="Restrictions apply" />
+                )}
+                {hasNotes && (
+                  <FileText className="w-2.5 h-2.5 text-blue-500" aria-label="Special notes" />
+                )}
+              </div>
+            )}
 
-              {/* Today Indicator */}
-              {isToday && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
-              )}
-            </motion.div>
-          </motion.button>
+            {/* Today Indicator */}
+            {isToday && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white"></div>
+            )}
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="bg-gray-800 text-white">
           {tooltipContent}
