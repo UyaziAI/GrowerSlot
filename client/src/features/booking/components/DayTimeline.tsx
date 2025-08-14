@@ -107,14 +107,25 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   const selectedIndex = indexFromDate(selectedDayjs);
   const focusedIndex = indexFromDate(focusedDayjs);
 
-  // Virtualization setup with stable total count
+  // Constant item width for stable calculations
+  const ITEM_WIDTH = 100;
+  
+  // Virtualization setup with proper scroll element binding
   const virtualizer = useVirtualizer({
+    horizontal: true,
     count: totalDays,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 100, // Estimated width per day pill
-    horizontal: true,
-    overscan: 5
+    estimateSize: () => ITEM_WIDTH,
+    overscan: 10,
   });
+  
+  // Debug: Log scroll element binding once
+  useEffect(() => {
+    console.log('Virtualizer scroll element binding check:');
+    console.log('parentRef.current:', !!parentRef.current);
+    console.log('getScrollElement():', !!virtualizer.options.getScrollElement?.());
+    console.log('Elements match:', virtualizer.options.getScrollElement?.() === parentRef.current);
+  }, []);
 
   // Debounced scroll handler for focus changes only (no auto-selection)
   const handleScrollEnd = useCallback(() => {
@@ -177,7 +188,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     };
   }, [handleScrollEnd]);
 
-  // Centering logic using stable index math (no array search)
+  // Centering logic using virtualizer's own scroll API
   const centerOnDate = useCallback(async (date: Date | string, opts?: ScrollToOptions) => {
     const container = parentRef.current;
     if (!container) {
@@ -193,40 +204,52 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     await Promise.resolve();
     virtualizer.measure();
     
-    const idx = indexFromDate(d);
-    console.log('Target index calculated:', idx, 'for date:', d.format('YYYY-MM-DD'), 'EPOCH diff:', d.diff(EPOCH, 'day'));
-    console.log('Container width:', container.clientWidth, 'Total days:', totalDays);
+    const idx = Math.max(0, Math.min(indexFromDate(d), totalDays - 1));
+    console.log('Target index (clamped):', idx, 'for date:', d.format('YYYY-MM-DD'));
+    console.log('Container width:', container.clientWidth, 'scrollLeft before:', container.scrollLeft);
     
-    // Ensure index is within bounds
-    if (idx >= 0 && idx < totalDays) {
-      const rawOffset = virtualizer.getOffsetForIndex(idx);
-      console.log('Raw offset from virtualizer:', rawOffset);
-      
-      // Handle tuple return: getOffsetForIndex returns [offset, alignment] in some versions
-      const offset = Array.isArray(rawOffset) ? rawOffset[0] : rawOffset;
-      console.log('Extracted offset value:', offset, 'type:', typeof offset);
-      
-      if (offset != null && !isNaN(Number(offset))) {
-        const itemWidth = 100; // Approximate pill width
-        const numericOffset = Number(offset);
-        const centerOffset = numericOffset - (container.clientWidth - itemWidth) / 2;
-        
-        console.log('Scrolling to offset:', centerOffset, 'from extracted offset:', numericOffset, 'container width:', container.clientWidth);
-        
-        container.scrollTo({
-          left: Math.max(0, centerOffset),
-          behavior: opts?.behavior ?? 'smooth'
-        });
-        
-        // Log final scroll position after a brief delay
-        setTimeout(() => {
-          console.log('Final scroll position:', container.scrollLeft);
-        }, 100);
+    // Use virtualizer's scroll API for reliable centering
+    try {
+      // Try scrollToIndex if available
+      if (typeof virtualizer.scrollToIndex === 'function') {
+        console.log('Using virtualizer.scrollToIndex');
+        virtualizer.scrollToIndex(idx, { align: 'center' });
       } else {
-        console.log('Virtualizer returned invalid offset:', rawOffset, 'extracted:', offset);
+        // Fallback: compute from virtual items
+        console.log('Using virtual items fallback');
+        const items = virtualizer.getVirtualItems();
+        const item = items.find(v => v.index === idx);
+        
+        if (item) {
+          const target = item.start - (container.clientWidth - ITEM_WIDTH) / 2;
+          console.log('Virtual item found - start:', item.start, 'target scroll:', target);
+          
+          container.scrollTo({
+            left: Math.max(0, target),
+            behavior: opts?.behavior ?? 'smooth'
+          });
+        } else {
+          // Force virtualizer to create the item by estimating position
+          const estimatedStart = idx * ITEM_WIDTH;
+          const target = estimatedStart - (container.clientWidth - ITEM_WIDTH) / 2;
+          console.log('Virtual item not found - estimated start:', estimatedStart, 'target scroll:', target);
+          
+          container.scrollTo({
+            left: Math.max(0, target),
+            behavior: opts?.behavior ?? 'smooth'
+          });
+        }
       }
-    } else {
-      console.log('Date index out of bounds:', idx, 'total days:', totalDays, 'EPOCH:', EPOCH.format('YYYY-MM-DD'));
+      
+      // Log final scroll position after a brief delay
+      setTimeout(() => {
+        console.log('Final scroll position:', container.scrollLeft);
+        const items = virtualizer.getVirtualItems();
+        console.log('Virtual items range:', items.length > 0 ? `${items[0].index}-${items[items.length-1].index}` : 'none');
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error in centerOnDate:', error);
     }
   }, [virtualizer, tenantTz, indexFromDate, totalDays, EPOCH]);
 
@@ -263,7 +286,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
       <div
         ref={parentRef}
 
-        className="overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-pan-x overscroll-x-contain overscroll-y-none whitespace-nowrap h-[88px] flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
+        className="overflow-x-auto overflow-y-hidden h-[88px] flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
@@ -275,6 +298,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         aria-label="Day timeline"
       >
         <div
+          className="overflow-visible"
           style={{
             height: '100%',
             width: `${virtualizer.getTotalSize()}px`,
@@ -291,7 +315,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             return (
               <div
                 key={virtualItem.key}
-                className="inline-flex snap-center items-stretch h-full"
+                className="flex items-stretch h-full"
                 style={{
                   position: 'absolute',
                   top: 0,

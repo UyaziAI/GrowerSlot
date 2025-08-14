@@ -37,6 +37,16 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
 
+### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
+- **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality
+- **Root Cause**: Virtualizer scroll element binding mismatch causing getOffsetForIndex tuple handling issues
+- **Resolution**: 
+  - Fixed virtualizer.scrollToIndex implementation with proper scroll element binding
+  - Resolved getOffsetForIndex tuple return value extraction
+  - Eliminated nested scroll containers interfering with calculations
+  - Added comprehensive debugging for scroll positioning verification
+- **Status**: Timeline now centers reliably on all centering operations
+
 ### Week Overview UX (August 14, 2025) - RESOLVED
 - **Issue**: Week view used hourly time grid instead of day card overview per Blueprint Section 7
 - **Resolution**: Implemented WeekOverviewGrid and DayCard components replacing time grid layout
