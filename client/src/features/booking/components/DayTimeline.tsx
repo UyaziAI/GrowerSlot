@@ -199,14 +199,19 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     
     // Ensure index is within bounds
     if (idx >= 0 && idx < totalDays) {
-      const offset = virtualizer.getOffsetForIndex(idx);
-      console.log('Raw offset from virtualizer:', offset);
+      const rawOffset = virtualizer.getOffsetForIndex(idx);
+      console.log('Raw offset from virtualizer:', rawOffset);
       
-      if (offset != null) {
+      // Handle tuple return: getOffsetForIndex returns [offset, alignment] in some versions
+      const offset = Array.isArray(rawOffset) ? rawOffset[0] : rawOffset;
+      console.log('Extracted offset value:', offset, 'type:', typeof offset);
+      
+      if (offset != null && !isNaN(Number(offset))) {
         const itemWidth = 100; // Approximate pill width
-        const centerOffset = Number(offset) - (container.clientWidth - itemWidth) / 2;
+        const numericOffset = Number(offset);
+        const centerOffset = numericOffset - (container.clientWidth - itemWidth) / 2;
         
-        console.log('Scrolling to offset:', centerOffset, 'from calculated offset:', offset, 'container width:', container.clientWidth);
+        console.log('Scrolling to offset:', centerOffset, 'from extracted offset:', numericOffset, 'container width:', container.clientWidth);
         
         container.scrollTo({
           left: Math.max(0, centerOffset),
@@ -218,7 +223,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
           console.log('Final scroll position:', container.scrollLeft);
         }, 100);
       } else {
-        console.log('Virtualizer returned null offset for index:', idx);
+        console.log('Virtualizer returned invalid offset:', rawOffset, 'extracted:', offset);
       }
     } else {
       console.log('Date index out of bounds:', idx, 'total days:', totalDays, 'EPOCH:', EPOCH.format('YYYY-MM-DD'));
