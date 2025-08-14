@@ -88,25 +88,32 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
 
-  // Stable EPOCH centered around current year for optimal scrolling range
-  const currentYear = dayjs().year();
-  const EPOCH = dayjs.tz(`${currentYear - 1}-01-01`, tenantTz).startOf('day'); // Start 1 year ago
-  const totalDays = 365 * 3; // 3-year window (prev year, current year, next year)
+  // Dynamic EPOCH = today at midnight for optimal index range (-30 to +30 days)
+  const EPOCH = useMemo(() => dayjs().tz(tenantTz).startOf('day'), [tenantTz]); // Today's midnight
+  const totalDays = 61; // -30 to +30 days around today
 
-  // Timezone-aware date mapping helpers
+  // Dynamic index calculation: today = 0, yesterday = -1, tomorrow = +1
   const indexFromDate = (d: dayjs.ConfigType) => 
     dayjs(d).tz(tenantTz).startOf('day').diff(EPOCH, 'day');
   
   const dateFromIndex = (i: number) => 
     EPOCH.add(i, 'day');
+  
+  // Convert index to virtualizer index (offset by 30 to handle negative indices)
+  const toVirtualIndex = (dateIndex: number) => dateIndex + 30;
+  const fromVirtualIndex = (virtualIndex: number) => virtualIndex - 30;
 
   // Convert dates to timezone-normalized dayjs objects
   const selectedDayjs = dayjs(selectedDate).tz(tenantTz).startOf('day');
   const focusedDayjs = dayjs(focusedDate).tz(tenantTz).startOf('day');
   
-  // Calculate indices using stable math (no array search)
-  const selectedIndex = indexFromDate(selectedDayjs);
-  const focusedIndex = indexFromDate(focusedDayjs);
+  // Calculate date indices (can be negative)
+  const selectedDateIndex = indexFromDate(selectedDayjs);
+  const focusedDateIndex = indexFromDate(focusedDayjs);
+  
+  // Convert to virtualizer indices (always positive)
+  const selectedIndex = toVirtualIndex(selectedDateIndex);
+  const focusedIndex = toVirtualIndex(focusedDateIndex);
 
   // Constant item width for stable calculations
   const ITEM_WIDTH = 100;
@@ -120,12 +127,14 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     overscan: 10,
   });
   
-  // Debug: Log scroll element binding and date range once
+  // Debug: Log scroll element binding and dynamic EPOCH setup
   useEffect(() => {
-    console.log('Virtualizer setup:');
-    console.log('EPOCH:', EPOCH.format('YYYY-MM-DD'));
-    console.log('Total days:', totalDays);
-    console.log('Today index:', indexFromDate(dayjs().tz(tenantTz)));
+    console.log('Dynamic EPOCH timeline setup:');
+    console.log('EPOCH (today midnight):', EPOCH.format('YYYY-MM-DD'));
+    console.log('Total virtualizer items:', totalDays);
+    console.log('Date range: -30 to +30 days from today');
+    console.log('Today date index:', indexFromDate(dayjs().tz(tenantTz)), '(should be 0)');
+    console.log('Today virtualizer index:', toVirtualIndex(indexFromDate(dayjs().tz(tenantTz))), '(should be 30)');
     console.log('Scroll element binding - parentRef exists:', !!parentRef.current);
     console.log('getScrollElement():', !!virtualizer.options.getScrollElement?.());
     console.log('Elements match:', virtualizer.options.getScrollElement?.() === parentRef.current);
@@ -153,7 +162,8 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     });
     
     if (nearest) {
-      const nearestDate = dateFromIndex(nearest.index);
+      const dateIndex = fromVirtualIndex(nearest.index);
+      const nearestDate = dateFromIndex(dateIndex);
       const nearestDateStr = nearestDate.format('YYYY-MM-DD');
       const focusedDateStr = focusedDayjs.format('YYYY-MM-DD');
       
@@ -208,23 +218,26 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     await Promise.resolve();
     virtualizer.measure();
     
-    const rawIdx = indexFromDate(d);
-    const idx = Math.max(0, Math.min(rawIdx, totalDays - 1));
-    console.log('Target index - raw:', rawIdx, 'clamped:', idx, 'for date:', d.format('YYYY-MM-DD'));
+    const dateIdx = indexFromDate(d);
+    const virtualIdx = toVirtualIndex(dateIdx);
+    const clampedVirtualIdx = Math.max(0, Math.min(virtualIdx, totalDays - 1));
+    
+    console.log('Target date index:', dateIdx, 'days from today (0=today, -1=yesterday, +1=tomorrow)');
+    console.log('Virtual index:', virtualIdx, 'clamped:', clampedVirtualIdx, 'for date:', d.format('YYYY-MM-DD'));
     console.log('Container width:', container.clientWidth, 'scrollLeft before:', container.scrollLeft);
-    console.log('Valid index range: 0 to', totalDays - 1);
+    console.log('Valid virtualizer range: 0 to', totalDays - 1);
     
     // Use virtualizer's scroll API for reliable centering
     try {
       // Try scrollToIndex if available
       if (typeof virtualizer.scrollToIndex === 'function') {
-        console.log('Using virtualizer.scrollToIndex');
-        virtualizer.scrollToIndex(idx, { align: 'center' });
+        console.log('Using virtualizer.scrollToIndex with virtual index:', clampedVirtualIdx);
+        virtualizer.scrollToIndex(clampedVirtualIdx, { align: 'center' });
       } else {
         // Fallback: compute from virtual items
-        console.log('Using virtual items fallback');
+        console.log('Using virtual items fallback with virtual index:', clampedVirtualIdx);
         const items = virtualizer.getVirtualItems();
-        const item = items.find(v => v.index === idx);
+        const item = items.find(v => v.index === clampedVirtualIdx);
         
         if (item) {
           const target = item.start - (container.clientWidth - ITEM_WIDTH) / 2;
@@ -236,7 +249,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
           });
         } else {
           // Force virtualizer to create the item by estimating position
-          const estimatedStart = idx * ITEM_WIDTH;
+          const estimatedStart = clampedVirtualIdx * ITEM_WIDTH;
           const target = estimatedStart - (container.clientWidth - ITEM_WIDTH) / 2;
           console.log('Virtual item not found - estimated start:', estimatedStart, 'target scroll:', target);
           
@@ -275,13 +288,15 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
       if (focusedIndex > 0) {
-        const prevDate = dateFromIndex(focusedIndex - 1);
+        const prevDateIndex = fromVirtualIndex(focusedIndex - 1);
+        const prevDate = dateFromIndex(prevDateIndex);
         onDateSelect(prevDate.format('YYYY-MM-DD'));
       }
     } else if (event.key === 'ArrowRight') {
       event.preventDefault();
       if (focusedIndex < totalDays - 1) {
-        const nextDate = dateFromIndex(focusedIndex + 1);
+        const nextDateIndex = fromVirtualIndex(focusedIndex + 1);
+        const nextDate = dateFromIndex(nextDateIndex);
         onDateSelect(nextDate.format('YYYY-MM-DD'));
       }
     }
@@ -312,7 +327,8 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
           }}
         >
           {virtualizer.getVirtualItems().map(virtualItem => {
-            const date = dateFromIndex(virtualItem.index);
+            const dateIndex = fromVirtualIndex(virtualItem.index);
+            const date = dateFromIndex(dateIndex);
             const dateStr = date.format('YYYY-MM-DD');
             const isSelected = date.isSame(selectedDayjs, 'day');
             const isFocused = date.isSame(focusedDayjs, 'day');
