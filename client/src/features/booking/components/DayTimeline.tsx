@@ -117,7 +117,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   // Track current visible month for sticky header
   const [currentMonth, setCurrentMonth] = useState<string>('');
   
-  // Update current month based on selected date
+  // Update current month on initial render and selected date changes
   useEffect(() => {
     if (selectedDate) {
       const monthLabel = dayjs(selectedDate).tz(tenantTz).format('MMMM YYYY').toUpperCase();
@@ -187,6 +187,46 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     console.log('Elements match:', virtualizer.options.getScrollElement?.() === parentRef.current);
   }, [selectedDate, totalDays, daysDiffFromToday, daysBefore, daysAfter]);
 
+  // Update month header based on center pill
+  const updateMonthHeader = useCallback(() => {
+    if (!parentRef.current) return;
+    
+    const container = parentRef.current;
+    const mid = container.scrollLeft + container.clientWidth / 2;
+    
+    // Find the nearest item to center
+    const items = virtualizer.getVirtualItems();
+    if (items.length === 0) return;
+    
+    let nearest = items[0];
+    let minDistance = Infinity;
+    
+    items.forEach(item => {
+      const itemCenter = (item.start || 0) + 50; // 50 is half of estimated item width
+      const distance = Math.abs(itemCenter - mid);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearest = item;
+      }
+    });
+    
+    if (nearest) {
+      const dateIndex = fromVirtualIndex(nearest.index);
+      const nearestDate = dateFromIndex(dateIndex);
+      const monthLabel = nearestDate.format('MMMM YYYY').toUpperCase();
+      
+      // Update month header if different
+      if (monthLabel !== currentMonth) {
+        setCurrentMonth(monthLabel);
+      }
+    }
+  }, [virtualizer, currentMonth, fromVirtualIndex, dateFromIndex]);
+
+  // Update month header when virtualizer items change (after render/scroll)
+  useEffect(() => {
+    updateMonthHeader();
+  }, [updateMonthHeader]);
+
   // Debounced scroll handler for focus changes only (no auto-selection)
   const handleScrollEnd = useCallback(() => {
     if (!parentRef.current) return;
@@ -236,6 +276,11 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         clearTimeout(scrollTimeout.current);
       }
       
+      // Update month header immediately during scroll (if updateMonthHeader is available)
+      if (typeof updateMonthHeader === 'function') {
+        updateMonthHeader();
+      }
+      
       // Set new timeout for scroll end detection
       scrollTimeout.current = setTimeout(handleScrollEnd, 150);
     };
@@ -247,7 +292,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         clearTimeout(scrollTimeout.current);
       }
     };
-  }, [handleScrollEnd]);
+  }, [handleScrollEnd, updateMonthHeader]);
 
   // Centering logic using scrollIntoView for better reliability
   const centerOnDate = useCallback(async (date: Date | string, opts?: ScrollToOptions) => {
@@ -288,13 +333,18 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
       if (targetPill instanceof HTMLElement) {
         targetPill.focus();
       }
+      
+      // Update month header after centering
+      setTimeout(() => updateMonthHeader(), 100);
     } else {
       // Fallback: use virtualizer scrollToIndex
       if (typeof virtualizer.scrollToIndex === 'function') {
         virtualizer.scrollToIndex(virtualIdx, { align: 'center' });
+        // Update month header after programmatic centering
+        setTimeout(() => updateMonthHeader(), 100);
       }
     }
-  }, [virtualizer, tenantTz, indexFromDate, totalDays]);
+  }, [virtualizer, tenantTz, indexFromDate, totalDays, updateMonthHeader]);
 
   // Expose centerOnDate method
   useImperativeHandle(ref, () => ({
