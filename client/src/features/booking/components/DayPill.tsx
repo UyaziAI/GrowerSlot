@@ -132,8 +132,6 @@ export default function DayPill({
             aria-pressed={isSelected}
             aria-label={`${weekday}, ${dayNumber}. ${totalSlots} slots, ${remaining} available`}
             data-testid={testId}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
             animate={{ 
               opacity: isSelected ? 1 : 0.9 
             }}

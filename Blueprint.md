@@ -474,14 +474,15 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 ## Changelog
 
 ### August 14, 2025 - Timeline Pill Layout Sizing Fix
-- **fix:** Resolved selected day pill clipping by removing transform scale animations
+- **fix:** Remove transform scaling from DayPill; add 8px lane headroom for ring. Prevent vertical clipping; preserve equal padding
+- **scaling:** Removed whileHover={{ scale: 1.02 }} and whileTap={{ scale: 0.98 }} from motion.button
 - **layout:** Implemented layout-based sizing using padding/font changes instead of CSS transforms
 - **sizing:** Selected pills now use larger padding (p-5 vs p-4) and font sizes (text-2xl vs text-xl)
-- **container:** Optimized container height to 120px with 16px symmetric vertical padding
-- **centering:** Pills properly centered with flex items-center and uniform heights (88px max)
+- **container:** Increased lane height from 88px to 96px for focus ring clearance
+- **centering:** Pills properly centered with flex items-center and adequate vertical space
 - **overflow:** Maintained overflow-y-visible throughout container hierarchy for focus rings
 - **behavior:** Preserved horizontal scroll snap behavior and navigation functionality
-- **compliance:** Followed strict requirements: no transform scaling, symmetric padding, clean layout
+- **compliance:** Clean layout with no transform scaling, symmetric padding, and ring clearance
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan

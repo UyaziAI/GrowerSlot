@@ -342,7 +342,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         <div
           className="overflow-visible relative flex items-center"
           style={{
-            height: '88px',
+            height: '96px',
             width: `${virtualizer.getTotalSize()}px`,
             position: 'relative',
             zIndex: 1
@@ -365,7 +365,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                   top: 0,
                   left: 0,
                   width: `${virtualItem.size}px`,
-                  height: '88px',
+                  height: '96px',
                   transform: `translateX(${virtualItem.start}px)`
                 }}
               >
