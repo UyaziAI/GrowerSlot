@@ -1,12 +1,19 @@
 /**
  * DayTimeline - Continuous horizontally scrollable day strip with virtualization
- * Replaces WeekScroller with infinite scrolling and snap-to-center selection
+ * Uses stable EPOCH-based indexing with tenant timezone normalization
  */
-import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'framer-motion';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { SlotWithUsage } from "@shared/schema";
 import DayPill from './DayPill';
+
+// Initialize dayjs plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface DayTimelineProps {
   selectedDate: Date;
@@ -15,44 +22,16 @@ interface DayTimelineProps {
   onDateSelect: (date: string) => void;
   onFocusChange: (date: string) => void;
   className?: string;
+  tenantTz?: string;
 }
 
 interface DayTimelineRef {
-  centerOnDate: (date: Date, opts?: ScrollToOptions) => Promise<void>;
+  centerOnDate: (date: Date | string, opts?: ScrollToOptions) => Promise<void>;
 }
 
-// Date mapping helpers for precise day-level calculations
-const EPOCH = new Date('2024-01-01'); // Stable epoch for consistent mapping
-
-const dateFromIndex = (index: number): Date => {
-  const date = new Date(EPOCH);
-  date.setDate(EPOCH.getDate() + index);
-  return date;
-};
-
-const indexFromDate = (date: Date): number => {
-  const normalizedDate = new Date(date);
-  normalizedDate.setHours(0, 0, 0, 0); // Start of day
-  const epochStart = new Date(EPOCH);
-  epochStart.setHours(0, 0, 0, 0);
-  return Math.floor((normalizedDate.getTime() - epochStart.getTime()) / (24 * 60 * 60 * 1000));
-};
-
-// Generate date range for virtualization (360-day window around center)
-const generateDateRange = (centerDate: Date) => {
-  const centerIndex = indexFromDate(centerDate);
-  const dates = [];
-  
-  for (let i = -180; i < 180; i++) { // 180 days before and after
-    dates.push(dateFromIndex(centerIndex + i));
-  }
-  
-  return dates;
-};
-
-// Get aggregates for a specific date
-const getAggregatesForDate = (date: Date, slots: SlotWithUsage[]) => {
-  const dateStr = date.toISOString().split('T')[0];
+// Get aggregates for a specific date with timezone normalization
+const getAggregatesForDate = (date: dayjs.Dayjs, slots: SlotWithUsage[]) => {
+  const dateStr = date.format('YYYY-MM-DD');
   const daySlots = slots.filter(slot => slot.date === dateStr);
   
   const totalSlots = daySlots.length;
@@ -102,41 +81,35 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   slots, 
   onDateSelect,
   onFocusChange, 
-  className = '' 
+  className = '',
+  tenantTz = 'Africa/Johannesburg'
 }, ref) => {
   const parentRef = useRef<HTMLDivElement>(null);
-  // Generate date range dynamically to ensure current dates are always included
-  const dates = useMemo(() => {
-    // Always include today and selected date in range
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const normalizedSelected = new Date(selectedDate);
-    normalizedSelected.setHours(0, 0, 0, 0);
-    
-    // Find the earliest date to center range around
-    const earliestDate = today.getTime() < normalizedSelected.getTime() ? today : normalizedSelected;
-    
-    return generateDateRange(earliestDate);
-  }, [selectedDate]);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
 
-  // Find indices for selected and focused dates
-  const selectedDateStr = selectedDate.toISOString().split('T')[0];
-  const focusedDateStr = focusedDate.toISOString().split('T')[0];
-  
-  const selectedIndex = dates.findIndex(
-    date => date.toISOString().split('T')[0] === selectedDateStr
-  );
-  
-  const focusedIndex = dates.findIndex(
-    date => date.toISOString().split('T')[0] === focusedDateStr
-  );
+  // Stable EPOCH and total days for virtualization
+  const EPOCH = dayjs.tz('2024-01-01', tenantTz).startOf('day');
+  const totalDays = 365 * 3; // 3-year window
 
-  // Virtualization setup
+  // Timezone-aware date mapping helpers
+  const indexFromDate = (d: dayjs.ConfigType) => 
+    dayjs(d).tz(tenantTz).startOf('day').diff(EPOCH, 'day');
+  
+  const dateFromIndex = (i: number) => 
+    EPOCH.add(i, 'day');
+
+  // Convert dates to timezone-normalized dayjs objects
+  const selectedDayjs = dayjs(selectedDate).tz(tenantTz).startOf('day');
+  const focusedDayjs = dayjs(focusedDate).tz(tenantTz).startOf('day');
+  
+  // Calculate indices using stable math (no array search)
+  const selectedIndex = indexFromDate(selectedDayjs);
+  const focusedIndex = indexFromDate(focusedDayjs);
+
+  // Virtualization setup with stable total count
   const virtualizer = useVirtualizer({
-    count: dates.length,
+    count: totalDays,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 100, // Estimated width per day pill
     horizontal: true,
@@ -165,9 +138,9 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     });
     
     if (nearest) {
-      const nearestDate = dates[nearest.index];
-      const nearestDateStr = nearestDate.toISOString().split('T')[0];
-      const focusedDateStr = focusedDate.toISOString().split('T')[0];
+      const nearestDate = dateFromIndex(nearest.index);
+      const nearestDateStr = nearestDate.format('YYYY-MM-DD');
+      const focusedDateStr = focusedDayjs.format('YYYY-MM-DD');
       
       // Update focus only, not selection
       if (nearestDateStr !== focusedDateStr) {
@@ -176,7 +149,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     }
     
     setIsScrolling(false);
-  }, [dates, focusedDate, onFocusChange, virtualizer]);
+  }, [focusedDayjs, onFocusChange, virtualizer, dateFromIndex]);
 
   // Handle scroll events with debouncing
   useEffect(() => {
@@ -204,39 +177,37 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     };
   }, [handleScrollEnd]);
 
-  // Centering logic via imperative handle with reliable async API
-  const centerOnDate = useCallback(async (date: Date, opts?: ScrollToOptions) => {
+  // Centering logic using stable index math (no array search)
+  const centerOnDate = useCallback(async (date: Date | string, opts?: ScrollToOptions) => {
     const container = parentRef.current;
     if (!container) return;
     
-    console.log('centerOnDate called with:', date.toISOString().split('T')[0]);
+    const d = dayjs(date).tz(tenantTz).startOf('day');
+    console.log('centerOnDate called with:', d.format('YYYY-MM-DD'));
     
     // Settle layout and ensure virtualizer is measured
     await Promise.resolve();
     virtualizer.measure();
     
-    const targetDateStr = date.toISOString().split('T')[0];
-    const targetIndex = dates.findIndex(
-      d => d.toISOString().split('T')[0] === targetDateStr
-    );
+    const idx = indexFromDate(d);
+    console.log('Target index calculated:', idx, 'for date:', d.format('YYYY-MM-DD'));
     
-    console.log('Target index found:', targetIndex, 'out of', dates.length, 'dates');
-    
-    if (targetIndex !== -1) {
-      const offset = virtualizer.getOffsetForIndex(targetIndex);
+    // Ensure index is within bounds
+    if (idx >= 0 && idx < totalDays) {
+      const offset = virtualizer.getOffsetForIndex(idx) ?? 0;
       const itemWidth = 100; // Approximate pill width
-      const centerOffset = Number(offset ?? 0) - (container.clientWidth - itemWidth) / 2;
+      const centerOffset = Number(offset) - (container.clientWidth - itemWidth) / 2;
       
-      console.log('Scrolling to offset:', centerOffset, 'from offset:', offset);
+      console.log('Scrolling to offset:', centerOffset, 'from calculated offset:', offset);
       
       container.scrollTo({
         left: Math.max(0, centerOffset),
         behavior: opts?.behavior ?? 'smooth'
       });
     } else {
-      console.log('Date not found in range. First date:', dates[0]?.toISOString().split('T')[0], 'Last date:', dates[dates.length - 1]?.toISOString().split('T')[0]);
+      console.log('Date index out of bounds:', idx, 'total days:', totalDays);
     }
-  }, [dates, virtualizer]);
+  }, [virtualizer, tenantTz, indexFromDate, totalDays]);
 
   // Expose centerOnDate method
   useImperativeHandle(ref, () => ({
@@ -254,14 +225,14 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
       if (focusedIndex > 0) {
-        const prevDate = dates[focusedIndex - 1];
-        onDateSelect(prevDate.toISOString().split('T')[0]);
+        const prevDate = dateFromIndex(focusedIndex - 1);
+        onDateSelect(prevDate.format('YYYY-MM-DD'));
       }
     } else if (event.key === 'ArrowRight') {
       event.preventDefault();
-      if (focusedIndex < dates.length - 1) {
-        const nextDate = dates[focusedIndex + 1];
-        onDateSelect(nextDate.toISOString().split('T')[0]);
+      if (focusedIndex < totalDays - 1) {
+        const nextDate = dateFromIndex(focusedIndex + 1);
+        onDateSelect(nextDate.format('YYYY-MM-DD'));
       }
     }
   };
@@ -290,10 +261,10 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
           }}
         >
           {virtualizer.getVirtualItems().map(virtualItem => {
-            const date = dates[virtualItem.index];
-            const dateStr = date.toISOString().split('T')[0];
-            const isSelected = dateStr === selectedDate.toISOString().split('T')[0];
-            const isFocused = dateStr === focusedDate.toISOString().split('T')[0];
+            const date = dateFromIndex(virtualItem.index);
+            const dateStr = date.format('YYYY-MM-DD');
+            const isSelected = date.isSame(selectedDayjs, 'day');
+            const isFocused = date.isSame(focusedDayjs, 'day');
             const aggregates = getAggregatesForDate(date, slots);
 
             return (
@@ -316,7 +287,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                   transition={{ duration: 0.15 }}
                 >
                   <DayPill
-                    date={date}
+                    date={date.toDate()}
                     isSelected={isSelected}
                     isFocused={isFocused}
                     aggregates={aggregates}

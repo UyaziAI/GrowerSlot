@@ -1,0 +1,132 @@
+Prompt for Replit AI (Implement the fix)
+
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Goal
+
+Fix the DayTimeline so initial load, Today, and Jump to date all center and select the correct day reliably. Address the root cause from the above reports: the dates array is regenerated off selectedDate, breaking index stability. Also normalize to tenant timezone.
+
+Scope
+
+Frontend files (adjust exact paths to repo):
+
+client/src/pages/calendar-page.tsx (or /app/frontend/src/.../calendar-page.tsx)
+
+client/src/features/booking/components/DayTimeline.tsx
+
+client/src/features/booking/components/DayPill.tsx
+
+client/src/features/booking/components/MiniMonthPopover.tsx
+
+If not already present, add dayjs timezone support:
+
+dayjs, dayjs/plugin/utc, dayjs/plugin/timezone
+
+Required changes
+
+Make the timeline index stable (no regeneration off selectedDate)
+
+In DayTimeline.tsx, remove the useMemo([...selectedDate]) that rebuilds dates.
+
+Use a static virtualized range indexed from a fixed EPOCH and map index↔date with math:
+
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import tz from 'dayjs/plugin/timezone';
+dayjs.extend(utc); dayjs.extend(tz);
+
+const tenantTz = props.tenantTz ?? 'Africa/Johannesburg';
+const EPOCH = dayjs.tz('2024-01-01', tenantTz).startOf('day');
+
+const totalDays = 365 * 3;              // e.g., 3-year window (adjust if needed)
+const indexFromDate = (d: dayjs.Dayjs) => d.tz(tenantTz).startOf('day').diff(EPOCH, 'day');
+const dateFromIndex = (i: number) => EPOCH.add(i, 'day');
+
+
+Configure the virtualizer with count: totalDays. Render each item’s date via dateFromIndex(i). Do not keep a dates[] array derived from selectedDate.
+
+Rewrite centerOnDate() to use math (no findIndex)
+
+Replace string matching with index math:
+
+const centerOnDate = useCallback(async (date: Date | string, opts?: ScrollToOptions) => {
+  const d = dayjs(date).tz(tenantTz).startOf('day');
+  await Promise.resolve();
+  virtualizer.measure();
+  const idx = indexFromDate(d);
+  const offset = virtualizer.getOffsetForIndex(idx) ?? 0;
+  const target = offset - (container.clientWidth - itemWidth) / 2;
+  container.scrollTo({ left: Math.max(0, target), behavior: opts?.behavior ?? 'smooth' });
+}, [virtualizer, tenantTz]);
+
+
+Ensure parentRef, itemWidth, and virtualizer are defined consistently.
+
+Normalize all dates to tenant timezone
+
+Everywhere we construct/compare dates (initial load, Today, Jump, click), use:
+
+const tzName = tenantTimezone ?? 'Africa/Johannesburg';
+const toTzDay = (d: dayjs.ConfigType) => dayjs(d).tz(tzName).startOf('day');
+
+
+Eliminate .toISOString().split('T')[0] comparisons; compare dayjs().isSame(other, 'day') or same‑day strings produced from tz-normalized dayjs objects.
+
+Initial load selects & centers the correct day
+
+In calendar-page.tsx:
+
+const tzName = tenantTimezone ?? 'Africa/Johannesburg';
+const url = new URLSearchParams(location.search).get('date');
+const initial = url ? toTzDay(url) : toTzDay(new Date());
+
+const [focusedDate, setFocusedDate] = useState(initial);
+const [selectedDate, setSelectedDate] = useState(initial);
+
+useEffect(() => {
+  // After first paint and virtualizer measure
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    timelineRef.current?.centerOnDate(initial.toDate(), { behavior: 'instant' });
+  }));
+}, []);
+
+
+Keep scrolling updates focused only; click sets selectedDate and centers.
+
+Today & Jump center and open
+
+Update handlers to use tz-normalized toTzDay(...), set both focused+selected, update URL, await one animation frame, then centerOnDate(date, {behavior:'smooth'}).
+
+Preserve horizontal-only scroll
+
+Keep container classes that lock vertical axis: overflow-y-hidden, touch-pan-x, snap-x snap-mandatory, fixed height, etc.
+
+Tests (update/add)
+
+Index math round‑trip across months/DST (tenant TZ).
+
+Initial load centers & opens today (or ?date= if present).
+
+Today and Jump both center & open correct day.
+
+Scrolling does not change selectedDate (only focusedDate).
+
+Mobile E2E: inertial scroll, no vertical drift, tap to open.
+
+Documentation
+
+BLUEPRINT.md: note stable EPOCH+math indexing, tenant‑TZ normalization, and that the day list no longer regenerates from selectedDate. Add changelog.
+
+FEATURES.md: mark DayTimeline centering bug as fixed; record test steps.
+
+ISSUES.md: reference the prior index‑mismatch root cause and resolution.
+
+Acceptance Criteria
+
+On initial load, the today pill is selected, the timeline is centered on it, and the Day scheduler is open.
+
+Today and Jump to date both center and open their target day.
+
+Horizontal scrolling never auto-opens; tapping a pill opens and recenters.
+
+Index stability is maintained (no regeneration tied to selectedDate), and timezone normalization prevents off‑by‑one issues.
