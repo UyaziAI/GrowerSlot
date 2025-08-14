@@ -88,9 +88,10 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
 
-  // Stable EPOCH and total days for virtualization (center around 2024 for wider range)
-  const EPOCH = dayjs.tz('2023-01-01', tenantTz).startOf('day');
-  const totalDays = 365 * 5; // 5-year window (2023-2028)
+  // Stable EPOCH centered around current year for optimal scrolling range
+  const currentYear = dayjs().year();
+  const EPOCH = dayjs.tz(`${currentYear - 1}-01-01`, tenantTz).startOf('day'); // Start 1 year ago
+  const totalDays = 365 * 3; // 3-year window (prev year, current year, next year)
 
   // Timezone-aware date mapping helpers
   const indexFromDate = (d: dayjs.ConfigType) => 
@@ -119,10 +120,13 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     overscan: 10,
   });
   
-  // Debug: Log scroll element binding once
+  // Debug: Log scroll element binding and date range once
   useEffect(() => {
-    console.log('Virtualizer scroll element binding check:');
-    console.log('parentRef.current:', !!parentRef.current);
+    console.log('Virtualizer setup:');
+    console.log('EPOCH:', EPOCH.format('YYYY-MM-DD'));
+    console.log('Total days:', totalDays);
+    console.log('Today index:', indexFromDate(dayjs().tz(tenantTz)));
+    console.log('Scroll element binding - parentRef exists:', !!parentRef.current);
     console.log('getScrollElement():', !!virtualizer.options.getScrollElement?.());
     console.log('Elements match:', virtualizer.options.getScrollElement?.() === parentRef.current);
   }, []);
@@ -204,9 +208,11 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     await Promise.resolve();
     virtualizer.measure();
     
-    const idx = Math.max(0, Math.min(indexFromDate(d), totalDays - 1));
-    console.log('Target index (clamped):', idx, 'for date:', d.format('YYYY-MM-DD'));
+    const rawIdx = indexFromDate(d);
+    const idx = Math.max(0, Math.min(rawIdx, totalDays - 1));
+    console.log('Target index - raw:', rawIdx, 'clamped:', idx, 'for date:', d.format('YYYY-MM-DD'));
     console.log('Container width:', container.clientWidth, 'scrollLeft before:', container.scrollLeft);
+    console.log('Valid index range: 0 to', totalDays - 1);
     
     // Use virtualizer's scroll API for reliable centering
     try {
