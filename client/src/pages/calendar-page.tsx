@@ -15,44 +15,53 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date()); // drives DayView + URL
   const [focusedDate, setFocusedDate] = useState(new Date());   // purely visual highlight in scroller
   const [isMonthPopoverOpen, setIsMonthPopoverOpen] = useState(false);
-  const timelineRef = useRef<{ centerOnDate: (date: Date) => void }>(null);
+  const timelineRef = useRef<{ centerOnDate: (date: Date, opts?: ScrollToOptions) => Promise<void> }>(null);
   const user = authService.getUser();
 
-  // URL state management: hydrate selectedDate from ?date= query param with timezone handling
+  // Helper function for next frame delay
+  const nextFrame = () => new Promise(resolve => 
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  );
+
+  // URL state management with timezone handling and initial today selection
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dateParam = urlParams.get('date');
-    
-    let initialDate: Date;
-    if (dateParam) {
-      const parsedDate = new Date(dateParam);
-      if (!isNaN(parsedDate.getTime())) {
-        initialDate = parsedDate;
+    const initializeDate = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const dateParam = urlParams.get('date');
+      
+      // Tenant timezone with fallback
+      const tenantTz = 'Africa/Johannesburg'; // TODO: Get from tenant settings
+      
+      let initialDate: Date;
+      if (dateParam) {
+        const parsedDate = new Date(dateParam);
+        if (!isNaN(parsedDate.getTime())) {
+          initialDate = parsedDate;
+        } else {
+          // Invalid date param, fallback to today
+          initialDate = new Date();
+        }
       } else {
-        // Invalid date param, fallback to today
+        // No date param, default to today in tenant timezone
         initialDate = new Date();
       }
-    } else {
-      // No date param, default to today (tenant timezone)
-      initialDate = new Date();
-    }
-    
-    // Normalize to start of day for consistent behavior
-    initialDate.setHours(0, 0, 0, 0);
-    
-    // Set both selected and focused to the same initial date
-    setSelectedDate(initialDate);
-    setFocusedDate(initialDate);
-    
-    // Update URL to reflect the selected date only if no URL param was present
-    if (!dateParam) {
+      
+      // Normalize to start of day for consistent behavior
+      initialDate.setHours(0, 0, 0, 0);
+      
+      // Set both selected and focused to the same initial date (OPEN scheduler on first load)
+      setSelectedDate(initialDate);
+      setFocusedDate(initialDate);
+      
+      // Update URL to reflect the selected date
       updateURL(initialDate);
-    }
-    
-    // Center the timeline on initial date and ensure it's visible after component mount
-    setTimeout(() => {
+      
+      // Ensure virtualizer is measured before centering
+      await nextFrame();
       timelineRef.current?.centerOnDate(initialDate);
-    }, 200); // Increased timeout to ensure proper rendering
+    };
+    
+    initializeDate();
   }, []);
 
   // Update URL when date changes (no hard navigate)
@@ -85,22 +94,31 @@ export default function CalendarPage() {
     isLoading: slotsLoading
   } = useSlotsRange(startDate, endDate, true);
 
-  // Go to today functionality
-  const goToToday = () => {
+  // Go to today functionality with timezone handling
+  const goToToday = async () => {
+    const tenantTz = 'Africa/Johannesburg'; // TODO: Get from tenant settings
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     setSelectedDate(today);
     setFocusedDate(today);
     updateURL(today);
-    timelineRef.current?.centerOnDate(today);
+    
+    await nextFrame();
+    timelineRef.current?.centerOnDate(today, { behavior: 'smooth' });
   };
 
-  // Handle date selection from DayPill clicks (explicit selection)
-  const handleDateSelect = (dateStr: string) => {
+  // Handle date selection from DayPill clicks (explicit selection with centering)
+  const handleDateSelect = async (dateStr: string) => {
     const newDate = new Date(dateStr);
+    newDate.setHours(0, 0, 0, 0);
+    
     setSelectedDate(newDate);
     setFocusedDate(newDate);
     updateURL(newDate);
-    timelineRef.current?.centerOnDate(newDate);
+    
+    await nextFrame();
+    timelineRef.current?.centerOnDate(newDate, { behavior: 'smooth' });
   };
 
   // Handle scroll focus changes (visual highlight only)
@@ -110,14 +128,18 @@ export default function CalendarPage() {
     // DO NOT update selectedDate or URL on scroll
   };
 
-  // Handle month popover date selection
-  const handleMonthDateSelect = (dateStr: string) => {
+  // Handle month popover date selection with centering
+  const handleMonthDateSelect = async (dateStr: string) => {
     const picked = new Date(dateStr);
+    picked.setHours(0, 0, 0, 0);
+    
     setSelectedDate(picked);
     setFocusedDate(picked);
     updateURL(picked);
     setIsMonthPopoverOpen(false);
-    timelineRef.current?.centerOnDate(picked);
+    
+    await nextFrame();
+    timelineRef.current?.centerOnDate(picked, { behavior: 'smooth' });
   };
 
   // Calculate summary stats for selected date

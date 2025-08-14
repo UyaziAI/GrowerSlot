@@ -18,7 +18,7 @@ interface DayTimelineProps {
 }
 
 interface DayTimelineRef {
-  centerOnDate: (date: Date) => void;
+  centerOnDate: (date: Date, opts?: ScrollToOptions) => Promise<void>;
 }
 
 // Date mapping helpers for precise day-level calculations
@@ -188,10 +188,14 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     };
   }, [handleScrollEnd]);
 
-  // Centering logic via imperative handle
-  const centerOnDate = useCallback((date: Date) => {
+  // Centering logic via imperative handle with reliable async API
+  const centerOnDate = useCallback(async (date: Date, opts?: ScrollToOptions) => {
     const container = parentRef.current;
     if (!container) return;
+    
+    // Settle layout and ensure virtualizer is measured
+    await Promise.resolve();
+    virtualizer.measure();
     
     const targetIndex = dates.findIndex(
       d => d.toISOString().split('T')[0] === date.toISOString().split('T')[0]
@@ -199,11 +203,12 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     
     if (targetIndex !== -1) {
       const offset = virtualizer.getOffsetForIndex(targetIndex);
-      const centerOffset = (offset || 0) - (container.clientWidth - 100) / 2;
+      const itemWidth = 100; // Approximate pill width
+      const centerOffset = (offset ?? 0) - (container.clientWidth - itemWidth) / 2;
       
       container.scrollTo({
         left: Math.max(0, centerOffset),
-        behavior: 'smooth'
+        behavior: opts?.behavior ?? 'smooth'
       });
     }
   }, [dates, virtualizer]);
@@ -235,13 +240,11 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
       <div
         ref={parentRef}
 
-        className="overflow-x-auto overflow-y-hidden scrollbar-hide"
+        className="overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-pan-x overscroll-x-contain overscroll-y-none whitespace-nowrap h-[88px] flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
-          height: '120px',
           scrollSnapType: 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
           overscrollBehaviorX: 'contain',
-          overscrollBehaviorY: 'none' // Prevent vertical drift
+          overscrollBehaviorY: 'none'
         }}
         onKeyDown={handleKeyDown}
         tabIndex={0}
@@ -265,14 +268,14 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             return (
               <div
                 key={virtualItem.key}
+                className="inline-flex snap-center items-stretch h-full"
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   width: `${virtualItem.size}px`,
                   height: '100%',
-                  transform: `translateX(${virtualItem.start}px)`,
-                  scrollSnapAlign: 'center'
+                  transform: `translateX(${virtualItem.start}px)`
                 }}
               >
                 <motion.div
