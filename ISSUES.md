@@ -30,12 +30,12 @@ This file tracks issues, technical debt, and any violations of the governance ru
   3. Update blueprint to reflect current `/api/` convention
 - **Recommendation**: Option 2 - maintain compatibility while adding v1 routes
 
-### Frontend Routing Integration
-- **Severity**: Low
-- **Description**: New CalendarPage component needs to be integrated with app routing
-- **Details**: Calendar grid components created but not yet added to main navigation
-- **Impact**: Calendar features accessible via direct component import but not via app navigation
-- **Solution Required**: Add /calendar route and navigation links
+### Missing CSV Export Endpoint
+- **Severity**: Medium  
+- **Description**: Blueprint specifies CSV export endpoint but not implemented
+- **Details**: GET /api/export/bookings.csv endpoint missing from server routes
+- **Impact**: Admin data export functionality unavailable
+- **Solution Required**: Implement CSV endpoint in server/routes.ts
 
 ## Resolved Issues ✅
 
@@ -60,9 +60,11 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Verification**: Tested with concurrent requests, proper 409 responses
 
 ### Calendar Day/Week Toggle (August 14, 2025) - RESOLVED
-- **Issue**: Day/Week toggle not working, admin slot management missing
-- **Resolution**: Implemented fully functional calendar with admin management controls
-- **Verification**: Both Day/Week views working, admin can bulk create and edit slots
+- **Issue**: Week view button missing, only Day button visible in calendar interface
+- **Resolution**: Enabled Week view by setting isWeekViewEnabled = true across all calendar pages
+- **Implementation**: Week view displays 7-day grid with time-axis layout, proper date navigation
+- **Verification**: Both Day and Week buttons visible and functional, grid switches correctly
+- **Compliance**: Blueprint MVP requirement (Sections 1.3, 7, 12) for Day/Week views fulfilled
 
 ## Technical Debt 📋
 

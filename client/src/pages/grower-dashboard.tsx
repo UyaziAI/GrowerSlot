@@ -49,7 +49,7 @@ export default function GrowerDashboard() {
   // Get stats from bookings
   const totalBookings = bookings.length;
   const upcomingBookings = bookings.filter((booking: BookingWithDetails) => 
-    new Date(booking.slot.date) >= new Date()
+    new Date(booking.slotDate) >= new Date()
   ).length;
   const completedBookings = totalBookings - upcomingBookings;
   const totalQuantity = bookings.reduce((sum: number, booking: BookingWithDetails) => 
@@ -181,8 +181,8 @@ export default function GrowerDashboard() {
             ) : (
               <div className="space-y-4">
                 {bookings.map((booking: BookingWithDetails) => {
-                  const isUpcoming = new Date(booking.slot.date) >= new Date();
-                  const slotDate = new Date(booking.slot.date);
+                  const isUpcoming = new Date(booking.slotDate) >= new Date();
+                  const slotDate = new Date(booking.slotDate);
                   
                   return (
                     <div
@@ -202,13 +202,13 @@ export default function GrowerDashboard() {
                               })}
                             </div>
                             <div className="text-sm text-gray-600">
-                              {booking.slot.startTime} - {booking.slot.endTime}
+                              {booking.slotStartTime} - {booking.slotEndTime}
                             </div>
                           </div>
                           <div className="text-center">
                             <div className="font-medium">{booking.quantity} tons</div>
                             <div className="text-sm text-gray-600">
-                              {booking.cultivar?.name || 'N/A'}
+                              {booking.cultivarName || 'N/A'}
                             </div>
                           </div>
                           <div>
@@ -217,11 +217,7 @@ export default function GrowerDashboard() {
                             </Badge>
                           </div>
                         </div>
-                        {booking.notes && (
-                          <div className="mt-2 text-sm text-gray-600">
-                            Notes: {booking.notes}
-                          </div>
-                        )}
+                        {/* Notes would be part of slot details if needed */}
                       </div>
                       {isUpcoming && (
                         <Button

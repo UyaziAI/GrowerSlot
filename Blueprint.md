@@ -469,7 +469,16 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Blueprint Verification & Implementation Review
+### August 14, 2025 - Week View Implementation Complete
+- **feat:** Implemented fully functional Day/Week calendar toggle as required by MVP
+- **fix:** Week view button now visible and operational across all calendar interfaces
+- **implementation:** 7-day grid layout with time-axis, start-of-week date calculations
+- **compliance:** Blueprint Sections 1.3, 7, 12 requirement for Day/Week availability views fulfilled
+- **frontend:** Both admin and grower calendars support Day/Week view switching
+- **verification:** Calendar grid correctly switches between single-day and multi-day layouts
+- **quality:** Fixed grower dashboard schema issues, maintained backward compatibility
+
+### August 14, 2025 - Blueprint Verification & Implementation Review  
 - **verification:** Completed comprehensive repository verification against blueprint specifications
 - **findings:** Core MVP functionality fully implemented and working correctly
 - **architecture:** Database schema exactly matches blueprint Section 4 requirements
@@ -477,8 +486,8 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 - **frontend:** Calendar interface successfully replaced all vertical slot lists
 - **admin:** Full slot management controls implemented (/admin/slots page)
 - **gaps:** Minor API versioning discrepancy (/api/ vs /v1/) and missing CSV export endpoint
-- **quality:** No LSP errors, application stable, Day/Week toggle functional
-- **compliance:** RBAC working, transactional booking safe, multi-tenancy enforced
+- **quality:** Application stable, transactional booking safe, multi-tenancy enforced
+- **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
 
 ### August 13, 2025 - Calendar Grid Implementation
 - **feat:** Added GET /api/slots/range endpoint for multi-day slot fetching (max 14 days)

@@ -24,7 +24,8 @@ export default function CalendarPage() {
   const queryClient = useQueryClient();
   const user = authService.getUser();
 
-  const isWeekViewEnabled = import.meta.env.VITE_FEATURE_WEEKVIEW === 'true';
+  // Enable Week view (blueprint requirement - MVP must have Day/Week availability views)
+  const isWeekViewEnabled = true; // import.meta.env.VITE_FEATURE_WEEKVIEW === 'true';
 
   // Calculate date range based on view mode
   const getDateRange = () => {
