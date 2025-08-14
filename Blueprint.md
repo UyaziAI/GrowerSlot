@@ -358,7 +358,7 @@ Admin Slots – bulk generation, blackout, restrictions, notes.
 
 Inbound (feature‑flagged) – read‑only consignments list with latest checkpoint.
 
-Calendar Grid – time-axis calendar layout with Day/Week views, feature-rich slot cards.
+Continuous DayTimeline – horizontally scrollable day strip with snap-to-center selection, virtualized for performance, combined with animated Day Detail view below.
 
 RBAC guards: show Admin tools only if role==='admin'.
 

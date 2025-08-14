@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import TopNavigation from "@/components/top-navigation";
-import WeekScroller from "@/features/booking/components/WeekScroller";
+import DayTimeline from "@/features/booking/components/DayTimeline";
 import DayView from "@/features/booking/components/DayView";
 import MiniMonthPopover from "@/features/booking/components/MiniMonthPopover";
 import { useSlotsRange } from "@/features/booking/hooks/useSlotsRange";
@@ -36,37 +36,29 @@ export default function CalendarPage() {
     window.history.replaceState({}, '', url.toString());
   };
 
-  // Calculate week range for WeekScroller
+  // Calculate week range for initial data (API 14-day limit)
   const getWeekRange = () => {
-    const startOfWeek = new Date(selectedDate);
-    const dayOfWeek = startOfWeek.getDay();
-    startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
+    const startDate = new Date(selectedDate);
+    startDate.setDate(startDate.getDate() - 7);
     
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const endDate = new Date(selectedDate);
+    endDate.setDate(endDate.getDate() + 7);
     
     return {
-      startDate: startOfWeek.toISOString().split('T')[0],
-      endDate: endOfWeek.toISOString().split('T')[0]
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
     };
   };
 
   const { startDate, endDate } = getWeekRange();
   
-  // Fetch week aggregates for WeekScroller
+  // Fetch 2-week range for DayTimeline (respects API limits)
   const {
     data: slots = [],
     isLoading: slotsLoading
   } = useSlotsRange(startDate, endDate, true);
 
-  // Navigation: shift week window by ±7 days
-  const handleWeekChange = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-    setSelectedDate(newDate);
-    updateURL(newDate);
-  };
-
+  // Go to today functionality
   const goToToday = () => {
     const today = new Date();
     setSelectedDate(today);
@@ -110,18 +102,8 @@ export default function CalendarPage() {
               </p>
             </div>
             
-            {/* Navigation Controls */}
+            {/* Navigation Controls - Only Today and Jump to Date */}
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleWeekChange('prev')}
-                data-testid="prev-week-button"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Prev
-              </Button>
-              
               <Button
                 variant="ghost"
                 size="sm"
@@ -135,17 +117,6 @@ export default function CalendarPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleWeekChange('next')}
-                data-testid="next-week-button"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              
-              {/* Jump to Date Button */}
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={() => setIsMonthPopoverOpen(true)}
                 data-testid="jump-to-date-button"
               >
@@ -156,16 +127,16 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Week Scroller */}
+        {/* Day Timeline */}
         <Card className="mb-6">
           <CardContent className="p-6">
             {slotsLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-gray-600 text-sm">Loading week view...</p>
+                <p className="text-gray-600 text-sm">Loading timeline...</p>
               </div>
             ) : (
-              <WeekScroller
+              <DayTimeline
                 selectedDate={selectedDate}
                 slots={slots}
                 onDateSelect={handleDateSelect}

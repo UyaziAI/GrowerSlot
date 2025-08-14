@@ -28,6 +28,7 @@ interface DayPillProps {
   onClick: () => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
   'data-testid'?: string;
+  large?: boolean; // Enable large touch-friendly mode
 }
 
 export default function DayPill({ 
@@ -36,7 +37,8 @@ export default function DayPill({
   aggregates, 
   onClick, 
   onKeyDown, 
-  'data-testid': testId 
+  'data-testid': testId,
+  large = false
 }: DayPillProps) {
   const { 
     totalSlots, 
@@ -110,12 +112,16 @@ export default function DayPill({
         <TooltipTrigger asChild>
           <motion.button
             className={`
-              relative p-3 rounded-lg border-2 transition-all duration-200 min-w-[80px]
+              relative rounded-full border-2 transition-all duration-200 
+              ${large 
+                ? 'p-4 min-w-[72px] min-h-[72px]' // Large touch-friendly mode
+                : 'p-3 min-w-[64px]'
+              }
               ${isSelected 
-                ? 'border-blue-500 bg-blue-50 shadow-md' 
+                ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-300 ring-opacity-40' 
                 : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
               }
-              ${isToday ? 'ring-2 ring-blue-300 ring-opacity-50' : ''}
+              ${isToday && !isSelected ? 'ring-2 ring-blue-300 ring-opacity-30' : ''}
             `}
             onClick={onClick}
             onKeyDown={onKeyDown}
@@ -125,42 +131,42 @@ export default function DayPill({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             animate={{ 
-              scale: isSelected ? 1.05 : 1,
+              scale: isSelected ? (large ? 1.08 : 1.05) : 1,
               opacity: isSelected ? 1 : 0.9 
             }}
             transition={{ duration: 0.15 }}
           >
             {/* Main Content */}
             <div className="text-center">
-              <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+              <div className={`text-xs font-medium text-gray-600 uppercase tracking-wide ${large ? 'text-[10px]' : ''}`}>
                 {weekday}
               </div>
-              <div className={`text-lg font-bold mt-1 ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+              <div className={`font-bold mt-1 ${large ? 'text-xl' : 'text-lg'} ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                 {dayNumber}
               </div>
               
               {/* Availability Badge */}
-              <div className="mt-2">
+              <div className={`${large ? 'mt-3' : 'mt-2'}`}>
                 <Badge 
                   variant={getBadgeVariant()}
-                  className={`text-xs px-2 py-1 ${getBadgeColor()}`}
+                  className={`text-xs px-1.5 py-0.5 ${getBadgeColor()} ${large ? 'text-[10px]' : ''}`}
                 >
-                  {totalSlots === 0 ? 'None' : `${remaining}/${totalSlots}`}
+                  {totalSlots === 0 ? '0' : `${remaining}`}
                 </Badge>
               </div>
             </div>
 
-            {/* Flags Row */}
-            {(hasBlackouts || hasRestrictions || hasNotes) && (
+            {/* Flags Row - Only show in large mode or when critical */}
+            {large && (hasBlackouts || hasRestrictions || hasNotes) && (
               <div className="flex justify-center gap-1 mt-2">
                 {hasBlackouts && (
-                  <Ban className="w-3 h-3 text-red-500" aria-label="Blackout periods" />
+                  <Ban className="w-2.5 h-2.5 text-red-500" aria-label="Blackout periods" />
                 )}
                 {hasRestrictions && (
-                  <AlertCircle className="w-3 h-3 text-orange-500" aria-label="Restrictions apply" />
+                  <AlertCircle className="w-2.5 h-2.5 text-orange-500" aria-label="Restrictions apply" />
                 )}
                 {hasNotes && (
-                  <FileText className="w-3 h-3 text-blue-500" aria-label="Special notes" />
+                  <FileText className="w-2.5 h-2.5 text-blue-500" aria-label="Special notes" />
                 )}
               </div>
             )}
