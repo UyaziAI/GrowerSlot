@@ -15,6 +15,39 @@ import DayPill from './DayPill';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+// Visual sizing constants (px)
+const PILL_BASE = 64;         // small
+const PILL_MID = 72;          // flank baseline (before scale)
+const PILL_CENTER = 88;       // selected baseline (before scale)
+const SCALE_CENTER = 1.06;    // center visual scale (keep!)
+const SCALE_FLANK = 1.03;     // optional flank scale
+const RING_SELECTED = 4;      // Tailwind ring-4 (px)
+const SAFETY = 6;             // extra headroom for subpixel/shadow
+
+// Max visual height = biggest (scaled size + double ring) + safety
+const VISUAL_CENTER = Math.ceil(PILL_CENTER * SCALE_CENTER) + (RING_SELECTED * 2);
+const ITEM_TRACK = VISUAL_CENTER + SAFETY; // e.g. ~108px
+
+// Even padding top/bottom for the scroll lane (px)
+const RAIL_PAD_Y = 16; // exact same on top and bottom
+
+// Rail/container heights
+const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 108 + 32 = 140px
+
+// Development guard for future scale tweaks
+if (import.meta.env.DEV) {
+  const maxPlanned = Math.ceil(PILL_CENTER * SCALE_CENTER) + (RING_SELECTED * 2);
+  if (ITEM_TRACK < maxPlanned) {
+    // eslint-disable-next-line no-console
+    console.warn('[DayTimeline] ITEM_TRACK too small for planned scale/ring', { ITEM_TRACK, maxPlanned });
+  }
+  // Log computed constants for verification
+  console.log('DayTimeline sizing constants:', { 
+    PILL_BASE, PILL_MID, PILL_CENTER, SCALE_CENTER, RING_SELECTED, 
+    ITEM_TRACK, RAIL_MIN_HEIGHT, RAIL_PAD_Y 
+  });
+}
+
 interface DayTimelineProps {
   selectedDate: Date;
   focusedDate: Date;
@@ -321,15 +354,14 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   };
 
   return (
-    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: '120px' }}>
+    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: RAIL_MIN_HEIGHT }}>
       <div
         ref={parentRef}
-
         className="overflow-x-auto overflow-y-visible flex items-center [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
-          height: '120px',
-          paddingTop: '16px',
-          paddingBottom: '16px',
+          height: RAIL_MIN_HEIGHT,
+          paddingTop: RAIL_PAD_Y,
+          paddingBottom: RAIL_PAD_Y,
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'none'
@@ -338,11 +370,12 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         tabIndex={0}
         role="tablist"
         aria-label="Day timeline"
+        data-testid="timeline-rail"
       >
         <div
           className="overflow-visible relative flex items-center"
           style={{
-            height: '96px',
+            height: ITEM_TRACK,
             width: `${virtualizer.getTotalSize()}px`,
             position: 'relative',
             zIndex: 1
@@ -355,6 +388,10 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             const isSelected = date.isSame(selectedDayjs, 'day');
             const isFocused = date.isSame(focusedDayjs, 'day');
             const aggregates = getAggregatesForDate(date, slots);
+            
+            // Determine if this is a flank (adjacent to selected)
+            const selectedIndex = toVirtualIndex(indexFromDate(selectedDayjs));
+            const isFlank = Math.abs(virtualItem.index - selectedIndex) === 1;
 
             return (
               <div
@@ -365,7 +402,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                   top: 0,
                   left: 0,
                   width: `${virtualItem.size}px`,
-                  height: '96px',
+                  height: ITEM_TRACK,
                   transform: `translateX(${virtualItem.start}px)`
                 }}
               >
@@ -377,6 +414,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                     date={date.toDate()}
                     isSelected={isSelected}
                     isFocused={isFocused}
+                    isFlank={isFlank}
                     aggregates={aggregates}
                     onClick={() => onDateSelect(dateStr)}
                     onKeyDown={(event: React.KeyboardEvent) => {
@@ -385,8 +423,10 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                         onDateSelect(dateStr);
                       }
                     }}
-                    data-testid={`day-pill-${dateStr}`}
+                    data-testid={isSelected ? 'pill-selected' : `day-pill-${dateStr}`}
                     large={true} // Enable large touch-friendly mode
+                    scaleCenter={SCALE_CENTER}
+                    scaleFlank={SCALE_FLANK}
                   />
                 </div>
               </div>

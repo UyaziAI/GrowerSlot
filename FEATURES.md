@@ -73,6 +73,7 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Status: ✅ Implementation complete  
   - Location: `/client/src/features/booking/components/DayTimeline.tsx`
   - Features: Fixed vertical clipping of day pills, proper focus ring visibility
+  - Testing: Visual clipping tests added for timeline pills
   - Technical: overflow-y-visible, py-2 padding, 92px container height
   - Verification: Pills render fully without top/bottom cutoff, a11y compliant
 

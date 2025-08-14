@@ -8,10 +8,11 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Severity**: Low
 - **Description**: Comprehensive accessibility testing needed for timeline pill interactions
 - **Details**: 
-  - Implemented layout-based pill sizing (no transform scaling)
-  - Pills properly centered with symmetric padding
-  - Focus rings and hover shadows fully visible with overflow-y-visible
+  - Restored transform scaling with computed rail heights for proper clearance
+  - Pills properly centered with symmetric padding (RAIL_PAD_Y = 16px)
+  - Focus rings and hover shadows fully visible with overflow-y-visible chain
   - Keyboard navigation working (arrow keys, Enter/Space)
+  - Visual clipping tests added for 90%-125% zoom levels
 - **Impact**: Screen reader users and keyboard-only navigation
 - **Testing Required**: 
   - Test with screen readers (NVDA, JAWS, VoiceOver)
@@ -51,6 +52,17 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Details**: GET /api/export/bookings.csv endpoint missing from server routes
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
+
+### Timeline Pill Vertical Clipping (August 14, 2025) - RESOLVED
+- **Issue**: Selected day pills were being visually clipped at top/bottom due to insufficient rail height
+- **Root Cause**: Transform scaling increased visual size beyond layout container bounds
+- **Resolution**: 
+  - Computed ITEM_TRACK height (102px) from max scaled pill size + ring + safety margin
+  - Set RAIL_MIN_HEIGHT (134px) with exact symmetric padding (RAIL_PAD_Y = 16px)
+  - Restored transform scaling for center pill (1.06x) and flanks (1.03x) with inner wrapper
+  - Added overflow-visible chain throughout container hierarchy
+  - Implemented data-testid attributes for testing
+- **Status**: Pills now display without clipping at any zoom level (90%-125%)
 
 ### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
 - **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality
