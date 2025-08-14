@@ -10,6 +10,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 14, 2025**: Admin Calendar System Implementation Complete - Comprehensive CRUD Interface
+  - **Full Calendar Views**: Implemented Month/Week/Day admin calendar views for complete slot and booking management
+  - **RBAC Integration**: Added /admin/calendar route with admin-only access guard integrated into navigation
+  - **Data Integrity**: All views render only backend-provided data - fixed phantom slot regression from grower timeline
+  - **CRUD Interface**: Comprehensive slot editing, booking creation, blackout management, and restrictions
+  - **Components**: AdminCalendarPage, AdminMonthView, AdminWeekView, AdminDayView with BulkCreateSlotsDialog
+  - **Performance**: Loading skeletons instead of stale data, strict query keys with tenantId + date range
+  - **Empty States**: Proper "No slots defined by admin" messages when backend returns empty arrays
+  - **Timezone Support**: Full Africa/Johannesburg timezone handling across all calendar views
+  - **Accessibility**: Complete keyboard navigation, ARIA labels, screen reader support
+  - **Testing Ready**: Structure prepared for comprehensive admin calendar testing and phantom slot regression tests
+
 - **August 14, 2025**: Sticky Month Header Implementation with Clean Pill Design Complete
   - **Sticky Navigation**: Implemented 32px sticky month header with dynamic updates (e.g., "AUGUST 2025") during scroll
   - **Clean Pills**: Removed all info icons from pills - now display only day/date/availability with existing color coding

@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { SlotWithUsage } from "@shared/schema";
-import DayPill from './DayPill';
+import DayPill, { DayAggregates } from './DayPill';
 
 // Initialize dayjs plugins
 dayjs.extend(utc);

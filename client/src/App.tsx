@@ -10,6 +10,7 @@ import CalendarPage from "@/pages/calendar-page";
 import BookingRedirect from "@/pages/booking-redirect";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminSlotsPage from "@/pages/admin-slots";
+import AdminCalendarPage from "@/features/admin/AdminCalendarPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/grower-dashboard" component={GrowerDashboard} />
       {isAdmin && <Route path="/admin" component={AdminDashboard} />}
       {isAdmin && <Route path="/admin/slots" component={AdminSlotsPage} />}
+      {isAdmin && <Route path="/admin/calendar" component={AdminCalendarPage} />}
       <Route component={NotFound} />
     </Switch>
   );

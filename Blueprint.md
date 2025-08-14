@@ -473,25 +473,23 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Data Integrity Fix: Backend-Only Slot Rendering
-- **design:** Increased pill size to w-[84px] h-[84px] with flex-shrink-0 to accommodate longer labels like "155.5"
-- **content:** Removed info icons from pills, expanded badge sizes (max-w-[56px]), clean day/date/availability display only
-- **sticky header:** Implemented horizontally scrollable sticky month header (32px height) with dynamic month updates
-- **header behavior:** Month header reflects pill nearest horizontal center during all scroll interactions
-- **update triggers:** Header updates on initial render, during mouse/touch momentum scrolling, and after programmatic centering
-- **header features:** Full viewport width, background matching card, bold uppercase text, subtle bottom border
-- **tooltips:** Removed desktop hover tooltips since sticky month header provides context, preserved aria-label accessibility
-- **data integrity:** Fixed phantom availability - pills now show "-" for dates with no backend slots (totalSlots === 0)
-- **aggregation:** Modified getAggregatesForDate() to return proper empty state for undefined dates, no placeholder data
-- **week overview:** Fixed WeekOverviewGrid to only render days with actual database slots, no scaffolding for empty dates
-- **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
-- **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
-- **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
-- **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }), month header updates after centering
-- **compact layout:** Reduced rail padding to 8px for snug fit while accommodating sticky header
-- **container:** Final dimensions - ITEM_TRACK (98px), RAIL_MIN_HEIGHT (114px), total with header (146px)
-- **accessibility:** Enhanced aria-label for pills - "No slots defined" vs availability info, screen reader month announcements
-- **constants:** Complete sizing - PILL_SIZE(84) + RAIL(114px) + MONTH_HEADER(32px) = 146px total height
+### August 14, 2025 - Admin Calendar Implementation: Comprehensive CRUD Interface
+- **admin calendar:** Implemented full Month/Week/Day calendar views for admin slot and booking management
+- **view modes:** Three calendar views (Month/Week/Day) with proper timezone handling (Africa/Johannesburg)
+- **data integrity:** All views render only backend-provided data, no client-side fabrication or phantom slots
+- **crud operations:** Comprehensive interface for slot editing, booking creation, blackout management, restrictions
+- **empty states:** Proper "No slots defined by admin" messages when backend returns empty arrays
+- **routing:** Added /admin/calendar route with RBAC guard, integrated into admin navigation
+- **query optimization:** Strict query keys with tenantId + date range, no placeholderData for admin views
+- **performance:** Loading skeletons instead of stale data, virtualized month grids, debounced navigation
+- **components:** AdminMonthView, AdminWeekView, AdminDayView with consistent slot status indicators
+- **dialogs:** BulkCreateSlotsDialog, FilterDialog for comprehensive admin workflow
+- **accessibility:** Full keyboard navigation, ARIA labels, screen reader support for all calendar interactions
+- **regression fix:** Fixed phantom availability data in DayTimeline and WeekOverviewGrid components
+- **grower timeline:** Enhanced data integrity - pills show "-" for dates without backend slots (totalSlots === 0)
+- **aggregation:** Modified getAggregatesForDate() to return proper empty state for undefined dates
+- **timeline design:** Maintained 84px pills, sticky month header, clean UI without placeholder data
+- **testing ready:** Structure prepared for comprehensive admin calendar testing and phantom slot regression tests
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan
