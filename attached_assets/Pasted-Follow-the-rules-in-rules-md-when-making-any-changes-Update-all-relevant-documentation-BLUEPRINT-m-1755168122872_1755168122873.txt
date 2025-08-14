@@ -1,0 +1,149 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Goal: Keep the single-screen calendar (horizontal Week Scroller of DayPills + animated Day Detail below), and add a mini‑month “Jump to date” popover for fast long‑range navigation. No Day/Week toggle anywhere; URL uses only ?date=YYYY-MM-DD.
+
+Scope & files
+
+Frontend: /app/frontend/src/features/booking/
+
+Update container page (e.g., CalendarPage.tsx) that owns selectedDate state.
+
+Create:
+
+components/WeekScroller.tsx (if not already)
+
+components/DayPill.tsx
+
+components/MiniMonthPopover.tsx (new)
+
+Reuse existing DayView for detailed slots & booking.
+
+Functional requirements
+
+State & routing
+
+Source of truth is URL param date=YYYY-MM-DD.
+
+On mount: hydrate selectedDate from URL; on selection: replace URL (no hard navigate).
+
+Remove any view= param usage if present.
+
+Week Scroller (already present; refine as needed)
+
+Horizontal list of 7 DayPills (selected date + 6 neighbors).
+
+Fetch weekly aggregates via one call (prefer GET /v1/slots?start=&end=).
+
+DayPills show: weekday, date, availability badge (Green ≥50%, Amber 20–49%, Red <20%, Grey none/blackout), and tiny flags (notes/restricted/blackout).
+
+Mobile: swipe with CSS scroll-snap + programmatic centering of the selected pill.
+
+Keyboard: ←/→ moves selection; Enter focuses Day detail.
+
+Day Detail (below scroller)
+
+Renders DayView for selectedDate.
+
+Use Framer Motion to animate date change (slide/fade 150–200ms).
+
+Mini‑Month “Jump to date” popover (new)
+
+Trigger: a “Jump to date” button in the header next to ‹ Prev | Today | Next ›.
+
+Popover is a dialog with focus trap and ESC to close.
+
+Shows current month grid; provide chevrons to navigate months (±12 months acceptable).
+
+Each day cell indicates availability via a tiny heat‑dot / corner stripe using same thresholds as DayPills.
+
+Click a day → close popover → update URL ?date=YYYY-MM-DD → center that day in Week Scroller and render Day Detail.
+
+Performance: on open, fetch month aggregates in one batched call if available (e.g., /v1/slots?start=YYYY-MM-01&end=YYYY-MM-<last>), else chunk by week and merge client‑side.
+
+Header controls
+
+Prev/Next shift visible week window by ±7 days and re‑fetch weekly aggregates; keep selectedDate within visible range (snap if it falls outside).
+
+Today: sets selectedDate = today and scrolls scroller to center today.
+
+Animations & polish
+
+DayPill selection: subtle scale/opacity with Framer Motion.
+
+Popover open/close: spring or ease‑out fade/scale (120–160ms).
+
+Ensure 60fps on mid‑tier mobile (prefer GPU‑friendly transforms; avoid heavy box‑shadows during animation).
+
+Accessibility
+
+DayPills are <button> with aria-pressed for selected.
+
+Popover uses role="dialog" with labelled title “Jump to date”; arrow keys move calendar focus; Enter selects day.
+
+Tooltips/flags are keyboard reachable (aria-describedby).
+
+Data & aggregation
+
+Weekly aggregates per day:
+
+total_slots, capacity_total, booked_total, remaining, utilization_pct
+
+Flags: has_blackouts, has_restrictions, has_notes
+
+first_slot_time (optional for badge tooltip)
+
+Month aggregates: same fields but computed per date in the calendar grid.
+
+Testing
+
+Unit
+
+Date math for weekly window and month grid (including month start weekday & days in month).
+
+Aggregation + color thresholds.
+
+Integration
+
+Selecting a DayPill updates URL and re‑renders Day Detail.
+
+Opening popover → select a date → popover closes → scroller centers selected day → Day Detail updates.
+
+Prev/Next/Today behavior correct and idempotent.
+
+E2E
+
+Mobile swipe in Week Scroller.
+
+Popover navigation across months.
+
+Booking flow from Day Detail remains intact.
+
+Documentation
+
+BLUEPRINT.md
+
+Update Section 7 (Frontend Plan): replace Day/Week modes with single‑screen Week Scroller + Day Detail and mini‑month popover; document URL param (date only) and animation approach.
+
+Add changelog entry detailing refactor and new popover.
+
+FEATURES.md
+
+Mark “Week Overview (single‑screen + mini‑month jump)” as implemented and verified.
+
+ISSUES.md
+
+Add any known follow‑ups (e.g., performance tuning on large calendars, server month aggregation endpoint if you added it).
+
+Acceptance criteria
+
+One calendar screen: Week Scroller (swipeable) + animated Day Detail; no Day/Week toggle.
+
+Mini‑month popover enables jumping to any date; selecting a date recenters scroller and renders Day Detail.
+
+URL state uses only ?date=YYYY-MM-DD and restores correctly on refresh/back/forward.
+
+Color thresholds and flags are consistent across pills and mini‑month.
+
+A11y: fully operable by keyboard; dialog is focus‑trapped; readable ARIA labels.
+
+All updated tests pass.
