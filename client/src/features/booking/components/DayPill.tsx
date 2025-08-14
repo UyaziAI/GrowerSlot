@@ -138,6 +138,7 @@ export default function DayPill({
               scale: isSelected ? (large ? 1.08 : 1.05) : 1,
               opacity: isSelected ? 1 : 0.9 
             }}
+            style={{ zIndex: isSelected ? 10 : 1 }}
             transition={{ duration: 0.15 }}
           >
             {/* Main Content */}

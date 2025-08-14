@@ -201,7 +201,7 @@ export default function CalendarPage() {
 
         {/* Day Timeline */}
         <Card className="mb-6 relative">
-          <CardContent className="p-6">
+          <CardContent className="p-6 overflow-visible">
             <DayTimeline
               ref={timelineRef}
               selectedDate={selectedDate}
@@ -209,7 +209,7 @@ export default function CalendarPage() {
               slots={slots}
               onDateSelect={handleDateSelect}
               onFocusChange={handleFocusChange}
-              className="mb-4"
+              className="mb-4 overflow-visible"
               tenantTz={tenantTz}
             />
             {slotsLoading && (

@@ -321,12 +321,13 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   };
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`w-full overflow-visible ${className}`}>
       <div
         ref={parentRef}
 
-        className="overflow-x-auto overflow-y-visible h-[92px] py-2 flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
+        className="overflow-x-auto overflow-y-visible py-4 flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
+          minHeight: '120px',
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'none'
@@ -337,11 +338,12 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         aria-label="Day timeline"
       >
         <div
-          className="overflow-visible"
+          className="overflow-visible relative"
           style={{
             height: '100%',
             width: `${virtualizer.getTotalSize()}px`,
-            position: 'relative'
+            position: 'relative',
+            zIndex: 1
           }}
         >
           {virtualizer.getVirtualItems().map(virtualItem => {
@@ -355,7 +357,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             return (
               <div
                 key={virtualItem.key}
-                className="flex items-center h-full"
+                className="flex items-center h-full overflow-visible"
                 style={{
                   position: 'absolute',
                   top: 0,
@@ -365,11 +367,9 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                   transform: `translateX(${virtualItem.start}px)`
                 }}
               >
-                <motion.div
-                  className="h-full flex items-center justify-center px-2"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.15 }}
+                <div
+                  className="flex items-center justify-center px-2 overflow-visible relative"
+                  style={{ minHeight: '120px', zIndex: 1 }}
                 >
                   <DayPill
                     date={date.toDate()}
@@ -386,7 +386,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                     data-testid={`day-pill-${dateStr}`}
                     large={true} // Enable large touch-friendly mode
                   />
-                </motion.div>
+                </div>
               </div>
             );
           })}
