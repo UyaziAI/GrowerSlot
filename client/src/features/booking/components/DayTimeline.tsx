@@ -328,8 +328,8 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         className="overflow-x-auto overflow-y-visible flex items-center [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
           height: '140px',
-          paddingTop: '34px',
-          paddingBottom: '34px',
+          paddingTop: '20px',
+          paddingBottom: '20px',
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'none'
