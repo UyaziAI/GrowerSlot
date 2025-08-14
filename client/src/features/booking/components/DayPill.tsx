@@ -113,7 +113,7 @@ export default function DayPill({
           <button
             className={`
               relative flex items-center justify-center overflow-hidden rounded-full border-2 transition-all duration-200 
-              w-[72px] h-[72px] flex-shrink-0
+              w-[84px] h-[84px] flex-shrink-0
               ${isSelected 
                 ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-300' 
                 : isFocused 
@@ -138,11 +138,11 @@ export default function DayPill({
                 {dayNumber}
               </div>
               
-              {/* Availability Badge - Fixed size to prevent growth */}
+              {/* Availability Badge - Increased size for longer labels */}
               <div className="mt-1">
                 <div className={`
-                  inline-flex items-center justify-center px-1 py-0.5 rounded text-xs font-medium
-                  min-w-[20px] max-w-[40px] h-4 overflow-hidden
+                  inline-flex items-center justify-center px-1.5 py-0.5 rounded text-xs font-medium
+                  min-w-[24px] max-w-[56px] h-4 overflow-hidden
                   ${getBadgeColor()}
                 `}>
                   <span className="truncate text-xs leading-none">

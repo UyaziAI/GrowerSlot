@@ -473,17 +473,17 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Fixed Pill Sizing Implementation with Complete Clipping Elimination
-- **design:** Implemented exact fixed pill sizing - all pills use w-[72px] h-[72px] with flex-shrink-0 regardless of state
-- **content:** Content overflow protection with truncation, fixed badge sizes, and absolute positioned flags
+### August 14, 2025 - Optimized Pill Sizing for Long Labels with Compact Timeline
+- **design:** Increased pill size to w-[84px] h-[84px] with flex-shrink-0 to accommodate longer labels like "155.5"
+- **content:** Content overflow protection with truncation, expanded badge sizes (max-w-[56px]), and absolute positioned flags
 - **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
 - **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
 - **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
 - **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }) for precise centering and focus management
-- **clipping elimination:** Increased safety margins and rail padding to 14px to completely prevent ring clipping
-- **container:** Final dimensions - ITEM_TRACK (88px) and RAIL_MIN_HEIGHT (116px) with equal 14px top/bottom padding
+- **compact layout:** Reduced rail padding to 10px for more compact timeline while maintaining clipping prevention
+- **container:** Optimized dimensions - ITEM_TRACK (98px) and RAIL_MIN_HEIGHT (118px) with balanced 10px padding
 - **accessibility:** Added focus() call on selected pills for keyboard navigation compliance
-- **constants:** Fixed sizing - PILL_SIZE(72) + RING(2*2) + SHADOW(4) + SAFETY(8) = 88px track height
+- **constants:** Optimized sizing - PILL_SIZE(84) + RING(2*2) + SHADOW(4) + SAFETY(6) = 98px track height
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan

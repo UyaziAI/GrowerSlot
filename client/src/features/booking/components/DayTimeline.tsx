@@ -16,19 +16,19 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 // Fixed pill sizing constants (px)
-const PILL_SIZE = 72;         // exact fixed size for all pills (w-[72px] h-[72px])
+const PILL_SIZE = 84;         // increased size to accommodate longer labels like "155.5"
 const RING_SELECTED = 2;      // Tailwind ring-2 (px) for selected state
 const SHADOW_SPACE = 4;       // space for shadows and subtle effects
-const SAFETY = 8;             // increased safety margin for ring clipping prevention
+const SAFETY = 6;             // adequate safety margin for ring clipping prevention
 
 // Track height = pill size + ring + shadow + safety
-const ITEM_TRACK = PILL_SIZE + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 72 + 4 + 4 + 8 = 88px
+const ITEM_TRACK = PILL_SIZE + (RING_SELECTED * 2) + SHADOW_SPACE + SAFETY; // e.g. 84 + 4 + 4 + 6 = 98px
 
 // Even padding top/bottom for the scroll lane (px)
-const RAIL_PAD_Y = 14; // increased to ensure no clipping of rings
+const RAIL_PAD_Y = 10; // reduced to minimize timeline height while preventing clipping
 
 // Rail/container heights
-const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 88 + 28 = 116px
+const RAIL_MIN_HEIGHT = ITEM_TRACK + (RAIL_PAD_Y * 2); // e.g. 98 + 20 = 118px
 
 // Development verification
 if (import.meta.env.DEV) {

@@ -53,18 +53,19 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Impact**: Admin data export functionality unavailable
 - **Solution Required**: Implement CSV endpoint in server/routes.ts
 
-### Timeline Pill Sizing, Content Overflow, and Clipping Issues (August 14, 2025) - RESOLVED
-- **Issue**: Day pills had size variations from content overflow and persistent vertical clipping of highlighted pills
-- **Root Cause**: Min-width/height allowed content to grow pills, and insufficient safety margins caused ring clipping
+### Timeline Pill Sizing for Long Labels and Compact Layout (August 14, 2025) - RESOLVED
+- **Issue**: Pills too small for longer labels like "155.5" causing overflow, and timeline taking excessive vertical space
+- **Root Cause**: 72px pills insufficient for longer availability numbers, and excessive padding creating large timeline
 - **Resolution**: 
-  - Implemented exact fixed sizing: all pills use w-[72px] h-[72px] flex-shrink-0 consistently
-  - Added content overflow protection: truncation, fixed badge sizes (max-w-[40px]), absolute positioned flags
+  - Increased pill size to w-[84px] h-[84px] flex-shrink-0 to accommodate longer labels
+  - Expanded badge sizes from max-w-[40px] to max-w-[56px] for better label display
+  - Reduced rail padding from 14px to 10px for more compact timeline appearance
+  - Maintained content overflow protection: truncation, absolute positioned flags
   - Removed all transform scaling (whileHover, whileTap, animate scale) to prevent clipping
   - Selection indicated via visual highlight only (border-blue-500, bg-blue-50, ring-2)
   - Enhanced centering with scrollIntoView({ inline: 'center' }) and focus() for accessibility
-  - Increased safety margins and rail padding to 14px to completely eliminate ring clipping
-  - Final container dimensions: ITEM_TRACK (88px), RAIL_MIN_HEIGHT (116px) with equal 14px padding
-- **Status**: Fixed pill dimensions with complete clipping elimination and content overflow protection achieved
+  - Balanced container dimensions: ITEM_TRACK (98px), RAIL_MIN_HEIGHT (118px) with compact 10px padding
+- **Status**: Optimized pill size for long labels with compact timeline layout achieved
 
 ### DayTimeline Initial Load & Interaction (August 14, 2025) - RESOLVED  
 - **Issue**: Timeline centering failed for initial load, Today button, and Jump-to-date functionality
