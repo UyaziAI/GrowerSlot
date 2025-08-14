@@ -61,6 +61,14 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 ## In-Progress Features 🔄
 
+### Dynamic Timeline Range Expansion (August 14, 2025)
+- **Dynamic EPOCH timeline system** (August 14, 2025)
+  - Status: 🔄 Core implementation complete, testing in progress
+  - Location: `/client/src/features/booking/components/DayTimeline.tsx`
+  - Features: EPOCH = today midnight, dynamic range expansion for far dates
+  - Technical: Optimized ±30 day initial load, expands to ±2 years for jump-to-date
+  - Remaining: Final testing and verification of edge cases
+
 ### Logistics Tracking
 - **Consignment API endpoints** (August 13, 2025)
   - Status: 🔄 Backend complete, frontend in progress

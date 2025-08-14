@@ -22,6 +22,8 @@ Future roles – Transporter, Buyer, Warehouse via generic Party model.
 
 Mobile‑first web app (PWA‑friendly) with Day/Week availability.
 
+Continuous day timeline with dynamic range expansion (±30 days optimized, ±2 years max).
+
 Transactional booking with capacity controls and restrictions (by grower/cultivar/variant).
 
 Admin: bulk slot generation, blackouts, notes, per‑slot restrictions.
