@@ -321,15 +321,15 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   };
 
   return (
-    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: '120px' }}>
+    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: '140px' }}>
       <div
         ref={parentRef}
 
         className="overflow-x-auto overflow-y-visible flex items-center [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
-          height: '120px',
-          paddingTop: '24px',
-          paddingBottom: '24px',
+          height: '140px',
+          paddingTop: '34px',
+          paddingBottom: '34px',
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'none'
