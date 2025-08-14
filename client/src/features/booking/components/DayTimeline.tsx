@@ -243,6 +243,12 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
     centerOnDate
   }), [centerOnDate]);
 
+  // Debug: Log when component mounts/unmounts
+  useEffect(() => {
+    console.log('DayTimeline mounted');
+    return () => console.log('DayTimeline unmounted');
+  }, []);
+
   // Handle keyboard navigation
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowLeft') {

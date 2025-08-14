@@ -57,9 +57,18 @@ export default function CalendarPage() {
       updateURL(initialDate);
       
       // Ensure virtualizer is measured before centering
+      console.log('Initial load - about to center on:', initialDate.toISOString().split('T')[0]);
+      console.log('Timeline ref exists:', !!timelineRef.current);
+      
       await nextFrame();
       await nextFrame(); // Additional frame for layout settlement
-      timelineRef.current?.centerOnDate(initialDate, { behavior: 'instant' });
+      
+      if (timelineRef.current) {
+        await timelineRef.current.centerOnDate(initialDate, { behavior: 'instant' });
+        console.log('Initial centering completed');
+      } else {
+        console.log('Timeline ref not available for initial centering');
+      }
     };
     
     initializeDate();
@@ -105,8 +114,16 @@ export default function CalendarPage() {
     setFocusedDate(today);
     updateURL(today);
     
+    console.log('Today button clicked - centering on:', today.toISOString().split('T')[0]);
+    console.log('Timeline ref exists:', !!timelineRef.current);
+    
     await nextFrame();
-    timelineRef.current?.centerOnDate(today, { behavior: 'smooth' });
+    if (timelineRef.current) {
+      await timelineRef.current.centerOnDate(today, { behavior: 'smooth' });
+      console.log('Today centering completed');
+    } else {
+      console.log('Timeline ref not available for today centering');
+    }
   };
 
   // Handle date selection from DayPill clicks (explicit selection with centering)
@@ -139,8 +156,16 @@ export default function CalendarPage() {
     updateURL(picked);
     setIsMonthPopoverOpen(false);
     
+    console.log('Jump to date selected - centering on:', picked.toISOString().split('T')[0]);
+    console.log('Timeline ref exists:', !!timelineRef.current);
+    
     await nextFrame();
-    timelineRef.current?.centerOnDate(picked, { behavior: 'smooth' });
+    if (timelineRef.current) {
+      await timelineRef.current.centerOnDate(picked, { behavior: 'smooth' });
+      console.log('Jump to date centering completed');
+    } else {
+      console.log('Timeline ref not available for jump to date centering');
+    }
   };
 
   // Calculate summary stats for selected date
@@ -193,23 +218,24 @@ export default function CalendarPage() {
         </div>
 
         {/* Day Timeline */}
-        <Card className="mb-6">
+        <Card className="mb-6 relative">
           <CardContent className="p-6">
-            {slotsLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                <p className="text-gray-600 text-sm">Loading timeline...</p>
+            <DayTimeline
+              ref={timelineRef}
+              selectedDate={selectedDate}
+              focusedDate={focusedDate}
+              slots={slots}
+              onDateSelect={handleDateSelect}
+              onFocusChange={handleFocusChange}
+              className="mb-4"
+            />
+            {slotsLoading && (
+              <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                  <p className="text-gray-600 text-sm">Loading timeline...</p>
+                </div>
               </div>
-            ) : (
-              <DayTimeline
-                ref={timelineRef}
-                selectedDate={selectedDate}
-                focusedDate={focusedDate}
-                slots={slots}
-                onDateSelect={handleDateSelect}
-                onFocusChange={handleFocusChange}
-                className="mb-4"
-              />
             )}
           </CardContent>
         </Card>
