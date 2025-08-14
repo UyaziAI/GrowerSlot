@@ -38,11 +38,24 @@ export default function CalendarPage() {
 
   // Initial load centering after first paint and virtualizer measure
   useEffect(() => {
-    // After first paint and virtualizer measure
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      console.log('Initial load - centering on:', initial.format('YYYY-MM-DD'));
-      timelineRef.current?.centerOnDate(initial.toDate(), { behavior: 'instant' });
-    }));
+    const doInitialCenter = () => {
+      const currentInitial = dateParam ? toTzDay(dateParam) : toTzDay(new Date());
+      console.log('Initial load - centering on:', currentInitial.format('YYYY-MM-DD'));
+      console.log('Timeline ref available:', !!timelineRef.current);
+      
+      if (timelineRef.current) {
+        timelineRef.current.centerOnDate(currentInitial.toDate(), { behavior: 'instant' });
+      } else {
+        console.log('Timeline ref not available during initial center');
+      }
+    };
+    
+    // Wait for multiple frames to ensure timeline is fully mounted and measured
+    requestAnimationFrame(() => 
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => doInitialCenter())
+      )
+    );
   }, []);
 
   // Update URL when date changes (no hard navigate)
@@ -76,7 +89,7 @@ export default function CalendarPage() {
   } = useSlotsRange(startDate, endDate, true);
 
   // Go to today functionality with timezone handling
-  const goToToday = async () => {
+  const goToToday = () => {
     const today = toTzDay(new Date()).toDate();
     
     setSelectedDate(today);
@@ -84,11 +97,15 @@ export default function CalendarPage() {
     updateURL(today);
     
     console.log('Today button clicked - centering on:', toTzDay(today).format('YYYY-MM-DD'));
+    console.log('Timeline ref available on Today click:', !!timelineRef.current);
     
-    // Await one animation frame, then center
-    requestAnimationFrame(() => {
-      timelineRef.current?.centerOnDate(today, { behavior: 'smooth' });
-    });
+    // Await multiple animation frames for state updates to settle
+    requestAnimationFrame(() => 
+      requestAnimationFrame(() => {
+        console.log('About to call centerOnDate from Today button');
+        timelineRef.current?.centerOnDate(today, { behavior: 'smooth' });
+      })
+    );
   };
 
   // Handle date selection from DayPill clicks (explicit selection with centering)
@@ -122,11 +139,15 @@ export default function CalendarPage() {
     setIsMonthPopoverOpen(false);
     
     console.log('Jump to date selected - centering on:', toTzDay(picked).format('YYYY-MM-DD'));
+    console.log('Timeline ref available on Jump:', !!timelineRef.current);
     
-    // Await one animation frame, then center
-    requestAnimationFrame(() => {
-      timelineRef.current?.centerOnDate(picked, { behavior: 'smooth' });
-    });
+    // Await multiple animation frames for state updates to settle
+    requestAnimationFrame(() => 
+      requestAnimationFrame(() => {
+        console.log('About to call centerOnDate from Jump to date');
+        timelineRef.current?.centerOnDate(picked, { behavior: 'smooth' });
+      })
+    );
   };
 
   // Calculate summary stats for selected date

@@ -88,9 +88,9 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
 
-  // Stable EPOCH and total days for virtualization
-  const EPOCH = dayjs.tz('2024-01-01', tenantTz).startOf('day');
-  const totalDays = 365 * 3; // 3-year window
+  // Stable EPOCH and total days for virtualization (center around 2024 for wider range)
+  const EPOCH = dayjs.tz('2023-01-01', tenantTz).startOf('day');
+  const totalDays = 365 * 5; // 5-year window (2023-2028)
 
   // Timezone-aware date mapping helpers
   const indexFromDate = (d: dayjs.ConfigType) => 
@@ -180,34 +180,50 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   // Centering logic using stable index math (no array search)
   const centerOnDate = useCallback(async (date: Date | string, opts?: ScrollToOptions) => {
     const container = parentRef.current;
-    if (!container) return;
+    if (!container) {
+      console.log('centerOnDate: container not available');
+      return;
+    }
     
     const d = dayjs(date).tz(tenantTz).startOf('day');
     console.log('centerOnDate called with:', d.format('YYYY-MM-DD'));
+    console.log('EPOCH:', EPOCH.format('YYYY-MM-DD'));
     
     // Settle layout and ensure virtualizer is measured
     await Promise.resolve();
     virtualizer.measure();
     
     const idx = indexFromDate(d);
-    console.log('Target index calculated:', idx, 'for date:', d.format('YYYY-MM-DD'));
+    console.log('Target index calculated:', idx, 'for date:', d.format('YYYY-MM-DD'), 'EPOCH diff:', d.diff(EPOCH, 'day'));
+    console.log('Container width:', container.clientWidth, 'Total days:', totalDays);
     
     // Ensure index is within bounds
     if (idx >= 0 && idx < totalDays) {
-      const offset = virtualizer.getOffsetForIndex(idx) ?? 0;
-      const itemWidth = 100; // Approximate pill width
-      const centerOffset = Number(offset) - (container.clientWidth - itemWidth) / 2;
+      const offset = virtualizer.getOffsetForIndex(idx);
+      console.log('Raw offset from virtualizer:', offset);
       
-      console.log('Scrolling to offset:', centerOffset, 'from calculated offset:', offset);
-      
-      container.scrollTo({
-        left: Math.max(0, centerOffset),
-        behavior: opts?.behavior ?? 'smooth'
-      });
+      if (offset != null) {
+        const itemWidth = 100; // Approximate pill width
+        const centerOffset = Number(offset) - (container.clientWidth - itemWidth) / 2;
+        
+        console.log('Scrolling to offset:', centerOffset, 'from calculated offset:', offset, 'container width:', container.clientWidth);
+        
+        container.scrollTo({
+          left: Math.max(0, centerOffset),
+          behavior: opts?.behavior ?? 'smooth'
+        });
+        
+        // Log final scroll position after a brief delay
+        setTimeout(() => {
+          console.log('Final scroll position:', container.scrollLeft);
+        }, 100);
+      } else {
+        console.log('Virtualizer returned null offset for index:', idx);
+      }
     } else {
-      console.log('Date index out of bounds:', idx, 'total days:', totalDays);
+      console.log('Date index out of bounds:', idx, 'total days:', totalDays, 'EPOCH:', EPOCH.format('YYYY-MM-DD'));
     }
-  }, [virtualizer, tenantTz, indexFromDate, totalDays]);
+  }, [virtualizer, tenantTz, indexFromDate, totalDays, EPOCH]);
 
   // Expose centerOnDate method
   useImperativeHandle(ref, () => ({
