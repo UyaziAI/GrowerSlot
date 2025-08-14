@@ -2,7 +2,7 @@
  * DayTimeline - Continuous horizontally scrollable day strip with virtualization
  * Replaces WeekScroller with infinite scrolling and snap-to-center selection
  */
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { motion } from 'framer-motion';
 import { SlotWithUsage } from "@shared/schema";
@@ -10,21 +10,41 @@ import DayPill from './DayPill';
 
 interface DayTimelineProps {
   selectedDate: Date;
+  focusedDate: Date;
   slots: SlotWithUsage[];
   onDateSelect: (date: string) => void;
+  onFocusChange: (date: string) => void;
   className?: string;
 }
 
-// Generate date range for virtualization (selectedDate - 90d to +270d)
+interface DayTimelineRef {
+  centerOnDate: (date: Date) => void;
+}
+
+// Date mapping helpers for precise day-level calculations
+const EPOCH = new Date('2024-01-01'); // Stable epoch for consistent mapping
+
+const dateFromIndex = (index: number): Date => {
+  const date = new Date(EPOCH);
+  date.setDate(EPOCH.getDate() + index);
+  return date;
+};
+
+const indexFromDate = (date: Date): number => {
+  const normalizedDate = new Date(date);
+  normalizedDate.setHours(0, 0, 0, 0); // Start of day
+  const epochStart = new Date(EPOCH);
+  epochStart.setHours(0, 0, 0, 0);
+  return Math.floor((normalizedDate.getTime() - epochStart.getTime()) / (24 * 60 * 60 * 1000));
+};
+
+// Generate date range for virtualization (360-day window around center)
 const generateDateRange = (centerDate: Date) => {
+  const centerIndex = indexFromDate(centerDate);
   const dates = [];
-  const start = new Date(centerDate);
-  start.setDate(start.getDate() - 90);
   
-  for (let i = 0; i < 360; i++) { // 90 + 270 days
-    const date = new Date(start);
-    date.setDate(start.getDate() + i);
-    dates.push(date);
+  for (let i = -180; i < 180; i++) { // 180 days before and after
+    dates.push(dateFromIndex(centerIndex + i));
   }
   
   return dates;
@@ -76,20 +96,26 @@ const getAggregatesForDate = (date: Date, slots: SlotWithUsage[]) => {
   };
 };
 
-export default function DayTimeline({ 
-  selectedDate, 
+const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({ 
+  selectedDate,
+  focusedDate, 
   slots, 
-  onDateSelect, 
+  onDateSelect,
+  onFocusChange, 
   className = '' 
-}: DayTimelineProps) {
+}, ref) => {
   const parentRef = useRef<HTMLDivElement>(null);
   const [dates] = useState(() => generateDateRange(selectedDate));
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout>();
 
-  // Find the index of the selected date
+  // Find indices for selected and focused dates
   const selectedIndex = dates.findIndex(
     date => date.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0]
+  );
+  
+  const focusedIndex = dates.findIndex(
+    date => date.toISOString().split('T')[0] === focusedDate.toISOString().split('T')[0]
   );
 
   // Virtualization setup
@@ -101,7 +127,7 @@ export default function DayTimeline({
     overscan: 5
   });
 
-  // Debounced scroll handler for snap-to-center
+  // Debounced scroll handler for focus changes only (no auto-selection)
   const handleScrollEnd = useCallback(() => {
     if (!parentRef.current) return;
     
@@ -125,15 +151,16 @@ export default function DayTimeline({
     if (nearest) {
       const nearestDate = dates[nearest.index];
       const nearestDateStr = nearestDate.toISOString().split('T')[0];
-      const selectedDateStr = selectedDate.toISOString().split('T')[0];
+      const focusedDateStr = focusedDate.toISOString().split('T')[0];
       
-      if (nearestDateStr !== selectedDateStr) {
-        onDateSelect(nearestDateStr);
+      // Update focus only, not selection
+      if (nearestDateStr !== focusedDateStr) {
+        onFocusChange(nearestDateStr);
       }
     }
     
     setIsScrolling(false);
-  }, [dates, selectedDate, onDateSelect, virtualizer]);
+  }, [dates, focusedDate, onFocusChange, virtualizer]);
 
   // Handle scroll events with debouncing
   useEffect(() => {
@@ -161,34 +188,43 @@ export default function DayTimeline({
     };
   }, [handleScrollEnd]);
 
-  // Center the selected item when selectedDate changes
-  useEffect(() => {
-    if (selectedIndex !== -1 && !isScrolling) {
-      const container = parentRef.current;
-      if (container) {
-        const offset = virtualizer.getOffsetForIndex(selectedIndex) || 0;
-        const centerOffset = offset - (container.clientWidth - 100) / 2;
-        
-        container.scrollTo({
-          left: Math.max(0, centerOffset),
-          behavior: 'smooth'
-        });
-      }
+  // Centering logic via imperative handle
+  const centerOnDate = useCallback((date: Date) => {
+    const container = parentRef.current;
+    if (!container) return;
+    
+    const targetIndex = dates.findIndex(
+      d => d.toISOString().split('T')[0] === date.toISOString().split('T')[0]
+    );
+    
+    if (targetIndex !== -1) {
+      const offset = virtualizer.getOffsetForIndex(targetIndex);
+      const centerOffset = (offset || 0) - (container.clientWidth - 100) / 2;
+      
+      container.scrollTo({
+        left: Math.max(0, centerOffset),
+        behavior: 'smooth'
+      });
     }
-  }, [selectedIndex, virtualizer, isScrolling]);
+  }, [dates, virtualizer]);
+
+  // Expose centerOnDate method
+  useImperativeHandle(ref, () => ({
+    centerOnDate
+  }), [centerOnDate]);
 
   // Handle keyboard navigation
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      if (selectedIndex > 0) {
-        const prevDate = dates[selectedIndex - 1];
+      if (focusedIndex > 0) {
+        const prevDate = dates[focusedIndex - 1];
         onDateSelect(prevDate.toISOString().split('T')[0]);
       }
     } else if (event.key === 'ArrowRight') {
       event.preventDefault();
-      if (selectedIndex < dates.length - 1) {
-        const nextDate = dates[selectedIndex + 1];
+      if (focusedIndex < dates.length - 1) {
+        const nextDate = dates[focusedIndex + 1];
         onDateSelect(nextDate.toISOString().split('T')[0]);
       }
     }
@@ -221,6 +257,7 @@ export default function DayTimeline({
             const date = dates[virtualItem.index];
             const dateStr = date.toISOString().split('T')[0];
             const isSelected = dateStr === selectedDate.toISOString().split('T')[0];
+            const isFocused = dateStr === focusedDate.toISOString().split('T')[0];
             const aggregates = getAggregatesForDate(date, slots);
 
             return (
@@ -245,6 +282,7 @@ export default function DayTimeline({
                   <DayPill
                     date={date}
                     isSelected={isSelected}
+                    isFocused={isFocused}
                     aggregates={aggregates}
                     onClick={() => onDateSelect(dateStr)}
                     onKeyDown={(event: React.KeyboardEvent) => {
@@ -264,4 +302,7 @@ export default function DayTimeline({
       </div>
     </div>
   );
-}
+});
+
+DayTimeline.displayName = 'DayTimeline';
+export default DayTimeline;

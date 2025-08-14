@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,20 +12,39 @@ import { authService } from "@/lib/auth";
 import { SlotWithUsage } from "@shared/schema";
 
 export default function CalendarPage() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date()); // drives DayView + URL
+  const [focusedDate, setFocusedDate] = useState(new Date());   // purely visual highlight in scroller
   const [isMonthPopoverOpen, setIsMonthPopoverOpen] = useState(false);
+  const timelineRef = useRef<{ centerOnDate: (date: Date) => void }>(null);
   const user = authService.getUser();
 
-  // URL state management - source of truth is URL param date=YYYY-MM-DD
+  // URL state management: hydrate selectedDate from ?date= query param with timezone handling
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const dateParam = urlParams.get('date');
+    
+    let initialDate: Date;
     if (dateParam) {
       const parsedDate = new Date(dateParam);
       if (!isNaN(parsedDate.getTime())) {
-        setSelectedDate(parsedDate);
+        initialDate = parsedDate;
+      } else {
+        // Invalid date param, fallback to today
+        initialDate = new Date();
       }
+    } else {
+      // No date param, default to today
+      initialDate = new Date();
     }
+    
+    // Set both selected and focused to the same initial date
+    setSelectedDate(initialDate);
+    setFocusedDate(initialDate);
+    
+    // Center the timeline on initial date after component mount
+    setTimeout(() => {
+      timelineRef.current?.centerOnDate(initialDate);
+    }, 100);
   }, []);
 
   // Update URL when date changes (no hard navigate)
@@ -62,20 +81,35 @@ export default function CalendarPage() {
   const goToToday = () => {
     const today = new Date();
     setSelectedDate(today);
+    setFocusedDate(today);
     updateURL(today);
+    timelineRef.current?.centerOnDate(today);
   };
 
-  // Handle date selection from WeekScroller or MiniMonthPopover
+  // Handle date selection from DayPill clicks (explicit selection)
   const handleDateSelect = (dateStr: string) => {
     const newDate = new Date(dateStr);
     setSelectedDate(newDate);
+    setFocusedDate(newDate);
     updateURL(newDate);
+    timelineRef.current?.centerOnDate(newDate);
+  };
+
+  // Handle scroll focus changes (visual highlight only)
+  const handleFocusChange = (dateStr: string) => {
+    const newDate = new Date(dateStr);
+    setFocusedDate(newDate);
+    // DO NOT update selectedDate or URL on scroll
   };
 
   // Handle month popover date selection
   const handleMonthDateSelect = (dateStr: string) => {
-    handleDateSelect(dateStr);
+    const picked = new Date(dateStr);
+    setSelectedDate(picked);
+    setFocusedDate(picked);
+    updateURL(picked);
     setIsMonthPopoverOpen(false);
+    timelineRef.current?.centerOnDate(picked);
   };
 
   // Calculate summary stats for selected date
@@ -137,9 +171,12 @@ export default function CalendarPage() {
               </div>
             ) : (
               <DayTimeline
+                ref={timelineRef}
                 selectedDate={selectedDate}
+                focusedDate={focusedDate}
                 slots={slots}
                 onDateSelect={handleDateSelect}
+                onFocusChange={handleFocusChange}
                 className="mb-4"
               />
             )}

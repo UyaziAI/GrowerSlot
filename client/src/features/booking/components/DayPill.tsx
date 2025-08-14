@@ -24,6 +24,7 @@ export interface DayAggregates {
 interface DayPillProps {
   date: Date;
   isSelected: boolean;
+  isFocused?: boolean; // Visual highlight from scroll
   aggregates: DayAggregates;
   onClick: () => void;
   onKeyDown: (event: React.KeyboardEvent) => void;
@@ -34,6 +35,7 @@ interface DayPillProps {
 export default function DayPill({ 
   date, 
   isSelected, 
+  isFocused = false,
   aggregates, 
   onClick, 
   onKeyDown, 
@@ -118,10 +120,12 @@ export default function DayPill({
                 : 'p-3 min-w-[64px]'
               }
               ${isSelected 
-                ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-300 ring-opacity-40' 
+                ? 'border-blue-500 bg-blue-50 shadow-lg ring-4 ring-blue-300 ring-opacity-50' 
+                : isFocused 
+                ? 'border-blue-300 bg-blue-50/30 shadow-md ring-2 ring-blue-200 ring-opacity-40'
                 : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
               }
-              ${isToday && !isSelected ? 'ring-2 ring-blue-300 ring-opacity-30' : ''}
+              ${isToday && !isSelected && !isFocused ? 'ring-2 ring-blue-300 ring-opacity-30' : ''}
             `}
             onClick={onClick}
             onKeyDown={onKeyDown}

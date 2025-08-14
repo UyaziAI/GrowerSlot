@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 14, 2025**: DayTimeline Interaction Refinements Complete - Focused vs Selected State Separation
+  - **Explicit Day Opening**: Scrolling now only highlights days; clicking/tapping explicitly opens Day Detail below
+  - **Focused vs Selected States**: Split visual highlighting (focused) from data selection (selected) for precise interaction control
+  - **Enhanced Navigation**: Today and Jump-to-date buttons both open selected day and center timeline smoothly
+  - **Date Mapping Fix**: Implemented precise day-level calculations with stable EPOCH for consistent date↔index mapping
+  - **Centering Logic**: Added robust centerOnDate() method via forwardRef for programmatic timeline positioning
+  - **Visual Distinction**: Focused pills show subtle highlight; selected pills show stronger accent with thicker rings
+  - **Keyboard Support**: Arrow keys navigate through focused pills with explicit selection on Enter/Space
+
 - **August 14, 2025**: Continuous Day Timeline Implementation Complete - Blueprint Specification Fulfilled
   - **DayTimeline Component**: Replaced WeekScroller with virtualized horizontal scrollable timeline using @tanstack/react-virtual
   - **Large Touch Pills**: 72px touch-friendly DayPill components with chip styling and snap-to-center behavior
