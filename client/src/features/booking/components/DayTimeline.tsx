@@ -321,15 +321,15 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
   };
 
   return (
-    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: '140px' }}>
+    <div className={`w-full overflow-visible ${className}`} style={{ minHeight: '120px' }}>
       <div
         ref={parentRef}
 
         className="overflow-x-auto overflow-y-visible flex items-center [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
-          height: '140px',
-          paddingTop: '12px',
-          paddingBottom: '12px',
+          height: '120px',
+          paddingTop: '20px',
+          paddingBottom: '20px',
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'none'
@@ -342,7 +342,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         <div
           className="overflow-visible relative flex items-center"
           style={{
-            height: '116px',
+            height: '80px',
             width: `${virtualizer.getTotalSize()}px`,
             position: 'relative',
             zIndex: 1
@@ -365,7 +365,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
                   top: 0,
                   left: 0,
                   width: `${virtualItem.size}px`,
-                  height: '116px',
+                  height: '80px',
                   transform: `translateX(${virtualItem.start}px)`
                 }}
               >
