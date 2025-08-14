@@ -116,8 +116,8 @@ export default function DayPill({
             className={`
               relative rounded-full border-2 transition-all duration-200 
               ${large 
-                ? 'p-4 min-w-[72px] min-h-[72px]' // Large touch-friendly mode
-                : 'p-3 min-w-[64px]'
+                ? (isSelected ? 'p-5 min-w-[88px] min-h-[88px]' : 'p-4 min-w-[72px] min-h-[72px]') // Selected pills are larger via padding
+                : (isSelected ? 'p-4 min-w-[72px] min-h-[72px]' : 'p-3 min-w-[64px] min-h-[64px]')
               }
               ${isSelected 
                 ? 'border-blue-500 bg-blue-50 shadow-lg ring-4 ring-blue-300 ring-opacity-50' 
@@ -135,7 +135,6 @@ export default function DayPill({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             animate={{ 
-              scale: isSelected ? (large ? 1.08 : 1.05) : 1,
               opacity: isSelected ? 1 : 0.9 
             }}
             style={{ zIndex: isSelected ? 10 : 1 }}
@@ -143,18 +142,18 @@ export default function DayPill({
           >
             {/* Main Content */}
             <div className="text-center">
-              <div className={`text-xs font-medium text-gray-600 uppercase tracking-wide ${large ? 'text-[10px]' : ''}`}>
+              <div className={`font-medium text-gray-600 uppercase tracking-wide ${isSelected ? (large ? 'text-xs' : 'text-xs') : (large ? 'text-[10px]' : 'text-xs')}`}>
                 {weekday}
               </div>
-              <div className={`font-bold mt-1 ${large ? 'text-xl' : 'text-lg'} ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+              <div className={`font-bold mt-1 ${isSelected ? (large ? 'text-2xl' : 'text-xl') : (large ? 'text-xl' : 'text-lg')} ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                 {dayNumber}
               </div>
               
               {/* Availability Badge */}
-              <div className={`${large ? 'mt-3' : 'mt-2'}`}>
+              <div className={`${isSelected ? (large ? 'mt-4' : 'mt-3') : (large ? 'mt-3' : 'mt-2')}`}>
                 <Badge 
                   variant={getBadgeVariant()}
-                  className={`text-xs px-1.5 py-0.5 ${getBadgeColor()} ${large ? 'text-[10px]' : ''}`}
+                  className={`px-1.5 py-0.5 ${getBadgeColor()} ${isSelected ? (large ? 'text-xs' : 'text-xs') : (large ? 'text-[10px]' : 'text-xs')}`}
                 >
                   {totalSlots === 0 ? '0' : `${remaining}`}
                 </Badge>

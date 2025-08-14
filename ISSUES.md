@@ -4,12 +4,13 @@ This file tracks issues, technical debt, and any violations of the governance ru
 
 ## Active Issues 🔴
 
-### Timeline Accessibility Testing (August 14, 2025) - NEW
+### Timeline Accessibility Testing (August 14, 2025) - UPDATED
 - **Severity**: Low
 - **Description**: Comprehensive accessibility testing needed for timeline pill interactions
 - **Details**: 
-  - Fixed vertical clipping with overflow-y-visible
-  - Focus rings and hover shadows now visible
+  - Implemented layout-based pill sizing (no transform scaling)
+  - Pills properly centered with symmetric padding
+  - Focus rings and hover shadows fully visible with overflow-y-visible
   - Keyboard navigation working (arrow keys, Enter/Space)
 - **Impact**: Screen reader users and keyboard-only navigation
 - **Testing Required**: 
@@ -68,6 +69,18 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Compliance**: Blueprint Section 7 UX plan fully implemented with proper navigation flow
 
 ## Resolved Issues ✅
+
+### Timeline Pill Vertical Clipping (August 14, 2025) - RESOLVED
+- **Issue**: Selected day pills were being cut off at top/bottom due to CSS transform scaling
+- **Root Cause**: Using transform: scale() caused pills to extend beyond container bounds
+- **Resolution**: 
+  - Removed transform scale animations from DayPill component
+  - Implemented layout-based sizing using larger padding for selected pills (p-5 vs p-4)
+  - Increased font sizes for selected pills (text-2xl vs text-xl)
+  - Optimized container height to 120px with symmetric 16px vertical padding
+  - Maintained overflow-y-visible throughout container hierarchy
+- **Compliance**: Followed strict requirements for clean layout without transform overflow artifacts
+- **Status**: Pills now properly centered and never clipped, maintaining professional appearance
 
 ### LSP Diagnostics (August 14, 2025) - RESOLVED
 - **Issue**: Multiple TypeScript/Python LSP errors in backend and calendar features
