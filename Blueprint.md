@@ -46,6 +46,8 @@ Rules & Workflows (quotas, state machines) as JSON configs.
 
 Frontend: React (Vite) + TanStack Query + Tailwind. Feature flags for modules.
 
+Timeline Layout: Horizontal scroll with overflow-y-visible for focus rings/shadows visibility.
+
 Backend: FastAPI (Python) with asyncpg. (Node/Express alt OK; keep REST contracts.)
 
 DB: Supabase Postgres. Migrations in /infra. Optionally enable RLS later.
@@ -470,6 +472,15 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 ---
 
 ## Changelog
+
+### August 14, 2025 - Timeline Pill Vertical Clipping Fix
+- **fix:** Resolved vertical clipping of day pills in horizontal timeline scroller
+- **layout:** Changed DayTimeline overflow from `overflow-y-hidden` to `overflow-y-visible`
+- **spacing:** Added vertical padding (`py-2`) to timeline container for focus ring visibility
+- **height:** Increased container height to 92px to properly accommodate 72px pills with padding
+- **a11y:** Ensured keyboard focus outlines and hover shadows render fully visible
+- **containers:** Verified Card and CardContent components have no conflicting overflow-hidden
+- **behavior:** Preserved horizontal scroll snap behavior and navigation functionality
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan

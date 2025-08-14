@@ -4,19 +4,19 @@ This file tracks issues, technical debt, and any violations of the governance ru
 
 ## Active Issues 🔴
 
-### Dynamic Timeline Range Testing (August 14, 2025) - NEW
+### Timeline Accessibility Testing (August 14, 2025) - NEW
 - **Severity**: Low
-- **Description**: Dynamic range expansion needs comprehensive testing for edge cases
+- **Description**: Comprehensive accessibility testing needed for timeline pill interactions
 - **Details**: 
-  - EPOCH system implemented with today = index 0
-  - Range expansion logic working: ±30 initial, expands to ±2 years for far dates
-  - Need to verify jump-to-date functionality for extreme dates
-- **Impact**: Timeline navigation for dates far in future/past
+  - Fixed vertical clipping with overflow-y-visible
+  - Focus rings and hover shadows now visible
+  - Keyboard navigation working (arrow keys, Enter/Space)
+- **Impact**: Screen reader users and keyboard-only navigation
 - **Testing Required**: 
-  - Jump to dates 6+ months in future
-  - Jump to dates 6+ months in past  
-  - Verify virtualizer performance with large ranges
-  - Test centering behavior across all scenarios
+  - Test with screen readers (NVDA, JAWS, VoiceOver)
+  - Verify ARIA labels and roles are properly announced
+  - Confirm tab order and focus management
+  - Test high contrast mode compatibility
 
 ### Blueprint Implementation Verification (August 14, 2025) - NEW
 - **Severity**: Medium

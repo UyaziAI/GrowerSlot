@@ -325,7 +325,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
       <div
         ref={parentRef}
 
-        className="overflow-x-auto overflow-y-hidden h-[88px] flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
+        className="overflow-x-auto overflow-y-visible h-[92px] py-2 flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
@@ -355,7 +355,7 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             return (
               <div
                 key={virtualItem.key}
-                className="flex items-stretch h-full"
+                className="flex items-center h-full"
                 style={{
                   position: 'absolute',
                   top: 0,
