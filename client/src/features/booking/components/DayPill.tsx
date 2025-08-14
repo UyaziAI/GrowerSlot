@@ -122,7 +122,7 @@ export default function DayPill({
       onClick={onClick}
       onKeyDown={onKeyDown}
       aria-pressed={isSelected}
-      aria-label={`${weekday}, ${dayNumber}. ${totalSlots} slots, ${remaining} available`}
+      aria-label={totalSlots === 0 ? `${weekday}, ${dayNumber}. No slots defined` : `${weekday}, ${dayNumber}. ${totalSlots} slots, ${remaining} available`}
       data-testid={testId}
       style={{ zIndex: isSelected ? 10 : 1 }}
     >
@@ -143,7 +143,7 @@ export default function DayPill({
             ${getBadgeColor()}
           `}>
             <span className="truncate text-xs leading-none">
-              {totalSlots === 0 ? '0' : remaining > 999 ? '999+' : `${remaining}`}
+              {totalSlots === 0 ? '-' : remaining > 999 ? '999+' : `${remaining}`}
             </span>
           </div>
         </div>

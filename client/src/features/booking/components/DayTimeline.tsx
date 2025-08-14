@@ -56,11 +56,28 @@ interface DayTimelineRef {
 }
 
 // Get aggregates for a specific date with timezone normalization
-const getAggregatesForDate = (date: dayjs.Dayjs, slots: SlotWithUsage[]) => {
+const getAggregatesForDate = (date: dayjs.Dayjs, slots: SlotWithUsage[]): DayAggregates => {
   const dateStr = date.format('YYYY-MM-DD');
   const daySlots = slots.filter(slot => slot.date === dateStr);
   
   const totalSlots = daySlots.length;
+  
+  // If no slots exist for this date, return empty state (no availability data)
+  if (totalSlots === 0) {
+    return {
+      totalSlots: 0,
+      capacityTotal: 0,
+      bookedTotal: 0,
+      remaining: 0,
+      utilizationPct: 0,
+      hasBlackouts: false,
+      hasRestrictions: false,
+      hasNotes: false,
+      firstSlotTime: null,
+      availabilityLevel: 'grey'
+    };
+  }
+  
   const capacityTotal = daySlots.reduce((sum, slot) => sum + parseInt(slot.capacity), 0);
   const bookedTotal = daySlots.reduce((sum, slot) => sum + (parseInt(slot.capacity) - (slot.remaining ?? parseInt(slot.capacity))), 0);
   const remaining = daySlots.reduce((sum, slot) => sum + (slot.remaining ?? parseInt(slot.capacity)), 0);
@@ -73,11 +90,11 @@ const getAggregatesForDate = (date: dayjs.Dayjs, slots: SlotWithUsage[]) => {
   const hasNotes = daySlots.some(slot => slot.notes);
   const firstSlotTime = daySlots.length > 0 ? daySlots[0].startTime : null;
   
-  // Availability threshold calculation
+  // Availability threshold calculation only for days with actual slots
   const availabilityPct = capacityTotal > 0 ? Math.round((remaining / capacityTotal) * 100) : 0;
   let availabilityLevel: 'green' | 'amber' | 'red' | 'grey';
   
-  if (hasBlackouts || totalSlots === 0) {
+  if (hasBlackouts) {
     availabilityLevel = 'grey';
   } else if (availabilityPct >= 50) {
     availabilityLevel = 'green';

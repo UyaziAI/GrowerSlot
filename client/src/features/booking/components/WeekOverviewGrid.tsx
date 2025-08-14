@@ -52,28 +52,29 @@ export default function WeekOverviewGrid({
     const weekDates = generateWeekDates(anchorDate);
     const summaries: Record<string, DaySummary> = {};
 
-    // Initialize summaries for all 7 days
-    weekDates.forEach(date => {
-      const dateObj = new Date(date);
-      summaries[date] = {
-        date,
-        weekday: dateObj.toLocaleDateString('en', { weekday: 'short' }),
-        totalSlots: 0,
-        totalCapacity: 0,
-        booked: 0,
-        remaining: 0,
-        utilization: 0,
-        hasBlackout: false,
-        hasRestrictions: false,
-        earliestTime: undefined,
-        notes: undefined
-      };
-    });
-
-    // Aggregate slot data
+    // Do NOT initialize summaries for days without slots - only process backend data
+    
+    // Aggregate slot data from backend only
     slotsData.forEach(slot => {
       const slotDate = slot.date.toString();
-      if (!summaries[slotDate]) return;
+      
+      // Only create summary if slot exists in backend
+      if (!summaries[slotDate]) {
+        const dateObj = new Date(slotDate);
+        summaries[slotDate] = {
+          date: slotDate,
+          weekday: dateObj.toLocaleDateString('en', { weekday: 'short' }),
+          totalSlots: 0,
+          totalCapacity: 0,
+          booked: 0,
+          remaining: 0,
+          utilization: 0,
+          hasBlackout: false,
+          hasRestrictions: false,
+          earliestTime: undefined,
+          notes: undefined
+        };
+      }
 
       const summary = summaries[slotDate];
       const capacity = Number(slot.capacity) || 0;

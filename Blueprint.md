@@ -473,7 +473,7 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Sticky Month Header with Dynamic Updates and Removed Desktop Tooltips
+### August 14, 2025 - Data Integrity Fix: Backend-Only Slot Rendering
 - **design:** Increased pill size to w-[84px] h-[84px] with flex-shrink-0 to accommodate longer labels like "155.5"
 - **content:** Removed info icons from pills, expanded badge sizes (max-w-[56px]), clean day/date/availability display only
 - **sticky header:** Implemented horizontally scrollable sticky month header (32px height) with dynamic month updates
@@ -481,13 +481,16 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 - **update triggers:** Header updates on initial render, during mouse/touch momentum scrolling, and after programmatic centering
 - **header features:** Full viewport width, background matching card, bold uppercase text, subtle bottom border
 - **tooltips:** Removed desktop hover tooltips since sticky month header provides context, preserved aria-label accessibility
+- **data integrity:** Fixed phantom availability - pills now show "-" for dates with no backend slots (totalSlots === 0)
+- **aggregation:** Modified getAggregatesForDate() to return proper empty state for undefined dates, no placeholder data
+- **week overview:** Fixed WeekOverviewGrid to only render days with actual database slots, no scaffolding for empty dates
 - **selection:** Selected pills distinguished by visual highlight only (border-blue-500, bg-blue-50, ring-2) without size changes
 - **scaling:** Removed all transform scaling (whileHover, whileTap, animate scale) to prevent vertical clipping
 - **today:** Today indicator maintained as subtle dot overlay without affecting pill dimensions
 - **centering:** Enhanced centerOnDate() with scrollIntoView({ inline: 'center' }), month header updates after centering
 - **compact layout:** Reduced rail padding to 8px for snug fit while accommodating sticky header
 - **container:** Final dimensions - ITEM_TRACK (98px), RAIL_MIN_HEIGHT (114px), total with header (146px)
-- **accessibility:** Screen reader announcements for month changes (aria-live="polite"), comprehensive aria-label for pills
+- **accessibility:** Enhanced aria-label for pills - "No slots defined" vs availability info, screen reader month announcements
 - **constants:** Complete sizing - PILL_SIZE(84) + RAIL(114px) + MONTH_HEADER(32px) = 146px total height
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
