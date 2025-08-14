@@ -143,6 +143,12 @@ export default function AdminSlotsPage() {
     setSelectedDate(new Date());
   };
 
+  // Handle day card click in week view - navigate to day view
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(new Date(date));
+    setViewMode('day');
+  };
+
   const handleBulkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     bulkCreateMutation.mutate(bulkForm);
@@ -351,6 +357,7 @@ export default function AdminSlotsPage() {
                     viewMode={viewMode}
                     selectedDate={selectedDate}
                     onSlotClick={handleSlotClick}
+                    onDateSelect={handleDateSelect}
                     className="w-full"
                   />
                 )}

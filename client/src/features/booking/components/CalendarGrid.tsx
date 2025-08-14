@@ -1,6 +1,6 @@
 /**
  * Calendar-style slot layout with Day and Week views
- * Inspired by Playtomic's time-grid booking UI
+ * Week view now uses WeekOverviewGrid with day cards per Blueprint Section 7
  */
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,12 +10,14 @@ import { Progress } from "@/components/ui/progress";
 import { Lock, AlertTriangle, Clock, User } from "lucide-react";
 import { SlotWithUsage } from "@shared/schema";
 import { getTimeSegments } from "../hooks/useSlotsRange";
+import WeekOverviewGrid from './WeekOverviewGrid';
 
 interface CalendarGridProps {
   slots: SlotWithUsage[];
   viewMode: 'day' | 'week';
   selectedDate: Date;
   onSlotClick?: (slot: SlotWithUsage) => void;
+  onDateSelect?: (date: string) => void; // For week view day card navigation
   className?: string;
 }
 
@@ -171,6 +173,7 @@ export default function CalendarGrid({
   viewMode, 
   selectedDate, 
   onSlotClick, 
+  onDateSelect,
   className = "" 
 }: CalendarGridProps) {
   const timeSegments = getTimeSegments(6, 20, 30); // 6 AM to 8 PM, 30-min segments
@@ -251,7 +254,26 @@ export default function CalendarGrid({
     );
   }
 
-  // Week view with time grid
+  // Week view with day cards (replaces hourly time grid)
+  if (viewMode === 'week') {
+    // Calculate start of week (Sunday) for anchor date
+    const startOfWeek = new Date(selectedDate);
+    const dayOfWeek = startOfWeek.getDay();
+    startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
+
+    return (
+      <div className={`calendar-grid-week ${className}`} data-testid="calendar-grid-week">
+        <WeekOverviewGrid
+          anchorDate={startOfWeek}
+          slots={slots}
+          onSelectDate={onDateSelect || (() => {})}
+          className="w-full"
+        />
+      </div>
+    );
+  }
+
+  // This should not be reached as we handle both day and week above
   return (
     <div className={`calendar-grid-week ${className}`} data-testid="calendar-grid-week">
       <div className="overflow-x-auto">

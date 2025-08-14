@@ -77,6 +77,12 @@ export default function CalendarPage() {
     setIsBookingModalOpen(true);
   };
 
+  // Handle day card click in week view - navigate to day view
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(new Date(date));
+    setViewMode('day');
+  };
+
   // Calculate summary stats
   const totalSlots = slots.length;
   const availableSlots = slots.filter((slot: SlotWithUsage) => !slot.blackout && (slot.remaining ?? 0) > 0).length;
@@ -216,6 +222,7 @@ export default function CalendarPage() {
                 viewMode={viewMode}
                 selectedDate={selectedDate}
                 onSlotClick={handleBookSlot}
+                onDateSelect={handleDateSelect}
                 className="w-full"
               />
             )}

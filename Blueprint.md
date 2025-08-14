@@ -469,14 +469,15 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ## Changelog
 
-### August 14, 2025 - Week View Implementation Complete
-- **feat:** Implemented fully functional Day/Week calendar toggle as required by MVP
-- **fix:** Week view button now visible and operational across all calendar interfaces
-- **implementation:** 7-day grid layout with time-axis, start-of-week date calculations
-- **compliance:** Blueprint Sections 1.3, 7, 12 requirement for Day/Week availability views fulfilled
-- **frontend:** Both admin and grower calendars support Day/Week view switching
-- **verification:** Calendar grid correctly switches between single-day and multi-day layouts
-- **quality:** Fixed grower dashboard schema issues, maintained backward compatibility
+### August 14, 2025 - Week Overview UX Implementation Complete
+- **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan
+- **components:** Created WeekOverviewGrid and DayCard components with responsive layouts
+- **navigation:** Implemented click-to-navigate from week day cards to detailed Day view
+- **design:** Color-coded availability badges (Green ≥50%, Amber 20-49%, Red <20%, Grey no capacity)
+- **responsive:** Desktop 7-col, tablet 3-4 col, mobile 2-col layouts with proper accessibility
+- **integration:** Updated all calendar pages (calendar-page, admin-dashboard, admin-slots) with new onDateSelect
+- **compliance:** Fulfilled Blueprint Section 7 requirement for improved Week Overview UX
+- **quality:** Maintained backward compatibility, proper navigation flow, comprehensive tooltips
 
 ### August 14, 2025 - Blueprint Verification & Implementation Review  
 - **verification:** Completed comprehensive repository verification against blueprint specifications
