@@ -325,9 +325,11 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
       <div
         ref={parentRef}
 
-        className="overflow-x-auto overflow-y-visible py-4 flex items-stretch [-webkit-overflow-scrolling:touch] scrollbar-hide"
+        className="overflow-x-auto overflow-y-visible flex items-center [-webkit-overflow-scrolling:touch] scrollbar-hide"
         style={{
-          minHeight: '120px',
+          height: '120px',
+          paddingTop: '16px',
+          paddingBottom: '16px',
           scrollSnapType: 'x mandatory',
           overscrollBehaviorX: 'contain',
           overscrollBehaviorY: 'none'
@@ -338,9 +340,9 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
         aria-label="Day timeline"
       >
         <div
-          className="overflow-visible relative"
+          className="overflow-visible relative flex items-center"
           style={{
-            height: '100%',
+            height: '88px',
             width: `${virtualizer.getTotalSize()}px`,
             position: 'relative',
             zIndex: 1
@@ -357,19 +359,19 @@ const DayTimeline = forwardRef<DayTimelineRef, DayTimelineProps>(({
             return (
               <div
                 key={virtualItem.key}
-                className="flex items-center h-full overflow-visible"
+                className="flex items-center justify-center overflow-visible"
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   width: `${virtualItem.size}px`,
-                  height: '100%',
+                  height: '88px',
                   transform: `translateX(${virtualItem.start}px)`
                 }}
               >
                 <div
-                  className="flex items-center justify-center px-2 overflow-visible relative"
-                  style={{ minHeight: '120px', zIndex: 1 }}
+                  className="overflow-visible relative flex items-center justify-center"
+                  style={{ zIndex: 1 }}
                 >
                   <DayPill
                     date={date.toDate()}
