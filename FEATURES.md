@@ -87,6 +87,12 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Feature flag: VITE_FEATURE_NEXT_AVAILABLE
   - Implementation: POST /v1/slots/next-available endpoint, NextAvailableDialog component with slot jump functionality
 
+- **Slot restrictions UI** (August 15, 2025)
+  - Status: ✅ Implemented - B13 Frontend complete
+  - Scope: Admin interface for applying grower/cultivar restrictions to slots/days/weeks
+  - Implementation: RestrictionsDialog component with scope selection, multi-select growers/cultivars, POST /v1/restrictions/apply integration
+  - Features: Slot/day/week scope selection, error handling for 403/409, grid refresh after success
+
 - **Week view calendar** (August 14, 2025)
   - Status: 🔄 Week Overview implementation complete - kept in In-Progress per task requirements
   - Location: `/app/frontend/src/features/booking/components/WeekOverviewGrid.tsx`
@@ -149,11 +155,6 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Priority: High
   - Scope: Booking confirmations, cancellation emails
   - Estimated effort: 1-2 days
-
-- **Slot restrictions UI** - Backend implemented, needs frontend
-  - Priority: Medium  
-  - Location: Backend at `/app/backend/routers/restrictions.py`
-  - Scope: Admin interface for grower/cultivar restrictions
 
 
 

@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield, Move } from "lucide-react";
 import InspectorPanel from "./InspectorPanel";
 import NextAvailableDialog from "@/components/NextAvailableDialog";
+import RestrictionsDialog from "@/components/RestrictionsDialog";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, useDraggable, useDroppable, DragOverlay } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useLocation } from "wouter";
@@ -929,18 +930,15 @@ export default function AdminDashboard() {
                   Blackout
                 </Button>
 
-                {/* Restrictions Button */}
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => {
-                    toast({ title: "Restrictions", description: "Restrictions functionality not yet implemented" });
+                {/* Restrictions Dialog */}
+                <RestrictionsDialog
+                  selectedDate={dayjs(selectedDate).format('YYYY-MM-DD')}
+                  onSuccess={() => {
+                    // Refresh slots after restrictions are applied
+                    queryClient.invalidateQueries({ queryKey: ['slots'] });
+                    queryClient.invalidateQueries({ queryKey: ['slotsRange'] });
                   }}
-                  data-testid="restrictions-button"
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Restrictions
-                </Button>
+                />
 
                 {/* Next Available Dialog - Feature Gated */}
                 <NextAvailableDialog

@@ -24,16 +24,16 @@ async def apply_restrictions(
     if restriction.slot_id:
         # Apply to specific slot
         slot_ids = [restriction.slot_id]
-    elif restriction.date:
+    elif restriction.restriction_date:
         # Apply to all slots on a specific date
         date_query = """
             SELECT id FROM slots WHERE tenant_id = $1 AND date = $2
         """
         from ..db import execute_query
-        slots = await execute_query(date_query, uuid.UUID(tenant_id), restriction.date)
+        slots = await execute_query(date_query, uuid.UUID(tenant_id), restriction.restriction_date)
         slot_ids = [str(slot['id']) for slot in slots]
     else:
-        return {"message": "Either slot_id or date must be specified"}
+        return {"message": "Either slot_id or restriction_date must be specified"}
     
     # Create restriction records
     for slot_id in slot_ids:
