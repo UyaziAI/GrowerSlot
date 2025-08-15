@@ -139,20 +139,7 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Admin Tools: Added /admin/slots page with bulk creation, editing, blackout controls
   - Verification: Week overview cards working, navigation functional, responsive design
 
-- **Admin Calendar System** (August 15, 2025)
-  - Status: 🔄 In-Progress  
-  - Location: `/client/src/pages/admin-dashboard.tsx`
-  - Scope: Inspector panel ✅ Implemented, drag-drop ✅ Implemented, templates ✅ Apply-Template publish transaction
-  - Inspector panel: Right-hand panel shows slot details, blackout toggle, restrictions dialog
-  - API integration: PATCH /v1/slots/{id}/blackout, POST /v1/restrictions/apply
-  - Cache invalidation: Proper query invalidation after operations
-  - Drag-drop bookings: Real DnD using @dnd-kit/core, calls PATCH /v1/bookings/{id}
-  - Error handling: 403/409 show toast with server message, refetch for revert effect
-  - No optimistic updates: Only update UI after successful API response
-  - Template publishing: Transactional publish_plan with update-then-insert pattern
-  - Idempotency guaranteed: UPDATE WHERE (tenant_id, date, start_time, end_time), if rowcount==0 then INSERT
-  - Atomicity: All operations in single transaction, prevents partial writes on errors
-  - Reference: Admin_Addendum.md
+
 
 ## Known Gaps / Missing Features ❌
 
