@@ -80,6 +80,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Artifacts: Screenshots, videos, test reports with 30-day retention
   - Database: 5 migration files (001-104) with full schema setup and audit system
 
+- **B21 Feature-flag rollout checklist** (August 15, 2025)
+  - Status: ✅ Release checklist and rollout plan completed
+  - Location: `RELEASE_CHECKLIST.md`, updated `FEATURES.md`
+  - Flags: `VITE_FEATURE_ADMIN_TEMPLATES`, `VITE_FEATURE_NEXT_AVAILABLE` (default: false)
+  - Rollout: Staged deployment plan with smoke tests and rollback procedures
+  - Safety: Additive-only migrations, feature isolation, immediate rollback capability
+
 - **CSV Export (B16)** (August 15, 2025)
   - Status: ✅ Implemented and tested
   - Location: `/app/frontend/src/pages/admin-dashboard.tsx`

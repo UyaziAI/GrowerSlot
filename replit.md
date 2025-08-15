@@ -53,6 +53,9 @@ Preferred communication style: Simple, everyday language.
 - **Admin Calendar**: Comprehensive CRUD interface for slots and bookings (Month/Week/Day views).
 - **Role-Based Access Control (RBAC)**: Differentiates between admin and grower functionalities.
 - **Logistics Tracking**: Support for consignments and checkpoints for delivery tracking.
+- **Feature Flag System**: Staged rollout capabilities with environment-based configuration.
+- **CI/CD Pipeline**: Automated testing with GitHub Actions, PostgreSQL services, and artifact collection.
+- **Audit Trail**: Comprehensive logging system for compliance and administrative tracking.
 
 ## External Dependencies
 
