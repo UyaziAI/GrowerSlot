@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, X, Check } from 'lucide-react';
+import { fetchWithVerbatimErrors } from '../lib/http';
 import { useToast } from '@/hooks/use-toast';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
@@ -108,8 +109,8 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
     },
     onError: (error: any) => {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create slots',
+        title: 'Error', 
+        description: error.message,
         variant: 'destructive'
       });
     }
@@ -134,7 +135,7 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to apply blackout');
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
       return response.json();
     },
@@ -148,11 +149,10 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
       onDone();
     },
     onError: (error: any) => {
-      const errorMessage = error.message || 'Failed to apply blackout';
-      setApiError(errorMessage);
+      setApiError(error.message);
       toast({
         title: 'Error',
-        description: errorMessage,
+        description: error.message,
         variant: 'destructive'
       });
     }

@@ -57,9 +57,11 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 - Missing: Comprehensive form-level min attributes, server-side validation verification
 
 ### Verbatim error surfacing (422/403/409)
-❌ **Missing**: No evidence of structured error handling
-- Current: Generic toast messages like `'Failed to fetch slots'` at line 50
-- Required: Direct `json.error` display from server responses per spec
+✅ **Working**: Comprehensive verbatim error handling implemented
+- Evidence: fetchJson utility in `lib/http.ts` extracts exact server error messages
+- Implementation: AdminPage:52, BulkBar:141, all admin components use error.message directly
+- Test coverage: `admin_error_handling.spec.tsx` validates 422/403/409 verbatim display
+- **API Compliance**: Displays exact server `json.error` content without prefixes or fallbacks
 
 ### No-fabrication guarantee (render only GET /v1/slots data)
 ✅ **Working**: Code uses correct API endpoint and renders only backend data
@@ -126,15 +128,15 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 ### Missing test coverage
 - 42-cell month view guarantee tests
 - ✅ API endpoint compliance verification: `admin_api_compliance.spec.tsx`
+- ✅ Verbatim error message display: `admin_error_handling.spec.tsx`
 - Feature flag behavior validation
 - Blackout visual indicator tests
-- Error message verbatim display tests
 
 ## 8) What's Left To Do (actionable backlog)
 
 ### Critical API Compliance
 1. ✅ **Fixed slot fetching endpoint**: Changed `/v1/slots/range` to `/v1/slots?start=X&end=Y` in AdminPage:47, client.ts:70, useSlotsRange.ts:22
-2. **Implement verbatim error display**: Replace generic error messages with `json.error` content
+2. ✅ **Implemented verbatim error display**: Created fetchJson utility in lib/http.ts, updated AdminPage:52, BulkBar, all admin dialogs
 3. **Add feature flag gates**: Integrate `VITE_FEATURE_ADMIN_TEMPLATES` and `VITE_FEATURE_NEXT_AVAILABLE`
 
 ### UI Completeness  
@@ -179,7 +181,7 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 
 ### Priority 1 (Critical - API Compliance) 
 1. ✅ **Fixed `/v1/slots` endpoint usage** - Completed across AdminPage, client.ts, useSlotsRange.ts with test coverage
-2. **Implement error message passthrough** - Replace all generic error strings with server responses
+2. ✅ **Implemented error message passthrough** - Created lib/http.ts utility, updated all admin components, added test coverage
 3. **Add feature flag checks** - Gate template and next-available features properly
 
 ### Priority 2 (UI Completeness) 

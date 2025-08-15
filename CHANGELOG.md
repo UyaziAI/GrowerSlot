@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **2025-08-15**: API compliance P1.2 — Implemented verbatim 4xx error handling via lib/http.ts utility. AdminPage, BulkBar now display exact server error messages. Added admin_error_handling.spec.tsx test coverage.
 - **2025-08-15**: API compliance P1.1 — Fixed /v1/slots endpoint usage across AdminPage:47, client.ts:70, useSlotsRange.ts:22. Now uses spec-compliant `/v1/slots?start&end` format. Added admin_api_compliance.spec.tsx test coverage.
 
 ### Documentation

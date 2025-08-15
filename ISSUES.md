@@ -92,7 +92,7 @@
 #### API Endpoint Violations
 - [x] **Fix slot fetching endpoint**: Changed `/v1/slots/range?start&end` to `/v1/slots?start&end` in AdminPage:47, client.ts:70, useSlotsRange.ts:22
 - [ ] **Standardize blackout endpoints**: Ensure all blackout operations use spec-compliant format
-- [ ] **Error message passthrough**: Replace generic toast messages with verbatim `json.error` display
+- [x] **Error message passthrough**: Created lib/http.ts utility, updated AdminPage:52, BulkBar for verbatim `json.error` display
 
 #### Feature Flag Integration Required  
 - [ ] **Template functionality gating**: Implement `VITE_FEATURE_ADMIN_TEMPLATES=false` checks

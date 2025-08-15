@@ -5,6 +5,7 @@ import DayPeekSheet, { DayPeekSummary } from './DayPeekSheet';
 import DayEditorSheet from './DayEditorSheet';
 import { BulkBar } from './BulkBar';
 import { SlotSheet } from './SlotSheet';
+import { fetchJson } from '../lib/http';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
@@ -41,13 +42,10 @@ export default function AdminPage() {
                      view === 'week' ? format(endOfWeek(parseISO(focusedDate)), 'yyyy-MM-dd') :
                      format(endOfMonth(parseISO(focusedDate)), 'yyyy-MM-dd');
       
-      const res = await fetch(`/v1/slots?start=${startDate}&end=${endDate}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSlots(data.slots || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch slots:', error);
+      const data = await fetchJson(`/v1/slots?start=${startDate}&end=${endDate}`);
+      setSlots(data.slots || []);
+    } catch (error: any) {
+      toast({ description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -257,41 +255,29 @@ export default function AdminPage() {
           }}
           onBlackoutDay={async () => {
             try {
-              const res = await fetch('/v1/slots/blackout', {
+              await fetchJson('/v1/slots/blackout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dates: [peek.dateISO] })
               });
-              if (!res.ok) {
-                const json = await res.json();
-                toast({ description: json.error, variant: 'destructive' });
-              } else {
-                await fetchSlots();
-                setPeek(null);
-              }
-            } catch (error) {
-              toast({ description: 'Failed to blackout day', variant: 'destructive' });
+              await fetchSlots();
+              setPeek(null);
+            } catch (error: any) {
+              toast({ description: error.message, variant: 'destructive' });
             }
           }}
           onRestrictDay={async () => {
             try {
-              const res = await fetch('/v1/restrictions/apply', {
+              await fetchJson('/v1/restrictions/apply', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                   dates: [peek.dateISO],
                   scope: 'day'
                 })
               });
-              if (!res.ok) {
-                const json = await res.json();
-                toast({ description: json.error, variant: 'destructive' });
-              } else {
-                await fetchSlots();
-                setPeek(null);
-              }
-            } catch (error) {
-              toast({ description: 'Failed to restrict day', variant: 'destructive' });
+              await fetchSlots();
+              setPeek(null);
+            } catch (error: any) {
+              toast({ description: error.message, variant: 'destructive' });
             }
           }}
           onOpenEditor={() => {
@@ -311,29 +297,22 @@ export default function AdminPage() {
         <DayEditorSheet
           dateISO={editDay}
           onClose={() => setEditDay(null)}
-          onToggleBlackout={async (next) => {
+          onToggleBlackout={async () => {
             try {
-              const res = await fetch('/v1/slots/blackout', {
-                method: next ? 'POST' : 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
+              await fetchJson('/v1/slots/blackout', {
+                method: 'POST',
                 body: JSON.stringify({ dates: [editDay] })
               });
-              if (!res.ok) {
-                const json = await res.json();
-                toast({ description: json.error, variant: 'destructive' });
-              } else {
-                await fetchSlots();
-              }
-            } catch (error) {
-              toast({ description: 'Failed to toggle blackout', variant: 'destructive' });
+              await fetchSlots();
+            } catch (error: any) {
+              toast({ description: error.message, variant: 'destructive' });
             }
           }}
           onQuickCreate={async (params) => {
             try {
               const dayOfWeek = format(parseISO(editDay), 'EEEE').toLowerCase();
-              const res = await fetch('/v1/slots/bulk', {
+              await fetchJson('/v1/slots/bulk', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   ...params,
                   start_date: editDay,
@@ -341,19 +320,10 @@ export default function AdminPage() {
                   weekdays: [dayOfWeek]
                 })
               });
-              if (!res.ok) {
-                const json = await res.json();
-                if (res.status === 422) {
-                  toast({ description: json.error, variant: 'destructive' });
-                } else {
-                  toast({ description: json.error || 'Failed to create slots', variant: 'destructive' });
-                }
-              } else {
-                await fetchSlots();
-                setEditDay(null);
-              }
-            } catch (error) {
-              toast({ description: 'Failed to create slots', variant: 'destructive' });
+              await fetchSlots();
+              setEditDay(null);
+            } catch (error: any) {
+              toast({ description: error.message, variant: 'destructive' });
             }
           }}
         />
