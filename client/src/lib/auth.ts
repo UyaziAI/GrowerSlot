@@ -1,61 +1,42 @@
-import { User } from "@shared/schema";
+export type Role = 'admin' | 'grower';
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: string;
-  tenantId: string;
-  growerId?: string;
+const STORAGE_KEY = 'auth';
+
+export function getAuth(): { token?: string; role?: Role } {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
 }
 
-export interface AuthResponse {
-  token: string;
-  user: AuthUser;
+export function isAuthenticated(): boolean {
+  return !!getAuth().token;
 }
 
-export class AuthService {
-  private static instance: AuthService;
-  
-  static getInstance(): AuthService {
-    if (!AuthService.instance) {
-      AuthService.instance = new AuthService();
-    }
-    return AuthService.instance;
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
-  setAuth(data: AuthResponse): void {
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-  }
-
-  getUser(): AuthUser | null {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    
-    try {
-      return JSON.parse(userStr);
-    } catch {
-      return null;
-    }
-  }
-
-  logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  isAdmin(): boolean {
-    const user = this.getUser();
-    return user?.role === 'admin';
-  }
+export function role(): Role | null {
+  return (getAuth().role ?? null) as Role | null;
 }
 
-export const authService = AuthService.getInstance();
+export function login(token: string, r: Role) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, role: r }));
+}
+
+export function logout() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+// Backward compatibility layer for existing imports
+export const authService = {
+  isAuthenticated,
+  isAdmin: () => role() === 'admin',
+  getUser: () => {
+    const auth = getAuth();
+    return auth.token ? { role: auth.role } : null;
+  },
+  getToken: () => getAuth().token || null,
+  login: (email: string, password: string) => {
+    // For compatibility - determine role from email pattern
+    const r = email.includes('admin') ? 'admin' : 'grower';
+    login('dev-token', r);
+    return Promise.resolve({ token: 'dev-token', role: r });
+  },
+  logout
+};

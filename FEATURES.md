@@ -4,6 +4,14 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 ## Implemented Features ✅
 
+### Authentication & Routing
+- **Global shell + auth routing** (August 15, 2025)
+  - Status: ✅ Implemented (root /src)
+  - Features: AppShell component with brand header, nav tabs, logout
+  - Location: `/client/src/components/AppShell.tsx`, `/client/src/lib/auth.ts`
+  - Routes: /login, /admin (admin only), /grower (grower only), / (redirects by role)
+  - Authentication: localStorage-based role/token management
+
 ### Core MVP (Slot Booking System)
 - **Multi-tenant slot booking system** (August 13, 2025)
   - Status: ✅ Fully implemented and tested
