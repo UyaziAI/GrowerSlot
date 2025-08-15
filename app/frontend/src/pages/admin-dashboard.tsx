@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Ban, Mail, Download, BarChart3 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban, Mail, Download, BarChart3, Calendar, Grid } from "lucide-react";
 import TopNavigation from "@/components/top-navigation";
 import SlotCard from "@/components/slot-card";
+import CalendarMonth from "@/features/booking/components/CalendarMonth";
 import { api } from "@/lib/api";
 import { authService } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,7 @@ import { SlotWithUsage } from "@shared/schema";
 
 export default function AdminDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [viewMode, setViewMode] = useState<'list' | 'month'>('list');
   const [bulkForm, setBulkForm] = useState({
     startDate: '',
     endDate: '',
@@ -30,9 +32,12 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const user = authService.getUser();
 
+  // Query tuning for month view with optimized caching
   const { data: slots = [], isLoading: slotsLoading } = useQuery<SlotWithUsage[]>({
-    queryKey: ["/v1/slots", selectedDate],
+    queryKey: ["slots", user?.tenantId, selectedDate],
     queryFn: () => api.getSlots(selectedDate),
+    staleTime: 15_000, // 15 seconds
+    gcTime: 5 * 60_000, // 5 minutes garbage collection
   });
 
   const { data: stats } = useQuery({
@@ -243,49 +248,103 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Today's Slots Management */}
+                {/* Slot Management with View Toggle */}
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>Today's Slots</CardTitle>
+                      <CardTitle>Slot Management</CardTitle>
                       <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDateChange('prev')}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm text-gray-600 font-medium">
-                          {formatDate(selectedDate)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDateChange('next')}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                        {/* View Mode Toggle */}
+                        <div className="flex items-center space-x-2 border rounded-md p-1">
+                          <Button
+                            variant={viewMode === 'list' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('list')}
+                            data-testid="toggle-list-view"
+                          >
+                            <Grid className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant={viewMode === 'month' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('month')}
+                            data-testid="toggle-month-view"
+                          >
+                            <Calendar className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Date Navigation (only for list view) */}
+                        {viewMode === 'list' && (
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDateChange('prev')}
+                              data-testid="button-prev-date"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm text-gray-600 font-medium">
+                              {formatDate(selectedDate)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDateChange('next')}
+                              data-testid="button-next-date"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {slotsLoading ? (
-                        <div className="text-center py-4 text-gray-500">Loading...</div>
-                      ) : slots.length === 0 ? (
-                        <div className="text-center py-4 text-gray-500">No slots for this date</div>
-                      ) : (
-                        slots.map((slot) => (
-                          <SlotCard
-                            key={slot.id}
-                            slot={slot}
-                            onToggleBlackout={handleToggleBlackout}
-                            isAdmin={true}
-                          />
-                        ))
-                      )}
-                    </div>
+                    {viewMode === 'list' ? (
+                      <div className="space-y-4">
+                        {slotsLoading ? (
+                          <div className="text-center py-4 text-gray-500">Loading...</div>
+                        ) : slots.length === 0 ? (
+                          <div className="text-center py-4 text-gray-500">No slots for this date</div>
+                        ) : (
+                          slots.map((slot) => (
+                            <SlotCard
+                              key={slot.id}
+                              slot={slot}
+                              onToggleBlackout={handleToggleBlackout}
+                              isAdmin={true}
+                            />
+                          ))
+                        )}
+                      </div>
+                    ) : (
+                      <CalendarMonth
+                        slots={slots.map(slot => ({
+                          id: slot.id,
+                          date: slot.date || selectedDate,
+                          start_time: slot.startTime || '08:00',
+                          end_time: slot.endTime || '17:00',
+                          capacity: slot.capacity || 0,
+                          blackout: slot.blackout || false,
+                          usage: {
+                            capacity: slot.capacity || 0,
+                            booked: slot.usage?.booked || 0,
+                            remaining: slot.usage?.remaining || slot.capacity || 0
+                          },
+                          restrictions: slot.restrictions || {}
+                        }))}
+                        selectedDate={new Date(selectedDate)}
+                        onDateSelect={(date) => setSelectedDate(date.toISOString().split('T')[0])}
+                        onSlotClick={(slot) => {
+                          console.log('Slot clicked:', slot);
+                          // Handle slot click for editing
+                        }}
+                        isLoading={slotsLoading}
+                        className="min-h-[600px]"
+                      />
+                    )}
                   </CardContent>
                 </Card>
               </div>
