@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- **2025-08-15**: Admin authentication (complete) — Eliminated "Access token required" popup by replacing all unauthenticated fetch() calls with authenticated fetchJson() in BulkBar.tsx (4 mutations), DayEditorSheet.tsx (3 mutations), SlotSheet.tsx (1 mutation), and AdminPage.tsx. Bearer token headers now included in all admin API calls.
+- **2025-08-15**: Admin authentication enforcement (global) — Eliminated "Access token required" popup by implementing enforceAuthentication() function in app/frontend/src/lib/http.ts that validates auth state before every API call. All admin operations (initial load, view switches, sheets, bulk actions) now use global auth enforcement with automatic redirect on auth failure.
 - **2025-08-15**: Test coverage P3.1 — Comprehensive test pack: admin_api_compliance.spec.tsx (/v1/ endpoints), admin_error_handling.spec.tsx (verbatim 4xx messages), admin_accessibility.spec.tsx (ARIA, 44px targets), admin_feature_flags.spec.tsx (template gating). Complete Quality Assurance coverage.
 - **2025-08-15**: UI completeness P2.4 — Implemented day view timeline and mobile FAB in AdminPage:295-480. Desktop timeline supports drag-to-create (6AM-8PM), mobile FAB with form inputs. Added admin_day_view.spec.tsx test coverage.
 - **2025-08-15**: UI completeness P2.3 — Implemented week view slot ribbons in AdminPage:165-243. Color-coded ribbons show capacity/time data, ⛔ blackout, 🔒 restriction indicators. Added admin_week_view.spec.tsx test coverage.

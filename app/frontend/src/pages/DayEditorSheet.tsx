@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../components/ui/sheet';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Switch } from '../components/ui/switch';
+import { Badge } from '../components/ui/badge';
+import { Separator } from '../components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, Trash2, AlertTriangle } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '../hooks/use-toast';
+import { fetchJson } from '../lib/http';
 
 // Feature flags
 const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
@@ -22,6 +23,7 @@ const FEATURE_NEXT_AVAILABLE = import.meta.env.VITE_FEATURE_NEXT_AVAILABLE === '
 
 interface DayEditorSheetProps {
   dateISO: string;
+  isOpen: boolean;
   onClose: () => void;
   onToggleBlackout?: () => void;
   onQuickCreate?: (params: any) => void;
@@ -42,7 +44,7 @@ interface QuickCreateForm {
   notes: string;
 }
 
-export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQuickCreate }: DayEditorSheetProps) {
+export default function DayEditorSheet({ dateISO, isOpen, onClose, onToggleBlackout, onQuickCreate }: DayEditorSheetProps) {
   const [quickCreateForm, setQuickCreateForm] = useState<QuickCreateForm>({
     slot_length_min: 60,
     capacity: 20,
@@ -90,8 +92,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Quick create slot mutation
   const quickCreateMutation = useMutation({
     mutationFn: async (formData: QuickCreateForm) => {
-      const { fetchJson } = await import('../lib/http');
-      
       return await fetchJson('/v1/slots/bulk', {
         method: 'POST',
         body: JSON.stringify({
@@ -127,8 +127,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Blackout day mutation
   const blackoutDayMutation = useMutation({
     mutationFn: async (blackout: boolean) => {
-      const { fetchJson } = await import('../lib/http');
-      
       return await fetchJson('/v1/slots/blackout', {
         method: 'POST',
         body: JSON.stringify({
@@ -162,8 +160,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Restrictions mutation
   const restrictionsMutation = useMutation({
     mutationFn: async (restrictions: any) => {
-      const { fetchJson } = await import('../lib/http');
-      
       return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
         body: JSON.stringify({
