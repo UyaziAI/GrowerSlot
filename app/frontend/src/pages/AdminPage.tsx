@@ -83,29 +83,82 @@ export default function AdminPage() {
       const isCurrentMonth = isSameMonth(day, date);
       const isSelected = selectedDates.includes(dateISO);
       
+      // Get slot data for this day from backend
+      const daySlots = slots.filter(s => s.date === dateISO);
+      const totalSlots = daySlots.length;
+      const totalCapacity = daySlots.reduce((sum, slot) => sum + (slot.capacity || 0), 0);
+      const totalBooked = daySlots.reduce((sum, slot) => sum + (slot.booked || 0), 0);
+      const remaining = totalCapacity - totalBooked;
+      
+      // Check for status indicators from backend data
+      const hasBlackout = daySlots.some(slot => slot.blackout === true);
+      const hasRestrictions = daySlots.some(slot => 
+        slot.restrictions && (
+          (slot.restrictions.growers && slot.restrictions.growers.length > 0) ||
+          (slot.restrictions.cultivars && slot.restrictions.cultivars.length > 0)
+        )
+      );
+      
       days.push(
         <button
           key={i}
           onClick={() => handleDayClick(dateISO)}
           className={`
-            p-3 border rounded text-sm
+            relative p-3 border rounded text-sm min-h-[60px] flex flex-col items-start
             ${isCurrentMonth ? '' : 'text-gray-400'}
             ${isSelected ? 'bg-blue-100 border-blue-500' : 'hover:bg-gray-50'}
           `}
+          data-testid={`month-cell-${dateISO}`}
         >
-          {format(day, 'd')}
+          <div className="font-medium">{format(day, 'd')}</div>
+          
+          {/* Status Indicators */}
+          <div className="flex gap-1 mt-1">
+            {hasBlackout && (
+              <span className="text-red-500" data-testid={`blackout-indicator-${dateISO}`} title="Blackout day">
+                ⛔
+              </span>
+            )}
+            {hasRestrictions && (
+              <span className="text-yellow-600" data-testid={`restriction-indicator-${dateISO}`} title="Restricted slots">
+                🔒
+              </span>
+            )}
+          </div>
+          
+          {/* Slot Count Badge */}
+          {totalSlots > 0 && (
+            <div className="absolute bottom-1 right-1 flex gap-1">
+              <span 
+                className="text-xs bg-blue-100 text-blue-800 px-1 rounded"
+                data-testid={`slot-count-badge-${dateISO}`}
+                title={`${totalSlots} slots, ${remaining} remaining`}
+              >
+                {totalSlots}
+              </span>
+              {remaining > 0 && (
+                <span 
+                  className="text-xs bg-green-100 text-green-800 px-1 rounded"
+                  data-testid={`remaining-badge-${dateISO}`}
+                  title={`${remaining} slots available`}
+                >
+                  {remaining}
+                </span>
+              )}
+            </div>
+          )}
         </button>
       );
     }
     
     return (
-      <div>
+      <div data-testid="month-view-grid">
         <div className="grid grid-cols-7 gap-1 mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
             <div key={day} className="text-center text-sm font-medium">{day}</div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-2" data-testid="month-calendar-cells">
           {days}
         </div>
       </div>

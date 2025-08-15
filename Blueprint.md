@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Month view indicators P2.1 — Added slot count badges, ⛔ blackout, 🔒 restriction icons with 42-cell test coverage.
+
 ### August 15, 2025 - Feature flag gates P1.3 — Implemented VITE_FEATURE_ADMIN_TEMPLATES conditional rendering in DayEditorSheet, BulkBar.
 
 ### August 15, 2025 - Verbatim 4xx error handling — Created lib/http.ts utility, updated AdminPage, BulkBar for exact server error display.
