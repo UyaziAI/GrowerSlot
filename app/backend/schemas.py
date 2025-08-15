@@ -2,7 +2,7 @@
 Pydantic schemas for request/response validation
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime, date, time
 from decimal import Decimal
 import uuid
@@ -134,6 +134,30 @@ class CheckpointResponse(BaseModel):
     timestamp: datetime
     payload: Dict[str, Any]
     created_by: Optional[str]
+
+# Template schemas
+class TemplateIn(BaseModel):
+    name: str
+    description: Optional[str] = None
+    config: Dict[str, Any]
+    active_from: Optional[str] = None   # YYYY-MM-DD
+    active_to: Optional[str] = None
+
+class TemplateOut(TemplateIn):
+    id: str
+    tenant_id: str
+
+class ApplyTemplateRequest(BaseModel):
+    template_id: str
+    start_date: str
+    end_date: str
+    mode: Literal["preview", "publish"]
+
+class ApplyTemplateResult(BaseModel):
+    created: int = 0
+    updated: int = 0
+    skipped: int = 0
+    samples: Dict[str, List[Dict[str, Any]]] = Field(default_factory=lambda: {"create":[], "update":[], "skip":[]})
 
 # Event schemas
 class DomainEvent(BaseModel):

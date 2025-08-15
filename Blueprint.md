@@ -563,6 +563,9 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
 
+### August 15, 2025 - Templates Backend Schemas
+- **schemas:** Add Pydantic models for templates and apply-template operations
+
 ### August 15, 2025 - Templates Migration Scaffold
 - **migration:** Add 104_templates.sql (docs-only scaffold)
 

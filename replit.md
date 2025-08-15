@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 15, 2025**: Templates Backend Schemas Complete - Pydantic Models Added
+  - **Schemas**: Added TemplateIn, TemplateOut, ApplyTemplateRequest, ApplyTemplateResult to schemas.py
+  - **Validation**: Pydantic models for request/response validation with proper typing
+  - **Import Success**: All template schemas import successfully, no mypy/TS conflicts
+  - **API Ready**: Backend schemas prepared for template CRUD and apply-template endpoints
+
 - **August 15, 2025**: Templates Migration Scaffold Added - Database Schema Preparation Complete
   - **Migration**: Created 104_templates.sql with tenant-scoped templates table structure
   - **Schema**: Added templates table with JSONB config, date ranges, tenant isolation, proper indexing
