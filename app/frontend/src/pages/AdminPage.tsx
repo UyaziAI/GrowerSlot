@@ -45,8 +45,47 @@ export default function AdminPage() {
   // Detect mobile viewport
   const isMobile = window.innerWidth < 768;
   
+  // Check if user is authenticated and has admin role
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (!token || !userStr) {
+      return { authenticated: false, isAdmin: false };
+    }
+    
+    try {
+      const user = JSON.parse(userStr);
+      return { 
+        authenticated: true, 
+        isAdmin: user.role === 'admin' 
+      };
+    } catch {
+      return { authenticated: false, isAdmin: false };
+    }
+  };
+
   // Fetch slots for visible range
   const fetchSlots = async () => {
+    const auth = checkAuth();
+    
+    // Check authentication first
+    if (!auth.authenticated) {
+      toast({ 
+        description: 'Please log in to access admin features', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    if (!auth.isAdmin) {
+      toast({ 
+        description: 'Admin access required', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const startDate = view === 'day' ? focusedDate : 
@@ -59,6 +98,15 @@ export default function AdminPage() {
       const data = await fetchJson(`/v1/slots?start=${startDate}&end=${endDate}`);
       setSlots(data.slots || []);
     } catch (error: any) {
+      // Handle auth errors specifically
+      if (error.status === 401) {
+        // Don't show noisy popup - clear auth and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
+      // Show other server errors verbatim (422/403/409)
       toast({ description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -793,70 +841,6 @@ export default function AdminPage() {
         <SlotSheet
           slot={slotSheet}
           isOpen={true}
-          onClose={() => setSlotSheet(null)}
-        />
-      )}
-
-      {/* Old SlotSheet handlers - keeping for reference
-          onToggleBlackout={async (next) => {
-            try {
-              const res = await fetch(`/v1/slots/${slotSheet.id}/blackout`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ blackout: next })
-              });
-              if (!res.ok) {
-                const json = await res.json();
-                toast({ description: json.error, variant: 'destructive' });
-              } else {
-                await fetchSlots();
-                setSlotSheet(null);
-              }
-            } catch (error) {
-              toast({ description: 'Failed to toggle blackout', variant: 'destructive' });
-            }
-          }}
-          onRestrict={async () => {
-            try {
-              const res = await fetch('/v1/restrictions/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  slot_ids: [slotSheet.id],
-                  scope: 'slot'
-                })
-              });
-              if (!res.ok) {
-                const json = await res.json();
-                toast({ description: json.error, variant: 'destructive' });
-              } else {
-                await fetchSlots();
-                setSlotSheet(null);
-              }
-            } catch (error) {
-              toast({ description: 'Failed to restrict slot', variant: 'destructive' });
-            }
-          }}
-          onDelete={async () => {
-            if (slotSheet.remaining !== slotSheet.capacity) {
-              toast({ description: 'Cannot delete slot with bookings', variant: 'destructive' });
-              return;
-            }
-            try {
-              const res = await fetch(`/v1/slots/${slotSheet.id}`, {
-                method: 'DELETE'
-              });
-              if (!res.ok) {
-                const json = await res.json();
-                toast({ description: json.error, variant: 'destructive' });
-              } else {
-                await fetchSlots();
-                setSlotSheet(null);
-              }
-            } catch (error) {
-              toast({ description: 'Failed to delete slot', variant: 'destructive' });
-            }
-          }}
           onClose={() => setSlotSheet(null)}
         />
       )}

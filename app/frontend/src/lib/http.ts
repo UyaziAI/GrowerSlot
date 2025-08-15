@@ -10,15 +10,20 @@ export interface ApiError {
 
 /**
  * Fetches data with verbatim error handling for 4xx responses
+ * Includes authentication headers when token is available
  * Returns exact server error message from json.error field
  */
 export async function fetchWithVerbatimErrors(
   url: string, 
   options: RequestInit = {}
 ): Promise<Response> {
+  // Get auth token from localStorage (direct access for simplicity)
+  const token = localStorage.getItem('token');
+  
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
     ...options,
@@ -46,6 +51,7 @@ export async function fetchWithVerbatimErrors(
 
 /**
  * Convenience wrapper for JSON responses with verbatim error handling
+ * Includes authentication headers automatically
  */
 export async function fetchJson<T = any>(
   url: string, 

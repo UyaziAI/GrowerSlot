@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Admin auth fix — Fixed "Access token required" popup by adding Bearer token headers to admin API calls and proper auth error handling.
+
 ### August 15, 2025 - Test coverage pack P3.1 — Implemented comprehensive test suite for API compliance, error handling, accessibility, and feature flags.
 
 ### August 15, 2025 - Day view timeline + FAB P2.4 — Implemented desktop timeline draw-to-create and mobile FAB for slot creation.

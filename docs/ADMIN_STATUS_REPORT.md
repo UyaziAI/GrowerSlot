@@ -166,9 +166,10 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 4. ✅ **Feature flag test pack**: Template and next available feature gating validation
 
 ### Validation & Safety
-1. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
-2. **Blackout prevention**: Implement booking prevention on blackout slots with 409 handling
-3. **Capacity validation**: Ensure positive integer validation for slot creation forms
+1. ✅ **Admin authentication**: Fixed "Access token required" popup by adding Bearer token to fetchJson in http.ts and auth checks in AdminPage
+2. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
+3. **Blackout prevention**: Implement booking prevention on blackout slots with 409 handling
+4. **Capacity validation**: Ensure positive integer validation for slot creation forms
 
 ### Mobile & Accessibility
 1. **Touch targets**: Verify 44px minimum size for all interactive elements
