@@ -6,9 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { authService } from "./lib/auth";
 import LoginPage from "@/pages/login";
 import GrowerDashboard from "@/pages/grower-dashboard";
+import AdminPage from "@/pages/AdminPage";
 import CalendarPage from "@/pages/calendar-page";
 import BookingRedirect from "@/pages/booking-redirect";
-// Legacy admin imports removed - using new AdminPage structure
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,13 +21,13 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={CalendarPage} />
+      <Route path="/" component={isAdmin ? AdminPage : CalendarPage} />
       <Route path="/calendar" component={CalendarPage} />
       <Route path="/booking" component={BookingRedirect} />
       <Route path="/slots" component={BookingRedirect} />
-      <Route path="/dashboard" component={GrowerDashboard} />
+      <Route path="/dashboard" component={isAdmin ? AdminPage : GrowerDashboard} />
       <Route path="/grower-dashboard" component={GrowerDashboard} />
-      {/* /admin routes removed - handled by app/frontend structure */}
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -97,8 +97,10 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Status: ✅ V1 Implementation Complete
   - Features: Month/Week/Day views with 42-cell calendar, day click interactions
   - Components: DayPeekSheet, DayEditorSheet, BulkBar, SlotSheet integrated
-  - Location: `/app/frontend/src/pages/AdminPage.tsx`
+  - Location: `/app/frontend/src/pages/AdminPage.tsx` and `/client/src/pages/AdminPage.tsx`
   - Note: Data badges & inspector polish pending for V2
+  - API: Uses GET /v1/slots?start=YYYY-MM-DD&end=YYYY-MM-DD per blueprint
+  - Errors: Displays json.error verbatim on non-OK responses
 
 - **Audit Trail & Events System (B17)** (August 15, 2025)
   - Status: ✅ Implemented and tested

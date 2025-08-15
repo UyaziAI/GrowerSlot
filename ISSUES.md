@@ -90,11 +90,13 @@
 ### V2 Enhancements (Future)
 - [ ] Week ribbon with slot count badges
 - [ ] Inspector panel with detailed slot info
-- [ ] Template preview and application
+- [ ] Template preview and application (feature flagged)
 - [ ] E2E CI tests for admin calendar flows
 - [ ] Data badges showing capacity/booking counts
 - [ ] Advanced filtering and search
 - [ ] Drag-and-drop slot rearrangement
+- [ ] Calendar virtualization for performance
+- [ ] Template drawer (feature flagged)
   - Rate-limit safe with graceful handling of API throttling
   - Resilient to external API outages without data loss
   - Updates and deletions sync correctly to external calendar
