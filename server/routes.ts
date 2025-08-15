@@ -450,6 +450,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CSV Export endpoint (B15 - Admin only)
+  app.get("/v1/exports/bookings.csv", authenticateToken as any, requireAdmin as any, async (req: AuthRequest, res: Response) => {
+    try {
+      const { start, end, grower_id, cultivar_id, status } = req.query;
+      
+      // Validate required parameters
+      if (!start || !end) {
+        return res.status(400).json({ error: "start and end date parameters are required" });
+      }
+      
+      const startDate = new Date(start as string);
+      const endDate = new Date(end as string);
+      
+      // Validate date range
+      if (startDate > endDate) {
+        return res.status(400).json({ error: "start date must be <= end date" });
+      }
+      
+      // Get bookings with joined data for CSV export
+      const bookingsData = await storage.getBookingsForExport({
+        tenantId: req.user!.tenantId,
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        growerId: grower_id as string,
+        cultivarId: cultivar_id as string,
+        status: status as string
+      });
+      
+      // Set CSV headers
+      const filename = `bookings_${startDate.toISOString().split('T')[0]}_${endDate.toISOString().split('T')[0]}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Create CSV with exact header order specified in B15
+      const csvHeader = 'booking_id,slot_date,start_time,end_time,grower_name,cultivar_name,quantity,status,notes\n';
+      res.write(csvHeader);
+      
+      // Stream CSV data
+      for (const booking of bookingsData) {
+        const csvRow = [
+          booking.bookingId || '',
+          booking.slotDate || '',
+          booking.startTime || '',
+          booking.endTime || '',
+          booking.growerName || '',
+          booking.cultivarName || '',
+          booking.quantity || '',
+          booking.status || '',
+          booking.notes || ''
+        ];
+        
+        // Escape CSV fields properly
+        const escapedRow = csvRow.map(field => {
+          const str = String(field);
+          // Escape quotes and wrap in quotes if contains comma, quote, or newline
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        });
+        
+        res.write(escapedRow.join(',') + '\n');
+      }
+      
+      res.end();
+      
+    } catch (error) {
+      console.error('CSV export error:', error);
+      res.status(500).json({ error: "Internal server error during CSV export" });
+    }
+  });
+
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });

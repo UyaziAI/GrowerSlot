@@ -175,6 +175,14 @@ class ApplyTemplateResult(BaseModel):
     skipped: int = 0
     samples: Dict[str, List[Dict[str, Any]]] = Field(default_factory=lambda: {"create":[], "update":[], "skip":[]})
 
+# Export schemas
+class BookingsExportRequest(BaseModel):
+    start: date
+    end: date
+    grower_id: Optional[str] = None
+    cultivar_id: Optional[str] = None
+    status: Optional[str] = None
+
 # Event schemas
 class DomainEvent(BaseModel):
     event_type: str

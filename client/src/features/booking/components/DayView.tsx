@@ -8,8 +8,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, Ban, AlertCircle, FileText } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Clock, Users, Ban, AlertCircle, FileText, Lock, Search } from 'lucide-react';
 import BookingModal from "@/components/booking-modal";
+import NextAvailableDialog from "@/components/NextAvailableDialog";
 import { SlotWithUsage } from "@shared/schema";
 import { api } from "@/lib/api";
 import { authService } from "@/lib/auth";
@@ -24,9 +26,13 @@ interface DayViewProps {
 export default function DayView({ selectedDate, slots, className = '' }: DayViewProps) {
   const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isNextAvailableOpen, setIsNextAvailableOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
+  
+  // Feature flag for Next Available
+  const isNextAvailableEnabled = import.meta.env.VITE_FEATURE_NEXT_AVAILABLE === 'true';
 
   // Filter slots for the selected date
   const dateStr = selectedDate.toISOString().split('T')[0];
@@ -36,13 +42,55 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
   const sortedSlots = [...daySlots].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const handleSlotClick = (slot: SlotWithUsage) => {
-    if (user?.role === 'grower' && !slot.blackout && (slot.remaining ?? 0) > 0) {
-      setSelectedSlot(slot);
-      setIsBookingModalOpen(true);
+    if (user?.role === 'grower') {
+      // Check if slot is bookable
+      if (!slot.blackout && (slot.remaining ?? 0) > 0 && !hasRestrictions(slot)) {
+        setSelectedSlot(slot);
+        setIsBookingModalOpen(true);
+      }
+      // For restricted/blackout/full slots, do nothing (tooltip will show reason)
     } else if (user?.role === 'admin') {
       // Admin can view slot details (could open admin modal)
       console.log('Admin clicked slot:', slot);
     }
+  };
+  
+  // Check if grower is restricted from booking this slot
+  const hasRestrictions = (slot: SlotWithUsage): boolean => {
+    if (!slot.restrictions || !user) return false;
+    
+    // If there are grower restrictions and current user not in allowed list
+    if (slot.restrictions.growers && slot.restrictions.growers.length > 0) {
+      return !slot.restrictions.growers.includes(user.id);
+    }
+    
+    // No restrictions apply
+    return false;
+  };
+  
+  // Get unavailability reason for tooltip
+  const getUnavailabilityReason = (slot: SlotWithUsage): string => {
+    if (slot.blackout) {
+      return "Blackout";
+    }
+    if ((slot.remaining ?? 0) <= 0) {
+      return "No capacity";
+    }
+    if (hasRestrictions(slot)) {
+      if (slot.restrictions?.growers && slot.restrictions.growers.length > 0) {
+        return "Grower restriction";
+      }
+      if (slot.restrictions?.cultivars && slot.restrictions.cultivars.length > 0) {
+        return `Cultivar restriction: only ${slot.restrictions.cultivars.join(', ')}`;
+      }
+    }
+    return "";
+  };
+  
+  // Check if slot is bookable for grower
+  const isSlotBookable = (slot: SlotWithUsage): boolean => {
+    if (user?.role !== 'grower') return false;
+    return !slot.blackout && (slot.remaining ?? 0) > 0 && !hasRestrictions(slot);
   };
 
   // Get slot status styling
@@ -118,27 +166,48 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
             </p>
           </div>
 
-          {/* Slots List */}
-          <div className="space-y-3">
-            {sortedSlots.map((slot, index) => {
-              const status = getSlotStatus(slot);
-              const remaining = slot.remaining ?? slot.capacity;
-              const isClickable = user?.role === 'grower' && !slot.blackout && remaining > 0;
+          {/* Next Available Button for Growers */}
+          {user?.role === 'grower' && isNextAvailableEnabled && (
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsNextAvailableOpen(true)}
+                className="flex items-center gap-2"
+                data-testid="button-next-available-grower"
+              >
+                <Search className="w-4 h-4" />
+                Find Next Available
+              </Button>
+            </div>
+          )}
 
-              return (
-                <motion.div
-                  key={slot.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card 
-                    className={`transition-all duration-200 ${getStatusColors(status)} ${
-                      isClickable ? 'cursor-pointer' : 'cursor-default'
-                    }`}
-                    onClick={() => handleSlotClick(slot)}
-                    data-testid={`slot-${slot.id}`}
+          {/* Slots List */}
+          <TooltipProvider>
+            <div className="space-y-3">
+              {sortedSlots.map((slot, index) => {
+                const status = getSlotStatus(slot);
+                const remaining = slot.remaining ?? slot.capacity;
+                const isBookable = isSlotBookable(slot);
+                const unavailabilityReason = getUnavailabilityReason(slot);
+                const showRestrictionIcon = hasRestrictions(slot);
+
+                return (
+                  <motion.div
+                    key={slot.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
                   >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Card 
+                          className={`transition-all duration-200 ${getStatusColors(status)} ${
+                            isBookable ? 'cursor-pointer' : 'cursor-default'
+                          }`}
+                          onClick={() => handleSlotClick(slot)}
+                          data-testid={`slot-${slot.id}`}
+                        >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         {/* Left: Time and Capacity */}
@@ -165,6 +234,7 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
                             variant={status === 'available' ? 'default' : 
                                    status === 'limited' ? 'secondary' : 
                                    status === 'full' ? 'destructive' : 'outline'}
+                            data-testid={`status-badge-${slot.id}`}
                           >
                             {slot.blackout ? 'Blackout' : 
                              status === 'full' ? 'Full' :
@@ -176,8 +246,12 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
                             {slot.blackout && (
                               <Ban className="w-4 h-4 text-red-500" aria-label="Blackout period" />
                             )}
-                            {slot.restrictions && (
-                              <AlertCircle className="w-4 h-4 text-orange-500" aria-label="Restrictions apply" />
+                            {showRestrictionIcon && (
+                              <Lock 
+                                className="w-4 h-4 text-orange-500" 
+                                aria-label="🔒 Restricted" 
+                                data-testid={`restriction-icon-${slot.id}`}
+                              />
                             )}
                             {slot.notes && (
                               <FileText className="w-4 h-4 text-blue-500" aria-label="Special notes" />
@@ -185,7 +259,7 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
                           </div>
 
                           {/* Action Button for Growers */}
-                          {user?.role === 'grower' && isClickable && (
+                          {user?.role === 'grower' && isBookable && (
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -221,14 +295,28 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
                           )}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                        </CardContent>
+                      </Card>
+                    </TooltipTrigger>
+                    
+                    {/* Tooltip for unavailable slots */}
+                    {!isBookable && unavailabilityReason && (
+                      <TooltipContent 
+                        side="top" 
+                        className="max-w-xs"
+                        data-testid={`tooltip-${slot.id}`}
+                      >
+                        <p>{unavailabilityReason}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </motion.div>
               );
             })}
           </div>
-        </motion.div>
-      </AnimatePresence>
+        </TooltipProvider>
+      </motion.div>
+    </AnimatePresence>
 
       {/* Booking Modal */}
       {selectedSlot && (
@@ -239,6 +327,19 @@ export default function DayView({ selectedDate, slots, className = '' }: DayView
             setSelectedSlot(null);
           }}
           slot={selectedSlot}
+        />
+      )}
+      
+      {/* Next Available Dialog */}
+      {isNextAvailableEnabled && (
+        <NextAvailableDialog
+          isOpen={isNextAvailableOpen}
+          onClose={() => setIsNextAvailableOpen(false)}
+          onSlotJump={(slotId: string) => {
+            // Jump to slot functionality - for grower view this is read-only
+            console.log('Grower jumping to slot:', slotId);
+            setIsNextAvailableOpen(false);
+          }}
         />
       )}
     </div>

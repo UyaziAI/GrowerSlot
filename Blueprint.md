@@ -378,6 +378,33 @@ Checkpoint payload
 { "type":"gate_in", "payload":{ "plate":"ABC123" } }
 ```
 
+### 6.6 Exports (Admin)
+
+```
+GET   /v1/exports/bookings.csv?start=YYYY-MM-DD&end=YYYY-MM-DD&grower_id=&cultivar_id=&status=
+```
+
+**CSV Export Endpoint:**
+- **Authentication**: Admin role required
+- **Content-Type**: `text/csv; charset=utf-8`
+- **Content-Disposition**: `attachment; filename="bookings_<start>_<end>.csv"`
+- **Streaming Response**: Uses FastAPI StreamingResponse for memory efficiency
+- **Column Order (exact)**: `booking_id,slot_date,start_time,end_time,grower_name,cultivar_name,quantity,status,notes`
+
+**Parameters:**
+- `start` (required): Start date in YYYY-MM-DD format (inclusive)
+- `end` (required): End date in YYYY-MM-DD format (inclusive)
+- `grower_id` (optional): Filter by specific grower UUID
+- `cultivar_id` (optional): Filter by specific cultivar UUID
+- `status` (optional): Filter by booking status (confirmed, pending, cancelled)
+
+**Features:**
+- Tenant-scoped data access (only authenticated user's tenant)
+- UTF-8 encoding for international characters in names and notes
+- Date range validation (start <= end)
+- Streaming response for large datasets without pagination
+- Proper CSV escaping for special characters and commas in data
+
 ## 7) Frontend Plan
 
 Replace wireframe's local state with API calls (TanStack Query cache + invalidation).
@@ -695,6 +722,25 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **validation:** Date format validation, range limits (365 days max), scope validation, admin-only access
 - **tests:** Comprehensive test suite in /app/backend/tests/test_blackout.py covering all scenarios
 - **docs:** Added blackout endpoints to Blueprint.md Section 6.2 with examples and scope explanations
+
+### August 15, 2025 - Grower View Alignment with Admin Restrictions (B18 Complete)
+- **restrictions:** Grower view accurately reflects admin-set restrictions with 🔒 icons for restricted slots
+- **tooltips:** Unavailability explanations via tooltips (blackout, no capacity, grower/cultivar restrictions)
+- **next available:** Integration with Next Available dialog when VITE_FEATURE_NEXT_AVAILABLE enabled
+- **data integrity:** No phantom slots - grower view mirrors backend slot availability with truthful indicators
+- **testing:** Comprehensive test suite with 21 test cases covering restriction scenarios, booking behavior, accessibility
+- **ui:** Slot badges show capacity remaining, proper blackout indicators, restriction lock icons with proper aria-labels
+- **compliance:** Fulfills Blueprint Section 7 requirement for grower view to mirror admin rules with transparent unavailability
+
+### August 15, 2025 - CSV Export Backend Implementation (B15 Complete)
+- **endpoint:** Implemented GET /v1/exports/bookings.csv with streaming response for memory efficiency
+- **filtering:** Date range (required), optional grower_id, cultivar_id, status filtering with tenant scoping
+- **format:** Exact header order: booking_id,slot_date,start_time,end_time,grower_name,cultivar_name,quantity,status,notes
+- **encoding:** UTF-8 support for international characters in names and notes fields
+- **headers:** Content-Type: text/csv; charset=utf-8, Content-Disposition with dynamic filename
+- **validation:** Admin role required, date range validation (start <= end), proper parameter handling
+- **tests:** Comprehensive test suite covering headers, filtering, Unicode, access control, tenant isolation
+- **docs:** Added Section 6.6 Exports to Blueprint.md with complete endpoint specification
 
 ### August 15, 2025 - Docs consistency pass #3 (removed legacy client paths; set export to /v1/)
 - **cleanup:** Updated FEATURES.md and ISSUES.md to remove legacy /client/ path references

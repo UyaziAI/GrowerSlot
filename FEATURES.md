@@ -100,6 +100,20 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Coverage: Bulk create, blackout operations, drag-drop booking moves, template apply idempotency, next available search + jump, restrictions UI
   - Features: Cross-browser testing (Chrome/Firefox/Safari), mobile viewport validation, error handling verification, feature flag testing
 
+- **CSV Export System** (August 15, 2025)
+  - Status: ✅ Implemented - B15 Backend complete
+  - Scope: Streaming CSV export for bookings with filtering capabilities
+  - Implementation: GET /v1/exports/bookings.csv with StreamingResponse, tenant scoping, date range filtering
+  - Features: UTF-8 encoding, exact header order, grower/cultivar/status filtering, admin-only access
+  - Testing: Comprehensive test suite covering headers, filtering, Unicode, access control, and tenant isolation
+
+- **Grower View Alignment** (August 15, 2025)
+  - Status: ✅ Implemented - B18 Grower restrictions + unavailability complete
+  - Scope: Update grower UI to accurately reflect admin rules and explain unavailability
+  - Implementation: Slot badges with capacity, blackout indicators, and 🔒 restriction icons
+  - Features: Tooltips for unavailability reasons, Next Available integration, comprehensive test coverage
+  - Tests: 21 test cases covering restriction scenarios, booking behavior, and accessibility
+
 - **Week view calendar** (August 14, 2025)
   - Status: 🔄 Week Overview implementation complete - kept in In-Progress per task requirements
   - Location: `/app/frontend/src/features/booking/components/WeekOverviewGrid.tsx`

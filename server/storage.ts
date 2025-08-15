@@ -50,6 +50,26 @@ export interface IStorage {
     totalCapacity: number;
     bookedCapacity: number;
   }>;
+  
+  // CSV Export
+  getBookingsForExport(params: {
+    tenantId: string;
+    startDate: string;
+    endDate: string;
+    growerId?: string;
+    cultivarId?: string;
+    status?: string;
+  }): Promise<{
+    bookingId: string;
+    slotDate: string;
+    startTime: string;
+    endTime: string;
+    growerName: string;
+    cultivarName: string;
+    quantity: string;
+    status: string;
+    notes: string;
+  }[]>;
 }
 
 export class DbStorage implements IStorage {
@@ -302,6 +322,53 @@ export class DbStorage implements IStorage {
       totalCapacity: Number(stats.totalCapacity),
       bookedCapacity: Number(bookingStats.bookedCapacity),
     };
+  }
+  
+  async getBookingsForExport(params: {
+    tenantId: string;
+    startDate: string;
+    endDate: string;
+    growerId?: string;
+    cultivarId?: string;
+    status?: string;
+  }) {
+    let whereConditions = [
+      eq(bookings.tenantId, params.tenantId),
+      gte(slots.date, params.startDate),
+      lte(slots.date, params.endDate)
+    ];
+    
+    // Add optional filters
+    if (params.growerId) {
+      whereConditions.push(eq(bookings.growerId, params.growerId));
+    }
+    if (params.cultivarId) {
+      whereConditions.push(eq(bookings.cultivarId, params.cultivarId));
+    }
+    if (params.status) {
+      whereConditions.push(eq(bookings.status, params.status));
+    }
+    
+    const results = await this.db
+      .select({
+        bookingId: bookings.id,
+        slotDate: sql<string>`${slots.date}::text`,
+        startTime: sql<string>`${slots.startTime}::text`,
+        endTime: sql<string>`${slots.endTime}::text`,
+        growerName: growers.name,
+        cultivarName: sql<string>`COALESCE(${cultivars.name}, '')`,
+        quantity: sql<string>`${bookings.quantity}::text`,
+        status: bookings.status,
+        notes: sql<string>`COALESCE(${slots.notes}, '')`
+      })
+      .from(bookings)
+      .innerJoin(slots, eq(bookings.slotId, slots.id))
+      .innerJoin(growers, eq(bookings.growerId, growers.id))
+      .leftJoin(cultivars, eq(bookings.cultivarId, cultivars.id))
+      .where(and(...whereConditions))
+      .orderBy(asc(slots.date), asc(slots.startTime), asc(bookings.createdAt));
+    
+    return results;
   }
 }
 
