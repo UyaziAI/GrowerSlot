@@ -506,7 +506,7 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 ### API (§6) Additions:
 - **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates` (stub endpoints implemented)
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency
-- **Booking Updates**: `PATCH /v1/bookings/{id}` for admin booking moves with 409/403 validation
+- **Booking Updates**: `PATCH /v1/bookings/{id}` for admin booking moves with 409/403 validation (stub implemented)
 
 ### API Stubs (§6.7 Templates - Admin Only):
 
@@ -516,6 +516,7 @@ POST   /v1/admin/templates                 -> { id, tenant_id, name, config, ...
 PATCH  /v1/admin/templates/{id}            -> { id, tenant_id, name, config, ... } 
 DELETE /v1/admin/templates/{id}            -> { ok: true }
 POST   /v1/slots/apply-template            -> { created: 0, updated: 0, skipped: 0, samples: {...} }
+PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ```
 
 ### Data Model (§4) Additions:
@@ -572,6 +573,9 @@ POST   /v1/slots/apply-template            -> { created: 0, updated: 0, skipped:
 - **gaps:** Minor API versioning discrepancy (/api/ vs /v1/) and missing CSV export endpoint
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
+
+### August 15, 2025 - PATCH Bookings Endpoint Stub
+- **endpoint:** Add PATCH /v1/bookings/{id} returning success placeholder
 
 ### August 15, 2025 - Apply-Template Endpoint Stub
 - **endpoint:** Add POST /v1/slots/apply-template returning zero counts

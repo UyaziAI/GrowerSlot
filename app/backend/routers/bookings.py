@@ -2,6 +2,7 @@
 Bookings router - handles booking creation and management with transactional safety
 """
 from fastapi import APIRouter, HTTPException, Depends, Query, status
+from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 from decimal import Decimal
@@ -11,6 +12,11 @@ from ..security import get_current_user
 from ..schemas import BookingCreate, BookingResponse, DomainEvent
 
 router = APIRouter()
+
+class BookingPatch(BaseModel):
+    slot_id: Optional[str] = None
+    quantity: Optional[int] = None
+    cultivar_id: Optional[str] = None
 
 async def emit_domain_event(event_type: str, aggregate_id: str, payload: dict, tenant_id: str):
     """Emit a domain event and add to outbox for webhook delivery"""
@@ -271,3 +277,7 @@ async def cancel_booking(
         return {"message": "Booking cancelled successfully"}
     else:
         raise HTTPException(status_code=500, detail="Failed to cancel booking")
+
+@router.patch("/{booking_id}")
+def patch_booking_scaffold(booking_id: str, body: BookingPatch):
+    return {"id": booking_id, "updated": True}

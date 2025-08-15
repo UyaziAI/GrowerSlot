@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 15, 2025**: PATCH Bookings Endpoint Stub Complete - Admin Booking Updates Scaffolded
+  - **Endpoint**: Added PATCH /v1/bookings/{id} to bookings router for admin booking modifications
+  - **Schema**: BookingPatch with optional slot_id, quantity, cultivar_id fields
+  - **Stub Response**: Returns {id: booking_id, updated: true} without database writes
+  - **Integration**: Ready for admin drag-drop booking management implementation
+
 - **August 15, 2025**: Apply-Template Endpoint Stub Complete - Zero-Count Response Ready
   - **Endpoint**: Added POST /v1/slots/apply-template to slots router with ApplyTemplateResult response
   - **Stub Response**: Returns {created:0, updated:0, skipped:0, samples:{create:[],update:[],skip:[]}}
