@@ -10,7 +10,13 @@ import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
-import { Plus } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { Plus, ChevronDown, Download, Filter, HelpCircle, Copy, Layers } from 'lucide-react';
 
 const TZ = 'Africa/Johannesburg';
 
@@ -30,6 +36,9 @@ export default function AdminPage() {
   const [slots, setSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Feature flags from environment
+  const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
   
   // Fetch slots for visible range
   const fetchSlots = async () => {
@@ -274,8 +283,103 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button data-testid="admin-header-create">Create ▾</button>
-          <button data-testid="admin-header-more">More ▾</button>
+          {/* Create Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" data-testid="admin-header-create">
+                Create
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => {
+                  // Open day editor for focused date
+                  setEditDay(focusedDate);
+                }}
+                data-testid="create-menu-day-slots"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Slots — Day
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  // Enable select mode for bulk operations
+                  setSelectMode(true);
+                  toast({
+                    title: "Bulk Create Mode",
+                    description: "Select multiple days to create slots in bulk"
+                  });
+                }}
+                data-testid="create-menu-bulk-slots"
+              >
+                <Layers className="h-4 w-4 mr-2" />
+                Bulk Create Slots
+              </DropdownMenuItem>
+              {FEATURE_ADMIN_TEMPLATES && (
+                <DropdownMenuItem 
+                  onClick={() => {
+                    toast({
+                      title: "Apply Template",
+                      description: "Template functionality coming soon"
+                    });
+                  }}
+                  data-testid="create-menu-apply-template"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Apply Template
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* More Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" data-testid="admin-header-more">
+                More
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => {
+                  toast({
+                    title: "Export CSV",
+                    description: "CSV export functionality coming soon"
+                  });
+                }}
+                data-testid="more-menu-export-csv"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  toast({
+                    title: "Filters",
+                    description: "Filter functionality coming soon"
+                  });
+                }}
+                data-testid="more-menu-filters"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters…
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  toast({
+                    title: "Help",
+                    description: "Help documentation coming soon"
+                  });
+                }}
+                data-testid="more-menu-help"
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Help
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
       <main className="p-3">

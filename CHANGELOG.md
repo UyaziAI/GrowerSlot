@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **2025-08-15**: UI completeness P2.2 — Wired toolbar dropdown menus in AdminPage:278-345. Create ▾ menu with day slots, bulk create, apply template (flag-gated). More ▾ menu with CSV export, filters, help. Added admin_toolbar_menus.spec.tsx test coverage.
 - **2025-08-15**: UI completeness P2.1 — Added month view indicators: slot count badges, ⛔ blackout icons, 🔒 restriction icons in AdminPage:134-147. Guaranteed 42-cell calendar grid. Added admin_month_view.spec.tsx test coverage.
 - **2025-08-15**: API compliance P1.3 — Implemented feature flag gates for VITE_FEATURE_ADMIN_TEMPLATES in DayEditorSheet:419, BulkBar:421. Template features now conditionally rendered. Added admin_feature_flags.spec.tsx test coverage.
 - **2025-08-15**: API compliance P1.2 — Implemented verbatim 4xx error handling via lib/http.ts utility. AdminPage, BulkBar now display exact server error messages. Added admin_error_handling.spec.tsx test coverage.

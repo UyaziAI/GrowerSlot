@@ -7,10 +7,12 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 ## 2) UI Views & Interactions (spec vs. implementation)
 
 ### Toolbar (Month|Week|Day; Create ▾; More ▾)
-✅ **Working**: View toggle buttons implemented in `app/frontend/src/pages/AdminPage.tsx:209-225`
-⚠️ **Partial**: Create ▾ and More ▾ buttons present with correct test-ids but non-functional
-- Evidence: `data-testid="admin-header-create"` and `data-testid="admin-header-more"` at lines 239-247
-- Missing: Dropdown menus and actual functionality
+✅ **Working**: Complete toolbar with functional dropdown menus
+- Evidence: View toggle buttons implemented in AdminPage:247-266
+- Implementation: Create ▾ dropdown (AdminPage:278-308) with "Create Slots — Day", "Bulk Create Slots", "Apply Template" (flag-gated)
+- Implementation: More ▾ dropdown (AdminPage:311-345) with "Export CSV", "Filters…", "Help"
+- Test coverage: `admin_toolbar_menus.spec.tsx` validates dropdown functionality and feature flag behavior
+- **Feature Flag Compliance**: Apply Template option only shown when VITE_FEATURE_ADMIN_TEMPLATES=true
 
 ### Month view (42 cells, badges, ⛔, 🔒)
 ✅ **Working**: Complete month view with visual indicators and 42-cell guarantee
@@ -134,6 +136,7 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 - ✅ Verbatim error message display: `admin_error_handling.spec.tsx`
 - ✅ Feature flag behavior validation: `admin_feature_flags.spec.tsx`
 - ✅ Blackout visual indicator tests: `admin_month_view.spec.tsx`
+- ✅ Toolbar dropdown menu functionality: `admin_toolbar_menus.spec.tsx`
 
 ## 8) What's Left To Do (actionable backlog)
 
@@ -145,7 +148,7 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 ### UI Completeness  
 1. ✅ **Month view badges**: Added slot count, remaining capacity badges per cell with backend data
 2. ✅ **Visual indicators**: Implemented ⛔ blackout and 🔒 restriction icons from slot.blackout, slot.restrictions
-3. **Create/More dropdowns**: Wire functional dropdown menus to header buttons
+3. ✅ **Create/More dropdowns**: Wired functional dropdown menus with Create ▾ (day slots, bulk, templates) and More ▾ (CSV, filters, help)
 4. **Week view ribbons**: Display actual slot time ribbons instead of placeholder cells
 
 ### Validation & Safety
