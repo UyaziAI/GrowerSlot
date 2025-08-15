@@ -444,6 +444,8 @@ Integration: two concurrent booking requests on same slot → one must fail with
 
 E2E: login → view day → book → cancel → admin blackout → verify UI.
 
+**Drag-Drop Testing**: Booking chips can be dragged between slots, calling PATCH /v1/bookings/{id} with {slot_id:newSlotId}. On 403/409 errors, toast shows server message and data refetch ensures chip returns to original position (revert effect).
+
 ## 12) Rollout
 
 Phase 0 – Core up & running (slots, bookings, admin, email).
@@ -616,6 +618,15 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
+
+### August 15, 2025 - Frontend Drag-Drop Booking Move Implementation (B9 Complete)
+- **drag-drop:** Implemented real DnD using @dnd-kit/core with BookingChip and DroppableSlot components
+- **api:** Calls PATCH /v1/bookings/{id} with {slot_id:newSlotId} on drop, no optimistic updates
+- **error handling:** 403/409 errors surface server message in toast, refetch ensures revert effect
+- **ui:** Booking chips show grower name + quantity, draggable with move cursor and visual feedback
+- **integration:** DndContext wraps AdminCalendarView, DragOverlay shows chip during drag
+- **tests:** Comprehensive test suite in /client/src/__tests__/admin_dnd.spec.tsx covering happy path and error scenarios
+- **docs:** Added drag-drop testing note to Blueprint.md Section 11, updated FEATURES.md progress
 
 ### August 15, 2025 - Frontend Inspector Panel Implementation (B8 Complete)
 - **inspector:** Created InspectorPanel.tsx with slot details display (capacity, remaining, notes, blackout status)

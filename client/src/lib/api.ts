@@ -81,6 +81,12 @@ export const api = {
   getBookings: () =>
     apiRequest('/bookings'),
 
+  updateBooking: (id: string, data: any) =>
+    apiRequest(`/bookings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
   cancelBooking: (id: string) =>
     apiRequest(`/bookings/${id}`, {
       method: 'DELETE',

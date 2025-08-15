@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield, Move } from "lucide-react";
 import InspectorPanel from "./InspectorPanel";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, useDraggable, useDroppable, DragOverlay } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { useLocation } from "wouter";
 import TopNavigation from "@/components/top-navigation";
 import CalendarGrid from "@/features/booking/components/CalendarGrid";
@@ -244,6 +246,7 @@ export default function AdminDashboard() {
   const [previewResult, setPreviewResult] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [showInspector, setShowInspector] = useState(false);
+  const [draggedBooking, setDraggedBooking] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
@@ -298,6 +301,12 @@ export default function AdminDashboard() {
     isLoading: slotsLoading,
     error: slotsError
   } = useSlotsRange(startDate, endDate, true);
+
+  // Fetch bookings for drag-drop functionality
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['bookings'],
+    queryFn: () => api.getBookings(),
+  });
 
   // Admin stats with proper tenant scoping
   const { data: stats } = useQuery({
@@ -423,6 +432,83 @@ export default function AdminDashboard() {
   const handleSlotClick = (slot: SlotWithUsage) => {
     setSelectedSlot(slot);
     setShowInspector(true);
+  };
+
+  // Booking update mutation for drag-drop
+  const updateBookingMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => api.updateBooking(id, data),
+    onSuccess: () => {
+      // Refetch slots and bookings after successful move
+      queryClient.invalidateQueries({ queryKey: ['slots'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      toast({
+        title: "Booking Moved",
+        description: "Booking moved successfully to new slot"
+      });
+    },
+    onError: (error: any, { originalSlotId, bookingId }: any) => {
+      // Show error toast and revert is handled by not having optimistic updates
+      if (error.status === 403) {
+        toast({
+          title: "Move Forbidden",
+          description: error.message || "Not allowed to move booking to this slot",
+          variant: "destructive"
+        });
+      } else if (error.status === 409) {
+        toast({
+          title: "Slot Conflict",
+          description: error.message || "Slot capacity exceeded or conflict detected",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Move Failed",
+          description: error.message || "Failed to move booking",
+          variant: "destructive"
+        });
+      }
+      
+      // Refetch to ensure UI shows correct state (revert effect)
+      queryClient.invalidateQueries({ queryKey: ['slots'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    }
+  });
+
+  // Drag-drop handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const booking = bookings.find((b: any) => b.id === active.id);
+    setDraggedBooking(booking);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setDraggedBooking(null);
+
+    if (!over || active.id === over.id) {
+      return; // No valid drop target or same slot
+    }
+
+    const bookingId = active.id as string;
+    const newSlotId = over.id as string;
+    const booking = bookings.find((b: any) => b.id === bookingId);
+    
+    if (!booking) {
+      toast({
+        title: "Error",
+        description: "Booking not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Call PATCH /v1/bookings/{id} with new slot_id - no optimistic updates
+    updateBookingMutation.mutate({
+      id: bookingId,
+      data: { slot_id: newSlotId },
+      originalSlotId: booking.slotId,
+      bookingId
+    });
   };
 
   const handleBookingCreate = async (slotId: string, bookingData: any) => {
@@ -953,14 +1039,28 @@ export default function AdminDashboard() {
                   <p className="text-red-600">Error loading calendar data: {slotsError.message}</p>
                 </div>
               ) : (
-                <AdminCalendarView
-                  viewMode={viewMode}
-                  selectedDate={selectedDate}
-                  slots={slots}
-                  onSlotClick={handleSlotClick}
-                  onDateSelect={handleDateSelect}
-                  onBookingCreate={handleBookingCreate}
-                />
+                <DndContext
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                >
+                  <AdminCalendarView
+                    viewMode={viewMode}
+                    selectedDate={selectedDate}
+                    slots={slots}
+                    bookings={bookings}
+                    onSlotClick={handleSlotClick}
+                    onDateSelect={handleDateSelect}
+                    onBookingCreate={handleBookingCreate}
+                  />
+                  <DragOverlay>
+                    {draggedBooking ? (
+                      <BookingChip
+                        booking={draggedBooking}
+                        isDragOverlay={true}
+                      />
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               )}
             </CardContent>
           </Card>
@@ -1038,11 +1138,74 @@ export default function AdminDashboard() {
   );
 }
 
+// Booking chip component for drag-drop
+function BookingChip({ booking, isDragOverlay = false }: { booking: any; isDragOverlay?: boolean }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: booking.id,
+    data: { booking }
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`
+        inline-flex items-center px-2 py-1 text-xs rounded-full cursor-grab
+        ${isDragOverlay 
+          ? 'bg-blue-100 text-blue-800 shadow-lg border border-blue-200'
+          : isDragging 
+            ? 'bg-blue-50 text-blue-600 opacity-50'
+            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+        }
+      `}
+      data-testid={`booking-chip-${booking.id}`}
+    >
+      <Move className="w-3 h-3 mr-1" />
+      <span>{booking.growerName || 'Unknown'}</span>
+      <span className="ml-1 font-medium">{booking.quantity}T</span>
+    </div>
+  );
+}
+
+// Droppable slot wrapper
+function DroppableSlot({ slot, children }: { slot: SlotWithUsage; children: React.ReactNode }) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: slot.id,
+    data: { slot }
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`
+        ${isOver ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+        transition-all duration-200
+      `}
+      data-testid={`droppable-slot-${slot.id}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 // Admin Calendar View Component - renders different views based on mode
 function AdminCalendarView({
   viewMode,
   selectedDate,
   slots,
+  bookings,
   onSlotClick,
   onDateSelect,
   onBookingCreate
@@ -1050,6 +1213,7 @@ function AdminCalendarView({
   viewMode: ViewMode;
   selectedDate: Date;
   slots: SlotWithUsage[];
+  bookings: any[];
   onSlotClick: (slot: SlotWithUsage) => void;
   onDateSelect: (date: Date | string) => void;
   onBookingCreate: (slotId: string, data: any) => void;
@@ -1081,6 +1245,7 @@ function AdminCalendarView({
       return <AdminDayView 
         selectedDate={selectedDate} 
         slots={slots.filter(s => s.date === dayjs(selectedDate).format('YYYY-MM-DD'))}
+        bookings={bookings}
         onSlotClick={onSlotClick}
         onBookingCreate={onBookingCreate}
       />;
@@ -1220,9 +1385,10 @@ function AdminWeekView({ selectedDate, slotsByDate, onDateSelect, onSlotClick }:
 }
 
 // Day view component
-function AdminDayView({ selectedDate, slots, onSlotClick, onBookingCreate }: {
+function AdminDayView({ selectedDate, slots, bookings, onSlotClick, onBookingCreate }: {
   selectedDate: Date;
   slots: SlotWithUsage[];
+  bookings: any[];
   onSlotClick: (slot: SlotWithUsage) => void;
   onBookingCreate: (slotId: string, data: any) => void;
 }) {
@@ -1238,47 +1404,65 @@ function AdminDayView({ selectedDate, slots, onSlotClick, onBookingCreate }: {
           </div>
         ) : (
           <div className="space-y-3">
-            {slots.map(slot => (
-              <div
-                key={slot.id}
-                className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 ${
-                  slot.blackout ? 'bg-gray-100' : 'bg-white'
-                }`}
-                onClick={() => onSlotClick(slot)}
-                data-testid={`day-slot-${slot.id}`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-semibold">{slot.startTime} - {slot.endTime}</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Capacity: {slot.capacity} | Booked: {slot.booked || 0} | 
-                      Available: {slot.remaining || 0}
+            {slots.map(slot => {
+              // Find bookings for this slot
+              const slotBookings = bookings.filter((b: any) => b.slotId === slot.id);
+              
+              return (
+                <DroppableSlot key={slot.id} slot={slot}>
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 ${
+                      slot.blackout ? 'bg-gray-100' : 'bg-white'
+                    }`}
+                    onClick={() => onSlotClick(slot)}
+                    data-testid={`day-slot-${slot.id}`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-semibold">{slot.startTime} - {slot.endTime}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          Capacity: {slot.capacity} | Booked: {slot.booked || 0} | 
+                          Available: {slot.remaining || 0}
+                        </div>
+                        {slot.notes && (
+                          <div className="text-sm text-gray-500 mt-1">{slot.notes}</div>
+                        )}
+                        
+                        {/* Booking chips for drag-drop */}
+                        {slotBookings.length > 0 && (
+                          <div className="mt-3 pt-2 border-t border-gray-200">
+                            <div className="text-xs font-medium text-gray-500 mb-2">Bookings:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {slotBookings.map((booking: any) => (
+                                <BookingChip key={booking.id} booking={booking} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Badge 
+                          variant={slot.blackout ? 'destructive' : 
+                            (slot.remaining || 0) > 0 ? 'default' : 'secondary'}
+                        >
+                          {slot.blackout ? 'Blackout' : 
+                           (slot.remaining || 0) > 0 ? 'Available' : 'Full'}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSlotClick(slot);
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    {slot.notes && (
-                      <div className="text-sm text-gray-500 mt-1">{slot.notes}</div>
-                    )}
                   </div>
-                  <div className="flex space-x-2">
-                    <Badge 
-                      variant={slot.blackout ? 'destructive' : 
-                        (slot.remaining || 0) > 0 ? 'default' : 'secondary'}
-                    >
-                      {slot.blackout ? 'Blackout' : 
-                       (slot.remaining || 0) > 0 ? 'Available' : 'Full'}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSlotClick(slot);
-                      }}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                </DroppableSlot>
+              );
+            })}
           </div>
         )}
       </div>
