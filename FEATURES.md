@@ -236,9 +236,19 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 - **Dialog Titles**: Day dialog updated to "Create Slots — Day", range dialog simplified to "Bulk Create Slots"
 - **User Experience**: Clear distinction between single-day focused creation vs multi-day range creation workflows
 
+## UI-ROUTE-FIX - /admin Route Renders AdminPage.tsx (August 15, 2025)
+
+- **Status**: ✅ Implemented and tested  
+- **Location**: `/app/frontend/src/App.tsx`, `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/__tests__/admin_route_wires_new_ui.spec.tsx`
+- **Features**: Ensures /admin route renders the new streamlined AdminPage instead of legacy AdminDashboard
+- **Routing Fix**: Updated App.tsx to import and render AdminPage component for all admin routes (/, /dashboard, /admin)
+- **Legacy Prevention**: Renamed admin-dashboard.tsx.bak to prevent accidental re-import
+- **Header Validation**: Test confirms Create ▾ and More ▾ buttons exist with no legacy header buttons (Blackout, Apply Restrictions, Bulk Create, Create Slots, Export CSV, Apply Template)
+- **Test IDs**: AdminPage header uses admin-header-create and admin-header-more data-testids for reliable testing
+
 ## UI-M1 - Admin Calendar Toolbar Cleanup + Day Peek (August 15, 2025)
 
-- **Status**: ✅ Implemented and tested
+- **Status**: ✅ Implemented and tested (M1 Toolbar cleanup + Day Peek completed)
 - **Location**: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/DayPeekSheet.tsx`, `/app/frontend/src/pages/FilterDrawer.tsx`, `/app/frontend/src/__tests__/admin_ui_m1.spec.tsx`
 - **Features**: Streamlined admin calendar interface following M1 design principles with consolidated actions and contextual day interactions
 - **Header Simplification**: Replaced legacy scattered buttons with organized Create ▾ and More ▾ dropdown menus

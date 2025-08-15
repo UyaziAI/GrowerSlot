@@ -684,6 +684,12 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
 
+### August 15, 2025 - UI-ROUTE-FIX — /admin now renders AdminPage.tsx; legacy header removed
+- **routing:** Updated App.tsx to render AdminPage component for /admin route instead of AdminDashboard
+- **legacy removal:** Renamed admin-dashboard.tsx to .bak to prevent accidental re-import
+- **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
+- **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
+
 ### August 15, 2025 - UI-M1 Admin Calendar Toolbar Cleanup + Day Peek
 - **header simplified:** Replaced legacy buttons (Blackout, Apply Restrictions, etc.) with streamlined Create ▾ and More ▾ dropdowns
 - **create menu:** "Create Slots (Day)", "Bulk Create Slots", and "Apply Template" consolidated under Create ▾

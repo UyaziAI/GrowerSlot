@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { authService } from "./lib/auth";
 import LoginPage from "@/pages/login";
 import GrowerDashboard from "@/pages/grower-dashboard";
-import AdminDashboard from "@/pages/admin-dashboard";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,9 +19,9 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={isAdmin ? AdminDashboard : GrowerDashboard} />
-      <Route path="/dashboard" component={isAdmin ? AdminDashboard : GrowerDashboard} />
-      {isAdmin && <Route path="/admin" component={AdminDashboard} />}
+      <Route path="/" component={isAdmin ? AdminPage : GrowerDashboard} />
+      <Route path="/dashboard" component={isAdmin ? AdminPage : GrowerDashboard} />
+      {isAdmin && <Route path="/admin" component={AdminPage} />}
       <Route component={NotFound} />
     </Switch>
   );

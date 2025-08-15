@@ -45,10 +45,12 @@
 - ✅ Blueprint.md Section 6.6: Complete endpoint specification added
 
 ## UI Updates (August 15, 2025)
-- Legacy header replaced on AdminPage; Day Peek wired
-- Old scattered action buttons (Blackout, Apply Restrictions) removed from global header
-- Day Peek sheet provides contextual actions when day cells are tapped
-- FilterDrawer component created as skeleton for future filter functionality
+- ✅ **RESOLVED**: /admin route now renders AdminPage.tsx instead of legacy AdminDashboard
+- ✅ **RESOLVED**: Legacy header replaced on AdminPage; Day Peek wired
+- ✅ **RESOLVED**: Old scattered action buttons (Blackout, Apply Restrictions) removed from global header  
+- ✅ **RESOLVED**: Day Peek sheet provides contextual actions when day cells are tapped
+- ✅ **RESOLVED**: FilterDrawer component created as skeleton for future filter functionality
+- ✅ **RESOLVED**: Legacy Admin header no longer visible - replaced with Create ▾ and More ▾ dropdowns
 
 ## Calendar Export & Sync (Future Features)
 
