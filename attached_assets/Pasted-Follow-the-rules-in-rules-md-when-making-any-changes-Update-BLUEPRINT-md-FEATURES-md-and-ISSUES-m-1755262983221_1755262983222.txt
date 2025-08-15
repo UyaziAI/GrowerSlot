@@ -1,0 +1,153 @@
+Follow the rules in rules.md when making any changes. Update BLUEPRINT.md, FEATURES.md, and ISSUES.md as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Goal: Generate a deterministic report verifying that the Admin page implements the updated calendar UX (M1–M6 + C1–C4) and identify all legacy Admin components still present or referenced. Do not change product behavior — only add scripts/tests and write report files.
+
+Files to add/update
+
+tools/admin_ui_audit.ts (Node script – static scan)
+
+app/frontend/src/__tests__/admin_route_wire.spec.tsx (route proof test)
+
+reports/admin_ui_audit.md (human report)
+
+reports/admin_ui_audit.json (machine-readable)
+
+BLUEPRINT.md changelog entry (one line)
+
+What to verify (must be covered in the report)
+
+Router wiring
+
+Which file defines the /admin route (e.g., App.tsx, routes.tsx, or similar)?
+
+Which component renders at /admin (absolute import path)?
+
+List all other route entries that also point to Admin-like components (duplicates/aliases).
+
+Header implementation (M1)
+
+In the component that actually renders at /admin, check the global header:
+
+Expected: only Create ▾ and More ▾ on the right.
+
+Must not render these labels at the top level: Blackout, Apply Restrictions, Create Slots, Bulk Create, Export CSV, Apply Template.
+
+Detect whether DayPeekSheet, FilterDrawer are imported and used.
+
+Day interactions (M2–M4)
+
+Presence and usage (import + JSX usage) of:
+
+DayPeekSheet (tap day → peek)
+
+DayEditorSheet (edit day in place)
+
+BulkBar (selection mode / bulk actions for week/month)
+
+SlotSheet (slot actions in Day view)
+
+Create flows & guardrails (C1–C4)
+
+UI has Create Slots (Day) and Bulk Create Slots as separate flows (look for dialog titles/labels).
+
+Date inputs have min=today logic (search for min or validation enforcing no past dates).
+
+Error surfaces display server json.error (search for handler reading res.json() and rendering error).
+
+No client-side fabrication
+
+In Admin calendar data hooks/components: confirm there is no usage of placeholderData, initialData, or a manual fabrication of “empty slots”. Report any occurrences.
+
+Feature flags & env
+
+Detect usage of VITE_FEATURE_ADMIN_TEMPLATES and VITE_FEATURE_NEXT_AVAILABLE and where they gate UI.
+
+Report values in .env.example.
+
+Legacy components & dead code
+
+List all files matching Admin legacy patterns (paths + first import line):
+
+Names: Admin(Dashboard|Calendar|Page|View).*.(tsx|jsx) and any files under /client/ or other legacy folders that contain “admin” in the name.
+
+Note whether each is imported anywhere (simple xref scan).
+
+List any references to /api/ routes in FE or BE (we standardized on /v1/).
+
+List any old React Query flags like keepPreviousData on Admin fetches.
+
+Tests
+
+Add a single test admin_route_wire.spec.tsx that renders the /admin route and asserts:
+
+Create and More buttons exist with data-testid="admin-header-create" and data-testid="admin-header-more" if those IDs exist; otherwise assert the legacy labels are not present at top level.
+
+Explain PASS/FAIL in the report based on the result.
+
+Implementation details
+
+Script tools/admin_ui_audit.ts:
+
+Use Node + TypeScript. Dependencies allowed: globby, fs-extra. (Do not add heavy AST libs.)
+
+Steps:
+
+Find likely router files: app/frontend/src/**/*.{ts,tsx} containing Route or createBrowserRouter. Parse with regex to collect routes; extract which file/component renders /admin.
+
+Read that component file; scan the source for the header region. Heuristics: search for obvious legacy labels (Blackout, Apply Restrictions, Bulk Create, Create Slots, Export CSV, Apply Template) and for the new labels (Create, More).
+
+Check imports/usage of DayPeekSheet, DayEditorSheet, BulkBar, SlotSheet, FilterDrawer.
+
+Search repo-wide for legacy Admin files and /api/ occurrences.
+
+Search repo-wide for placeholderData, initialData, keepPreviousData under Admin pages.
+
+Read .env.example and report values for the two feature flags.
+
+Emit a JSON object with sections exactly matching 1–7 above (include absolute paths and line snippets). Also emit a human-readable markdown file summarizing PASS/FAIL per section with a short explanation and bullet lists of findings.
+
+Write outputs to:
+
+reports/admin_ui_audit.json
+
+reports/admin_ui_audit.md
+
+Test app/frontend/src/__tests__/admin_route_wire.spec.tsx:
+
+Render the app at /admin using MemoryRouter.
+
+Assert EITHER: (preferred) presence of data-testid="admin-header-create" and admin-header-more OR absence of the legacy labels in the header region.
+
+The test must fail if the legacy header still renders at top level.
+
+Deliverables
+
+reports/admin_ui_audit.md — includes:
+
+Summary table (PASS/FAIL) for items 1–7
+
+Router/component used for /admin with path
+
+Evidence snippets (line numbers) for header labels found/not found
+
+List of legacy components with “imported by” xref
+
+List of /api/ references (with file:line)
+
+Recommendations section (exact files to update for route wiring or header cleanup)
+
+reports/admin_ui_audit.json — same info in structured form
+
+Test result for admin_route_wire.spec.tsx and a short note appended to the markdown (“Route test: PASS/FAIL”)
+
+BLUEPRINT.md changelog line: “Audit: generated Admin UI verification & legacy scan — no product code changes.”
+
+Acceptance (all must be true)
+
+The two report files exist and are populated with concrete paths and findings.
+
+The test runs and its result is reflected in the markdown report.
+
+The report explicitly states whether /admin renders the new AdminPage.tsx or a legacy component, and lists any legacy files still present or referenced.
+
+No product behavior changed.
