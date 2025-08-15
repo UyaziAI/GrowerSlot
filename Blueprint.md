@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Admin UI: DayPeek + DayEditor wired.
+
 ### August 15, 2025 - Router: fix /admin (wouter component prop).
 
 ### August 15, 2025 - Admin cleanup pass #001 — routes consolidated, legacy quarantined, FE endpoints moved to /v1; status report generated.

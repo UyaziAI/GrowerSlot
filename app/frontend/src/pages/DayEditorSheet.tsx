@@ -18,8 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 
 interface DayEditorSheetProps {
   dateISO: string;
-  isOpen: boolean;
   onClose: () => void;
+  onToggleBlackout?: () => void;
+  onQuickCreate?: (params: any) => void;
 }
 
 interface DayOverview {
@@ -37,7 +38,7 @@ interface QuickCreateForm {
   notes: string;
 }
 
-export function DayEditorSheet({ dateISO, isOpen, onClose }: DayEditorSheetProps) {
+export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQuickCreate }: DayEditorSheetProps) {
   const [quickCreateForm, setQuickCreateForm] = useState<QuickCreateForm>({
     slot_length_min: 60,
     capacity: 20,
