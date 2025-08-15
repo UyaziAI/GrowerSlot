@@ -278,6 +278,188 @@ async def cancel_booking(
     else:
         raise HTTPException(status_code=500, detail="Failed to cancel booking")
 
-@router.patch("/{booking_id}")
-def patch_booking_scaffold(booking_id: str, body: BookingPatch):
-    return {"id": booking_id, "updated": True}
+@router.patch("/{booking_id}", response_model=BookingResponse)
+async def update_booking(
+    booking_id: str,
+    booking_update: BookingPatch,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a booking with capacity and restriction checks"""
+    tenant_id = current_user["tenant_id"]
+    user_role = current_user["role"]
+    user_grower_id = current_user.get("grower_id")
+    
+    try:
+        # Start transaction and get current booking with slot info
+        get_current_booking_query = """
+            SELECT b.id, b.slot_id, b.grower_id, b.cultivar_id, b.quantity, b.status,
+                   s.capacity, s.blackout, s.date, s.start_time, s.end_time,
+                   COALESCE(SUM(CASE WHEN b2.status = 'confirmed' AND b2.id != b.id THEN b2.quantity ELSE 0 END), 0) as other_bookings
+            FROM bookings b
+            JOIN slots s ON b.slot_id = s.id
+            LEFT JOIN bookings b2 ON s.id = b2.slot_id
+            WHERE b.id = $1 AND b.tenant_id = $2
+            GROUP BY b.id, b.slot_id, b.grower_id, b.cultivar_id, b.quantity, b.status,
+                     s.capacity, s.blackout, s.date, s.start_time, s.end_time
+            FOR UPDATE
+        """
+        
+        # If moving to different slot, also lock the target slot
+        target_slot_query = """
+            SELECT s.id, s.capacity, s.blackout, s.date, s.start_time, s.end_time,
+                   COALESCE(SUM(CASE WHEN b.status = 'confirmed' THEN b.quantity ELSE 0 END), 0) as current_bookings
+            FROM slots s
+            LEFT JOIN bookings b ON s.id = b.slot_id
+            WHERE s.id = $1 AND s.tenant_id = $2
+            GROUP BY s.id, s.capacity, s.blackout, s.date, s.start_time, s.end_time
+            FOR UPDATE
+        """
+        
+        # Execute first query to get current booking
+        queries = [
+            (get_current_booking_query, [uuid.UUID(booking_id), uuid.UUID(tenant_id)])
+        ]
+        
+        results = await execute_transaction(queries)
+        current_booking = results[0][0] if results[0] else None
+        
+        if not current_booking:
+            raise HTTPException(status_code=404, detail="Booking not found")
+        
+        # Authorization: growers can only update their own bookings
+        if user_role == "grower" and user_grower_id != str(current_booking['grower_id']):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update your own bookings"
+            )
+        
+        if current_booking['status'] == 'cancelled':
+            raise HTTPException(status_code=400, detail="Cannot update cancelled booking")
+        
+        # Prepare update values, keeping current values if not provided
+        new_slot_id = booking_update.slot_id or str(current_booking['slot_id'])
+        new_quantity = booking_update.quantity or current_booking['quantity']
+        new_cultivar_id = booking_update.cultivar_id or current_booking['cultivar_id']
+        
+        target_slot_info = None
+        is_moving_slots = new_slot_id != str(current_booking['slot_id'])
+        
+        # If moving to different slot, get target slot info with lock
+        if is_moving_slots:
+            target_queries = [
+                (target_slot_query, [uuid.UUID(new_slot_id), uuid.UUID(tenant_id)])
+            ]
+            
+            target_results = await execute_transaction(target_queries)
+            target_slot_info = target_results[0][0] if target_results[0] else None
+            
+            if not target_slot_info:
+                raise HTTPException(status_code=404, detail="Target slot not found")
+            
+            # Check for restrictions on target slot (403 error)
+            if target_slot_info['blackout']:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot move to blacked out slot"
+                )
+            
+            # Check capacity constraints on target slot (409 error)
+            target_capacity = float(target_slot_info['capacity'])
+            target_current_bookings = float(target_slot_info['current_bookings'])
+            requested_quantity = float(new_quantity)
+            
+            if (target_current_bookings + requested_quantity) > target_capacity:
+                available = target_capacity - target_current_bookings
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Target slot at capacity. Available: {available}, Requested: {requested_quantity}"
+                )
+        
+        else:
+            # Not moving slots, but check capacity if quantity changed
+            if new_quantity != current_booking['quantity']:
+                current_capacity = float(current_booking['capacity'])
+                other_bookings = float(current_booking['other_bookings'])
+                requested_quantity = float(new_quantity)
+                
+                if (other_bookings + requested_quantity) > current_capacity:
+                    available = current_capacity - other_bookings
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Insufficient capacity. Available: {available}, Requested: {requested_quantity}"
+                    )
+        
+        # Update the booking
+        update_booking_query = """
+            UPDATE bookings
+            SET slot_id = $2, quantity = $3, cultivar_id = $4
+            WHERE id = $1 AND tenant_id = $5
+            RETURNING id, slot_id, tenant_id, grower_id, cultivar_id, quantity, status, created_at
+        """
+        
+        update_queries = [
+            (update_booking_query, [
+                uuid.UUID(booking_id),
+                uuid.UUID(new_slot_id),
+                new_quantity,
+                uuid.UUID(new_cultivar_id) if new_cultivar_id else None,
+                uuid.UUID(tenant_id)
+            ])
+        ]
+        
+        update_results = await execute_transaction(update_queries)
+        updated_booking = update_results[0][0]
+        
+        # Emit BOOKING_UPDATED domain event
+        slot_info_for_event = target_slot_info if is_moving_slots else current_booking
+        
+        event_payload = {
+            "booking_id": str(updated_booking['id']),
+            "old_slot_id": str(current_booking['slot_id']),
+            "new_slot_id": str(updated_booking['slot_id']),
+            "old_quantity": float(current_booking['quantity']),
+            "new_quantity": float(updated_booking['quantity']),
+            "updated_by": current_user["sub"],
+            "is_moved": is_moving_slots,
+            "slot_date": slot_info_for_event['date'].isoformat(),
+            "slot_time": slot_info_for_event['start_time'].strftime('%H:%M')
+        }
+        
+        await emit_domain_event(
+            "BOOKING_UPDATED",
+            str(updated_booking['id']),
+            event_payload,
+            tenant_id
+        )
+        
+        # Get additional details for response
+        details_query = """
+            SELECT g.name as grower_name, c.name as cultivar_name
+            FROM growers g
+            LEFT JOIN cultivars c ON c.id = $2
+            WHERE g.id = $1
+        """
+        
+        details = await execute_one(
+            details_query,
+            updated_booking['grower_id'],
+            updated_booking['cultivar_id']
+        )
+        
+        return BookingResponse(
+            id=str(updated_booking['id']),
+            slot_id=str(updated_booking['slot_id']),
+            tenant_id=str(updated_booking['tenant_id']),
+            grower_id=str(updated_booking['grower_id']),
+            cultivar_id=str(updated_booking['cultivar_id']) if updated_booking['cultivar_id'] else None,
+            quantity=updated_booking['quantity'],
+            status=updated_booking['status'],
+            created_at=updated_booking['created_at'],
+            grower_name=details['grower_name'] if details else None,
+            cultivar_name=details['cultivar_name'] if details else None
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Booking update failed: {str(e)}")

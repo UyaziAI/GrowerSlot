@@ -587,6 +587,18 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - PATCH Booking Update Implementation (B4 Complete)
+- **endpoint:** Implemented PATCH /v1/bookings/{id} with transactional capacity and restriction checks
+- **capacity:** Enforces slot capacity limits with 409 error when target slot full or quantity exceeds available space
+- **restrictions:** Validates slot restrictions with 403 error when moving to blacked out slots  
+- **authorization:** RBAC enforcement - growers can only update their own bookings, admins can update any
+- **transactions:** Uses SELECT FOR UPDATE to lock current and target slots during move operations
+- **events:** Emits BOOKING_UPDATED domain events with comprehensive payload including move details
+- **outbox:** Adds events to outbox table for reliable webhook delivery
+- **tests:** Created comprehensive test suite in /app/backend/tests/test_booking_patch.py with 15 test cases
+- **scenarios:** Covers 403 (blackout/auth), 409 (capacity), 200 (success), move/update/cultivar change
+- **validation:** Tests atomic transactions, SELECT FOR UPDATE behavior, event emission integrity
+
 ### August 15, 2025 - Wire Create Slots & Bulk Create Implementation (B3 Complete)
 - **frontend:** Enhanced admin dashboard with proper BulkCreateForm component using react-hook-form and Zod validation
 - **forms:** Created structured form with start_date, end_date, weekdays[], slot_length_min, capacity, notes fields
