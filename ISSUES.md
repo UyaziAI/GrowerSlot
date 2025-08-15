@@ -43,6 +43,44 @@
 
 ### Documentation Updates
 - ✅ Blueprint.md Section 6.6: Complete endpoint specification added
+
+## Calendar Export & Sync (Future Features)
+
+### Issue: P1 - ICS Feed Implementation
+- **Priority**: Medium
+- **Status**: Planned (Q1 2026)
+- **Description**: Implement read-only ICS calendar feeds for external calendar subscription
+- **Acceptance Criteria**:
+  - `/v1/exports/calendar.ics` serves signed, tenant-scoped ICS feeds
+  - Works seamlessly in Google Calendar, Outlook, Apple Calendar without auth prompts
+  - No inbound write capabilities, read-only access only
+  - Updates propagate within 15 minutes of slot changes
+  - Tenant isolation maintained through signed URLs
+- **Technical Requirements**: ICS format compliance, URL signing, tenant scoping
+
+### Issue: P2 - External Calendar API Publishing
+- **Priority**: Medium  
+- **Status**: Planned (Q2 2026)
+- **Description**: One-way publishing of slot data to external calendar services
+- **Acceptance Criteria**:
+  - Service can publish a month of slots to a selected external calendar
+  - Idempotent operations handle create, update, and delete events correctly
+  - Rate-limit safe with graceful handling of API throttling
+  - Resilient to external API outages without data loss
+  - Updates and deletions sync correctly to external calendar
+- **Technical Requirements**: Google Calendar API, Microsoft Graph API integration, rate limiting
+
+### Issue: P3 - Two-way Calendar Synchronization
+- **Priority**: Low
+- **Status**: Planned (Q3 2026) 
+- **Description**: Bidirectional sync with limited field editing and conflict resolution
+- **Acceptance Criteria**:
+  - Inbound edits limited to time adjustments and notes only
+  - Field violations are rejected with clear error messaging  
+  - All changes maintain comprehensive audit trail
+  - Conflict-free round-trip synchronization with ETags/deltas
+  - Administrative override capabilities for conflict resolution
+- **Technical Requirements**: ETag support, conflict resolution, audit logging, field validation
 - ✅ FEATURES.md: Moved to "In-Progress" status with implementation details
 - ✅ Router integration in main.py with /v1/exports prefix
 

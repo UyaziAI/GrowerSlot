@@ -148,6 +148,55 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Accessibility: Day cells with descriptive ARIA labels, proper form labeling, dialog accessibility structure
   - Testing: 16/16 Vitest + 12/12 Playwright tests passing for mobile UX and a11y compliance
 
+## Epic: Calendar Export & Sync
+
+**Vision**: Enable seamless integration with external calendar systems (Google Calendar, Outlook) for slot visibility and management. Provides read-only feeds, one-way publishing, and eventually two-way synchronization with conflict resolution.
+
+### P1 – ICS Read-only (Q1 2026)
+- **Status**: 📋 Planned
+- **Scope**: Subscribe-able calendar feeds for external calendar applications
+- **Features**:
+  - `/v1/exports/calendar.ics` endpoint serving signed, tenant-scoped ICS feeds
+  - Slots feed showing availability windows and capacity information
+  - Optional bookings feed for confirmed deliveries (admin-configurable)
+  - Works seamlessly in Google Calendar, Outlook, Apple Calendar without auth prompts
+  - Read-only access with no inbound write capabilities
+- **Acceptance Criteria**: 
+  - ICS feed displays correctly in major calendar applications
+  - Tenant isolation maintained through signed URLs
+  - No authentication required for calendar subscriptions
+  - Updates propagate within 15 minutes of slot changes
+
+### P2 – One-way API Publish (Q2 2026)
+- **Status**: 📋 Planned  
+- **Scope**: Automated publishing of slot data to external calendar services
+- **Features**:
+  - Service integration with Google Calendar API and Microsoft Graph API
+  - Publish month of slots to administrator-selected external calendar
+  - Idempotent operations handling create, update, and delete events
+  - Rate limit compliance with external API throttling
+  - No inbound edit processing from external calendars
+- **Acceptance Criteria**:
+  - Successfully publishes and maintains slot events in external calendar
+  - Handles API rate limits gracefully without data loss
+  - Updates and deletions sync correctly
+  - Service remains resilient to external API outages
+
+### P3 – Two-way Sync with Conflict Resolution (Q3 2026)
+- **Status**: 📋 Planned
+- **Scope**: Bidirectional synchronization with limited field editing and conflict management
+- **Features**:
+  - Inbound edit processing limited to time adjustments and notes
+  - Field violation detection and rejection with clear error messaging
+  - Comprehensive audit trail for all external modifications
+  - Conflict-free synchronization using ETags and delta detection
+  - Real-time conflict resolution with administrative override capabilities
+- **Acceptance Criteria**:
+  - External time/notes edits propagate correctly to internal system
+  - Unauthorized field modifications are rejected and logged
+  - All changes maintain complete audit trail
+  - Round-trip synchronization maintains data integrity
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

@@ -626,6 +626,11 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency
 - **Booking Updates**: `PATCH /v1/bookings/{id}` for admin booking moves with 409/403 validation (stub implemented)
 
+### API (§6) Calendar Export & Sync Roadmap:
+- **P1 ICS Feeds**: `GET /v1/exports/calendar.ics` with tenant-scoped signed URLs, optional booking feeds
+- **P2 External Publishing**: Service integration with Google Calendar API and Microsoft Graph for one-way slot publishing  
+- **P3 Two-way Sync**: Inbound edit processing with field validation, ETag-based conflict resolution, audit logging
+
 ### API Stubs (§6.7 Templates - Admin Only):
 
 ```
@@ -649,9 +654,19 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **No-fabrication guarantees**: UI renders only authentic backend data, no client-side slot generation
 - **Admin drag-drop tests**: booking moves with proper 403/409 error handling and UI revert behavior
 
+### Testing (§11) Calendar Export & Sync:
+- **P1 ICS Tests**: Feed validation with major calendar clients, tenant isolation, subscription workflows
+- **P2 Publishing Tests**: API rate limiting, idempotent operations, external service resilience
+- **P3 Sync Tests**: Conflict resolution, audit logging, field validation, ETags integrity
+
 ### Security/Tenancy (§8) Clarifications:
 - **RBAC for admin routes**: templates, bulk operations, and calendar management admin-only
 - **Template operations**: all scoped by tenant_id with proper access controls
+
+### Security/Tenancy (§8) Calendar Export & Sync:
+- **P1 Signed URLs**: Tenant-scoped ICS feeds with expiring signatures, no cross-tenant data leakage
+- **P2 API Credentials**: Secure OAuth2 flows for external calendar services, admin-controlled integrations
+- **P3 Sync Security**: Field-level permissions, audit trails, ETags for concurrency control
 
 ---
 
@@ -668,6 +683,14 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **rbac:** Confirmed admin-only routes protected with require_role decorator
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
+
+### August 15, 2025 - Calendar Export & Sync Roadmap Added
+- **roadmap:** Added comprehensive calendar export & sync roadmap with 3-phase implementation plan
+- **P1 planning:** ICS read-only feeds for external calendar subscription (Q1 2026)
+- **P2 planning:** One-way API publishing to Google Calendar and Microsoft Graph (Q2 2026)
+- **P3 planning:** Two-way sync with conflict resolution and audit trails (Q3 2026)
+- **documentation:** Updated FEATURES.md epic, Blueprint.md API roadmap, ISSUES.md acceptance criteria
+- **security:** Defined tenant-scoped signing, OAuth2 flows, field-level permissions for each phase
 
 ### August 14, 2025 - Admin Addendum adopted (docs); feature-flagged implementation planned
 - **docs:** Admin Addendum specifications adopted in Blueprint Delta section

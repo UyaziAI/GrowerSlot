@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scoped confirmation dialogs showing specific dates or selection counts
 - Verbatim HTTP error display (422/403/409) with server json.error messages
 - Date input validation with min attributes preventing past date selection
+- M6 Mobile viewport tests & accessibility for 390×844 and 412×915 screen sizes
+- Calendar export & sync roadmap (P1–P3) with ICS feeds, API publishing, and two-way sync phases
 - B21 Feature flag rollout checklist and deployment strategy
 - Comprehensive release procedures with staging and production phases
 - Risk assessment and monitoring guidelines for feature rollouts
