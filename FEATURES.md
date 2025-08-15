@@ -140,9 +140,12 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Verification: Week overview cards working, navigation functional, responsive design
 
 - **Admin Calendar System** (August 15, 2025)
-  - Status: 🔄 In-Progress
-  - Location: `/app/frontend/src/pages/AdminPage.tsx`
-  - Scope: Inspector, drag-drop, templates
+  - Status: 🔄 In-Progress  
+  - Location: `/client/src/pages/admin-dashboard.tsx`
+  - Scope: Inspector panel ✅ Implemented, drag-drop, templates
+  - Inspector panel: Right-hand panel shows slot details, blackout toggle, restrictions dialog
+  - API integration: PATCH /v1/slots/{id}/blackout, POST /v1/restrictions/apply
+  - Cache invalidation: Proper query invalidation after operations
   - Reference: Admin_Addendum.md
 
 ## Known Gaps / Missing Features ❌

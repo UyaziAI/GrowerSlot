@@ -120,4 +120,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // Blackout operations
+  blackoutSlot: (id: string, data: any) =>
+    apiRequest(`/slots/${id}/blackout`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  bulkBlackoutSlots: (data: any) =>
+    apiRequest('/slots/blackout', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };

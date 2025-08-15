@@ -394,6 +394,8 @@ Inbound (feature‑flagged) – read‑only consignments list with latest checkp
 
 Continuous DayTimeline – horizontally scrollable day strip with focused/selected state separation. Initial load selects today; explicit clicks open Day Detail; smooth centering on Today/Jump-to-date actions.
 
+**Inspector Panel** – right-hand panel shows selected slot details (capacity, usage, notes, blackout status). Quick actions: blackout toggle calls PATCH /v1/slots/{id}/blackout, restrict button opens restrictions dialog calling POST /v1/restrictions/apply. Cache invalidation after operations ensures UI consistency.
+
 RBAC guards: show Admin tools only if role==='admin'.
 
 Feature flags via import.meta.env.VITE_FEATURE_* (LOGISTICS, WEEKVIEW, QUALITY, etc.).
@@ -614,6 +616,16 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
+
+### August 15, 2025 - Frontend Inspector Panel Implementation (B8 Complete)
+- **inspector:** Created InspectorPanel.tsx with slot details display (capacity, remaining, notes, blackout status)
+- **actions:** Blackout toggle calls PATCH /v1/slots/{id}/blackout with proper request format
+- **restrictions:** Restrict button opens dialog, applies POST /v1/restrictions/apply with slot/day scope
+- **error handling:** 403/409 errors show toast without UI write, preventing phantom updates
+- **cache:** Proper invalidation of ['slots', tenantId, startISO, endISO] after all operations
+- **ui integration:** Inspector opens on slot selection, right-hand panel layout in admin dashboard
+- **tests:** Comprehensive test suite in /client/src/__tests__/admin_inspector.spec.tsx with 15+ scenarios
+- **docs:** Added Inspector Panel to Blueprint.md Section 7 Frontend Plan
 
 ### August 15, 2025 - Backend Blackout Operations Implementation (B7 Complete)
 - **schema:** Added BlackoutRequest model with start_date, end_date, scope (slot/day/week), optional note

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield } from "lucide-react";
+import InspectorPanel from "./InspectorPanel";
 import { useLocation } from "wouter";
 import TopNavigation from "@/components/top-navigation";
 import CalendarGrid from "@/features/booking/components/CalendarGrid";
@@ -242,6 +243,7 @@ export default function AdminDashboard() {
   const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
   const [previewResult, setPreviewResult] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [showInspector, setShowInspector] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
@@ -420,7 +422,7 @@ export default function AdminDashboard() {
 
   const handleSlotClick = (slot: SlotWithUsage) => {
     setSelectedSlot(slot);
-    setShowEditSlotDialog(true);
+    setShowInspector(true);
   };
 
   const handleBookingCreate = async (slotId: string, bookingData: any) => {
@@ -925,41 +927,56 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Main Calendar Content */}
-        <Card className="p-0 overflow-hidden">
-          <CardContent className="p-0">
-            {slotsLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading calendar data...</p>
-              </div>
-            ) : showEmptyState ? (
-              <div className="text-center py-12" data-testid="empty-state">
-                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No slots defined by admin</h3>
-                <p className="text-gray-600 mb-4">
-                  No slots are available for the period {startDate} to {endDate}.
-                </p>
-                <Button onClick={() => setShowBulkCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Slots
-                </Button>
-              </div>
-            ) : slotsError ? (
-              <div className="text-center py-12">
-                <p className="text-red-600">Error loading calendar data: {slotsError.message}</p>
-              </div>
-            ) : (
-              <AdminCalendarView
-                viewMode={viewMode}
-                selectedDate={selectedDate}
-                slots={slots}
-                onSlotClick={handleSlotClick}
-                onDateSelect={handleDateSelect}
-                onBookingCreate={handleBookingCreate}
-              />
-            )}
-          </CardContent>
-        </Card>
+        <div className="flex gap-4">
+          {/* Main Calendar */}
+          <Card className="flex-1 p-0 overflow-hidden">
+            <CardContent className="p-0">
+              {slotsLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading calendar data...</p>
+                </div>
+              ) : showEmptyState ? (
+                <div className="text-center py-12" data-testid="empty-state">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No slots defined by admin</h3>
+                  <p className="text-gray-600 mb-4">
+                    No slots are available for the period {startDate} to {endDate}.
+                  </p>
+                  <Button onClick={() => setShowBulkCreateDialog(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Slots
+                  </Button>
+                </div>
+              ) : slotsError ? (
+                <div className="text-center py-12">
+                  <p className="text-red-600">Error loading calendar data: {slotsError.message}</p>
+                </div>
+              ) : (
+                <AdminCalendarView
+                  viewMode={viewMode}
+                  selectedDate={selectedDate}
+                  slots={slots}
+                  onSlotClick={handleSlotClick}
+                  onDateSelect={handleDateSelect}
+                  onBookingCreate={handleBookingCreate}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Inspector Panel */}
+          {showInspector && (
+            <InspectorPanel
+              selectedSlot={selectedSlot}
+              onClose={() => {
+                setShowInspector(false);
+                setSelectedSlot(null);
+              }}
+              dateRange={{ startDate, endDate }}
+            />
+          )}
+        </div>
 
         {/* Edit Slot Dialog */}
         <Dialog open={showEditSlotDialog} onOpenChange={setShowEditSlotDialog}>
