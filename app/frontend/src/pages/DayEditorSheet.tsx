@@ -69,6 +69,9 @@ export default function DayEditorSheet({ dateISO, isOpen, onClose, onToggleBlack
   // Get today's date string for min attribute
   const todayISO = toZonedTime(new Date(), 'Africa/Johannesburg').toISOString().split('T')[0];
 
+  // Enhanced authentication gating for admin queries
+  const isAuthReady = authService.isAuthenticated() && !!authService.getToken();
+
   // Fetch day overview data with proper auth and sheet state gating
   const { data: dayOverview, isLoading } = useQuery<DayOverview>({
     queryKey: ['/v1/admin/day-overview', dateISO],
@@ -86,7 +89,7 @@ export default function DayEditorSheet({ dateISO, isOpen, onClose, onToggleBlack
         ]
       };
     },
-    enabled: isOpen && !!dateISO // Gate by both sheet state and valid date
+    enabled: isOpen && !!dateISO && isAuthReady // Gate by sheet state, valid date, and auth
   });
 
   // Quick create slot mutation

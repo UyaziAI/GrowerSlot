@@ -172,8 +172,8 @@ The Admin calendar interface has been **partially implemented** with core UI arc
    - **Comprehensive fix**: Modified api/client.ts request() method to use fetchJson, ensuring 100% authentication coverage
    - **Tripwire protection**: admin_errors_tripwire.spec.tsx detects the specific recurring patterns and fails if they reappear
    - **Evidence**: Both API client pathways now route through global authentication enforcement
-   - **Root-cause (final)**: Request ID `ib4csz1ucmedcsdz6` traced to grower-dashboard.tsx useQuery calls (lines 22-25) lacking authentication gating. Race condition between router auth check and API calls.
-   - **Final fix**: Added `isAuthReady` gating to useQuery calls preventing unauthenticated execution
+   - **Admin root-cause**: Request IDs `wwd0c4nt4medd4rjm`, `w4k3xb5h5medd4vym`, `conh6w30qmedd4yij`, `9d6rvi3upmedd4zba` traced to Admin component auth gaps: CalendarPage.tsx useSlotsSingle/useSlotsRange hooks, BulkBar.tsx mutations, DayEditorSheet.tsx queries lacking authentication gating
+   - **Comprehensive Admin fix**: Added isAuthReady gating to CalendarPage.tsx hooks, authentication validation to all BulkBar.tsx mutations, and enhanced gating to DayEditorSheet.tsx queries
 2. ✅ **DayEditor runtime errors**: Eliminated "isOpen is not defined" runtime error and associated auth issues:
    - **Root cause**: AdminPage.tsx DayEditorSheet call missing isOpen prop, causing undefined variable in useQuery enabled condition
    - **Fix**: Added isOpen={!!editDay} prop and enhanced query gating with both isOpen && !!dateISO

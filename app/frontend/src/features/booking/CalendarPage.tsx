@@ -44,13 +44,16 @@ export default function CalendarPage() {
   const { startDate, endDate } = getDateRange();
   
   // Use appropriate hook based on view mode
+  // Enhanced authentication gating for all admin queries  
+  const isAuthReady = authService.isAuthenticated() && !!authService.getToken();
+
   const {
     data: slots = [],
     isLoading,
     error
   } = viewMode === 'day' 
-    ? useSlotsSingle(startDate)
-    : useSlotsRange(startDate, endDate, isWeekViewEnabled);
+    ? useSlotsSingle(startDate, isAuthReady)
+    : useSlotsRange(startDate, endDate, isWeekViewEnabled && isAuthReady);
 
   // Navigation handlers
   const navigateDate = (direction: 'prev' | 'next') => {

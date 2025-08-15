@@ -80,6 +80,11 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk create slots mutation
   const bulkCreateMutation = useMutation({
     mutationFn: async (formData: BulkCreateForm) => {
+      // Ensure authentication before bulk operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for bulk operations');
+      }
+      
       const { startDate, endDate } = getDateRange(selectedDates);
       const weekdays = getWeekdayMask(selectedDates);
       
@@ -118,6 +123,11 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk blackout mutation
   const blackoutMutation = useMutation({
     mutationFn: async () => {
+      // Ensure authentication before blackout operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for blackout operations');
+      }
+      
       const { startDate, endDate } = getDateRange(selectedDates);
       
       return await fetchJson('/v1/slots/blackout', {
@@ -153,6 +163,11 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk restrictions mutation
   const restrictionsMutation = useMutation({
     mutationFn: async () => {
+      // Ensure authentication before restriction operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for restriction operations');
+      }
+      
       return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
         body: JSON.stringify({
