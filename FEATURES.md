@@ -121,6 +121,15 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Week Integration: "Bulk actions (week)" button preselects visible week for bulk operations
   - Testing: 7/7 tests passing for selection mode, bulk operations, and API integration
 
+- **M4 Day view FAB + Slot sheet** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/SlotSheet.tsx`
+  - Features: Mobile-first Day view with FAB for slot creation, bottom sheet for slot management
+  - FAB Dialog: Time picker, duration selector, capacity input, notes → POST /v1/slots/bulk for single slot
+  - Slot Sheet: Overview stats, capacity/notes editing, blackout toggle, restrictions, delete empty slots
+  - API Integration: /v1/slots/bulk, PATCH /v1/slots/{id}, PATCH /v1/slots/{id}/blackout, /v1/restrictions/apply
+  - Testing: 7/7 tests passing for FAB creation, slot sheet actions, and API calls
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)
