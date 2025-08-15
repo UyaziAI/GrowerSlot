@@ -184,21 +184,94 @@ export default function AdminPage() {
       const dateISO = format(day, 'yyyy-MM-dd');
       const isSelected = selectedDates.includes(dateISO);
       
+      // Get slots for this day from backend data
+      const daySlots = slots.filter(s => s.date === dateISO);
+      
       days.push(
-        <div key={i} className="border rounded p-2">
+        <div key={i} className="border rounded p-2 min-h-[200px]" data-testid={`week-day-${dateISO}`}>
           <button
             onClick={() => handleDayClick(dateISO)}
-            className={`w-full text-left p-2 rounded ${isSelected ? 'bg-blue-100' : 'hover:bg-gray-50'}`}
+            className={`w-full text-left p-2 rounded mb-2 ${isSelected ? 'bg-blue-100' : 'hover:bg-gray-50'}`}
           >
             <div className="font-medium">{format(day, 'EEE d')}</div>
           </button>
+          
+          {/* Slot Ribbons */}
+          <div className="space-y-1" data-testid={`week-slots-${dateISO}`}>
+            {daySlots.length === 0 && (
+              <div className="text-xs text-gray-400 text-center py-4">
+                No slots
+              </div>
+            )}
+            {daySlots.map((slot, idx) => {
+              const remaining = (slot.capacity || 0) - (slot.booked || 0);
+              const utilizationPercent = slot.capacity > 0 ? ((slot.booked || 0) / slot.capacity) * 100 : 0;
+              
+              // Color coding based on availability
+              let ribbonColor = 'bg-green-100 border-green-300 text-green-800'; // Available
+              if (remaining === 0) {
+                ribbonColor = 'bg-red-100 border-red-300 text-red-800'; // Full
+              } else if (utilizationPercent > 70) {
+                ribbonColor = 'bg-yellow-100 border-yellow-300 text-yellow-800'; // Nearly full
+              }
+              
+              if (slot.blackout) {
+                ribbonColor = 'bg-gray-100 border-gray-400 text-gray-600'; // Blackout
+              }
+              
+              return (
+                <div
+                  key={`${slot.id}-${idx}`}
+                  className={`border rounded p-2 text-xs cursor-pointer hover:shadow-sm ${ribbonColor}`}
+                  onClick={() => setSlotSheet({
+                    id: slot.id,
+                    date: slot.date,
+                    start_time: slot.time || slot.start_time,
+                    end_time: slot.end_time || '',
+                    capacity: slot.capacity,
+                    booked: slot.booked || (slot.capacity - slot.remaining),
+                    blackout: slot.blackout || false,
+                    notes: slot.notes || '',
+                    restrictions: slot.restrictions || {}
+                  })}
+                  data-testid={`week-slot-ribbon-${slot.id}`}
+                  title={`${slot.time} - ${remaining}/${slot.capacity} available${slot.blackout ? ' (Blackout)' : ''}${slot.notes ? ` - ${slot.notes}` : ''}`}
+                >
+                  <div className="font-medium">
+                    {slot.time || slot.start_time}
+                    {slot.slot_length_min && ` (${slot.slot_length_min}m)`}
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs">
+                      {remaining}/{slot.capacity}
+                    </span>
+                    {slot.blackout && (
+                      <span className="text-xs" title="Blackout slot">⛔</span>
+                    )}
+                    {slot.restrictions && (
+                      (slot.restrictions.growers?.length > 0 || slot.restrictions.cultivars?.length > 0)
+                    ) && (
+                      <span className="text-xs" title="Restricted slot">🔒</span>
+                    )}
+                  </div>
+                  {slot.notes && (
+                    <div className="text-xs mt-1 truncate" title={slot.notes}>
+                      {slot.notes}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
     }
     
     return (
-      <div className="grid grid-cols-7 gap-2">
-        {days}
+      <div data-testid="week-view-grid">
+        <div className="grid grid-cols-7 gap-2">
+          {days}
+        </div>
       </div>
     );
   };
