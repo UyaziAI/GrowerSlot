@@ -289,6 +289,8 @@ GET   /v1/slots?date=YYYY-MM-DD
 GET   /v1/slots/range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD  # range query (max 14 days)
 POST  /v1/slots/bulk                 # create slots for date/time window
 PATCH /v1/slots/{id}                 # blackout/capacity/notes
+PATCH /v1/slots/{id}/blackout        # set blackout=true with optional note
+POST  /v1/slots/blackout             # bulk blackout by day/week scope
 GET   /v1/slots/{id}/usage           # { capacity, booked, remaining }
 ```
 
@@ -325,6 +327,32 @@ Create request
 ```
 
 Errors: 409 (capacity exceeded), 403 (slot restricted), 404 (slot not found).
+
+**Blackout Operations**
+
+```
+PATCH /v1/slots/{id}/blackout
+```
+
+```json
+{ "start_date":"2025-08-20", "end_date":"2025-08-20", "scope":"slot", "note":"Emergency maintenance" }
+```
+
+```
+POST /v1/slots/blackout
+```
+
+```json
+{ "start_date":"2025-08-20", "end_date":"2025-08-22", "scope":"day", "note":"Scheduled downtime" }
+{ "start_date":"2025-08-18", "end_date":"2025-08-24", "scope":"week", "note":"Holiday period" }
+```
+
+Scope options:
+- `"slot"` - Single slot blackout (used with PATCH /{id}/blackout)
+- `"day"` - All slots for each date in range
+- `"week"` - All slots for entire calendar weeks (Monday-Sunday) in range
+
+Both endpoints are idempotent - re-applying same blackout doesn't duplicate effects.
 
 ### 6.4 Restrictions
 
@@ -586,6 +614,16 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
+
+### August 15, 2025 - Backend Blackout Operations Implementation (B7 Complete)
+- **schema:** Added BlackoutRequest model with start_date, end_date, scope (slot/day/week), optional note
+- **endpoints:** Implemented PATCH /v1/slots/{id}/blackout for single slot blackout with notes
+- **bulk:** Implemented POST /v1/slots/blackout for day/week bulk operations with date range validation
+- **scope:** Day scope blackouts all slots per date, week scope blackouts entire Monday-Sunday weeks
+- **idempotent:** Both endpoints use WHERE blackout = false to prevent duplicate updates on re-runs
+- **validation:** Date format validation, range limits (365 days max), scope validation, admin-only access
+- **tests:** Comprehensive test suite in /app/backend/tests/test_blackout.py covering all scenarios
+- **docs:** Added blackout endpoints to Blueprint.md Section 6.2 with examples and scope explanations
 
 ### August 15, 2025 - Docs consistency pass #3 (removed legacy client paths; set export to /v1/)
 - **cleanup:** Updated FEATURES.md and ISSUES.md to remove legacy /client/ path references

@@ -9,7 +9,7 @@ import uuid
 
 from ..db import execute_query, execute_one, execute_transaction, get_db_pool
 from ..security import get_current_user, require_role
-from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult
+from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult, BlackoutRequest
 from ..services.templates import plan_slots, diff_against_db, publish_plan
 
 router = APIRouter()
@@ -177,6 +177,191 @@ async def update_slot(
         blackout=updated_slot['blackout'],
         notes=updated_slot['notes']
     )
+
+@router.patch("/{slot_id}/blackout", response_model=SlotResponse)
+async def blackout_slot(
+    slot_id: str,
+    request: BlackoutRequest,
+    current_user: dict = Depends(require_role("admin"))
+):
+    """Set blackout=true on a specific slot with optional note"""
+    tenant_id = current_user["tenant_id"]
+    
+    # Parse dates for validation
+    try:
+        start_date = datetime.strptime(request.start_date, "%Y-%m-%d").date()
+        end_date = datetime.strptime(request.end_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date must be <= end_date")
+    
+    # Update the specific slot to blackout=true
+    update_values = [True]  # blackout=true
+    param_count = 1
+    
+    if request.note:
+        query = f"""
+            UPDATE slots 
+            SET blackout = $1, notes = $2
+            WHERE id = $3 AND tenant_id = $4
+            RETURNING id, tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes
+        """
+        update_values.extend([request.note, uuid.UUID(slot_id), uuid.UUID(tenant_id)])
+    else:
+        query = f"""
+            UPDATE slots 
+            SET blackout = $1
+            WHERE id = $2 AND tenant_id = $3
+            RETURNING id, tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes
+        """
+        update_values.extend([uuid.UUID(slot_id), uuid.UUID(tenant_id)])
+    
+    updated_slot = await execute_one(query, *update_values)
+    
+    if not updated_slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+    
+    return SlotResponse(
+        id=str(updated_slot['id']),
+        tenant_id=str(updated_slot['tenant_id']),
+        date=updated_slot['date'],
+        start_time=updated_slot['start_time'],
+        end_time=updated_slot['end_time'],
+        capacity=updated_slot['capacity'],
+        resource_unit=updated_slot['resource_unit'],
+        blackout=updated_slot['blackout'],
+        notes=updated_slot['notes']
+    )
+
+@router.post("/blackout")
+async def bulk_blackout_slots(
+    request: BlackoutRequest,
+    current_user: dict = Depends(require_role("admin"))
+):
+    """Bulk blackout slots by day or week scope"""
+    tenant_id = current_user["tenant_id"]
+    
+    # Parse and validate dates
+    try:
+        start_date = datetime.strptime(request.start_date, "%Y-%m-%d").date()
+        end_date = datetime.strptime(request.end_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date must be <= end_date")
+    
+    # Prevent excessively large ranges
+    date_diff = (end_date - start_date).days
+    if date_diff > 365:
+        raise HTTPException(status_code=400, detail="Date range cannot exceed 365 days")
+    
+    affected_rows = 0
+    
+    if request.scope == "day":
+        # Blackout all slots for each date in the range
+        current_date = start_date
+        while current_date <= end_date:
+            if request.note:
+                query = """
+                    UPDATE slots 
+                    SET blackout = true, notes = $1
+                    WHERE tenant_id = $2 AND date = $3 AND blackout = false
+                """
+                result = await execute_query(query, request.note, uuid.UUID(tenant_id), current_date)
+            else:
+                query = """
+                    UPDATE slots 
+                    SET blackout = true
+                    WHERE tenant_id = $1 AND date = $2 AND blackout = false
+                """
+                result = await execute_query(query, uuid.UUID(tenant_id), current_date)
+            
+            # Count affected rows (PostgreSQL specific)
+            count_query = """
+                SELECT COUNT(*) as count FROM slots 
+                WHERE tenant_id = $1 AND date = $2 AND blackout = true
+            """
+            count_result = await execute_one(count_query, uuid.UUID(tenant_id), current_date)
+            if count_result:
+                # This gives us total blackout slots for the date, not just newly updated
+                pass
+            
+            current_date += timedelta(days=1)
+        
+        # Get total count of updated slots
+        if request.note:
+            count_query = """
+                SELECT COUNT(*) as count FROM slots 
+                WHERE tenant_id = $1 AND date >= $2 AND date <= $3 AND blackout = true AND notes = $4
+            """
+            count_result = await execute_one(count_query, uuid.UUID(tenant_id), start_date, end_date, request.note)
+        else:
+            count_query = """
+                SELECT COUNT(*) as count FROM slots 
+                WHERE tenant_id = $1 AND date >= $2 AND date <= $3 AND blackout = true
+            """
+            count_result = await execute_one(count_query, uuid.UUID(tenant_id), start_date, end_date)
+        
+        affected_rows = count_result['count'] if count_result else 0
+        
+    elif request.scope == "week":
+        # Calculate week boundaries and blackout entire weeks
+        current_date = start_date
+        
+        while current_date <= end_date:
+            # Find start of current week (Monday)
+            week_start = current_date - timedelta(days=current_date.weekday())
+            # Find end of current week (Sunday)  
+            week_end = week_start + timedelta(days=6)
+            
+            # Update all slots in this week
+            if request.note:
+                query = """
+                    UPDATE slots 
+                    SET blackout = true, notes = $1
+                    WHERE tenant_id = $2 AND date >= $3 AND date <= $4 AND blackout = false
+                """
+                await execute_query(query, request.note, uuid.UUID(tenant_id), week_start, week_end)
+            else:
+                query = """
+                    UPDATE slots 
+                    SET blackout = true
+                    WHERE tenant_id = $1 AND date >= $2 AND date <= $3 AND blackout = false
+                """
+                await execute_query(query, uuid.UUID(tenant_id), week_start, week_end)
+            
+            # Move to next week
+            current_date = week_end + timedelta(days=1)
+        
+        # Get total count of affected slots in the entire range
+        if request.note:
+            count_query = """
+                SELECT COUNT(*) as count FROM slots 
+                WHERE tenant_id = $1 AND date >= $2 AND date <= $3 AND blackout = true AND notes = $4
+            """
+            count_result = await execute_one(count_query, uuid.UUID(tenant_id), start_date, end_date, request.note)
+        else:
+            count_query = """
+                SELECT COUNT(*) as count FROM slots 
+                WHERE tenant_id = $1 AND date >= $2 AND date <= $3 AND blackout = true
+            """
+            count_result = await execute_one(count_query, uuid.UUID(tenant_id), start_date, end_date)
+        
+        affected_rows = count_result['count'] if count_result else 0
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid scope. Must be 'day' or 'week'")
+    
+    return {
+        "message": f"Blackout applied to {affected_rows} slots",
+        "scope": request.scope,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "affected_slots": affected_rows
+    }
 
 @router.get("/range", response_model=List[SlotResponse])
 async def get_slots_range(

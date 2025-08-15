@@ -96,6 +96,13 @@ class BookingResponse(BaseModel):
     grower_name: Optional[str] = None
     cultivar_name: Optional[str] = None
 
+# Blackout schemas
+class BlackoutRequest(BaseModel):
+    start_date: str
+    end_date: str
+    scope: Literal["slot", "day", "week"]  # for day/week apply to all slots in range
+    note: Optional[str] = None
+
 # Restriction schemas
 class RestrictionApply(BaseModel):
     restriction_date: Optional[date] = None
