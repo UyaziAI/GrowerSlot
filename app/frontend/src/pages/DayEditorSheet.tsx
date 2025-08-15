@@ -10,8 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, Trash2, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isBefore, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { useToast } from '@/hooks/use-toast';
 
 interface DayEditorSheetProps {
@@ -42,13 +44,23 @@ export function DayEditorSheet({ dateISO, isOpen, onClose }: DayEditorSheetProps
     notes: ''
   });
   const [isDayBlackout, setIsDayBlackout] = useState(false);
+  const [apiError, setApiError] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const date = new Date(dateISO);
   const formattedDate = format(date, 'EEEE, MMMM d, yyyy');
+  const dayName = format(date, 'EEE');
   const weekdayMask = [false, false, false, false, false, false, false];
   weekdayMask[date.getDay()] = true; // Set the weekday for this specific date
+  
+  // Check if date is in the past (using Africa/Johannesburg timezone)
+  const today = startOfDay(toZonedTime(new Date(), 'Africa/Johannesburg'));
+  const targetDate = startOfDay(date);
+  const isPastDate = isBefore(targetDate, today);
+
+  // Get today's date string for min attribute
+  const todayISO = toZonedTime(new Date(), 'Africa/Johannesburg').toISOString().split('T')[0];
 
   // Fetch day overview data
   const { data: dayOverview, isLoading } = useQuery<DayOverview>({
@@ -123,10 +135,14 @@ export function DayEditorSheet({ dateISO, isOpen, onClose }: DayEditorSheetProps
         })
       });
       
-      if (!response.ok) throw new Error('Failed to update blackout');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update blackout');
+      }
       return response.json();
     },
     onSuccess: () => {
+      setApiError('');
       toast({
         title: 'Day Updated',
         description: `Day ${isDayBlackout ? 'blacked out' : 'blackout removed'} successfully`
@@ -135,9 +151,11 @@ export function DayEditorSheet({ dateISO, isOpen, onClose }: DayEditorSheetProps
       queryClient.invalidateQueries({ queryKey: ['/v1/admin/day-overview'] });
     },
     onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to update blackout';
+      setApiError(errorMessage);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update blackout',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -331,13 +349,22 @@ export function DayEditorSheet({ dateISO, isOpen, onClose }: DayEditorSheetProps
 
               <Button
                 onClick={handleQuickCreate}
-                disabled={quickCreateMutation.isPending}
+                disabled={quickCreateMutation.isPending || isPastDate}
                 className="w-full"
                 data-testid="button-quick-create-slot"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {quickCreateMutation.isPending ? 'Creating...' : 'Create Slot'}
               </Button>
+
+              {/* API Error Display */}
+              {apiError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800" data-testid="api-error-message">
+                    {apiError}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -401,16 +428,42 @@ export function DayEditorSheet({ dateISO, isOpen, onClose }: DayEditorSheetProps
                 Delete Empty Slots
               </Button>
 
-              <Button
-                variant="destructive"
-                className="w-full justify-start"
-                onClick={() => handleBlackoutToggle(!isDayBlackout)}
-                disabled={blackoutDayMutation.isPending}
-                data-testid="button-blackout-day"
-              >
-                <Ban className="h-4 w-4 mr-2" />
-                {isDayBlackout ? 'Remove' : 'Apply'} Blackout Day
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="w-full justify-start"
+                    disabled={blackoutDayMutation.isPending || isPastDate}
+                    data-testid="button-blackout-day"
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    {isDayBlackout ? 'Remove' : 'Apply'} Blackout Day
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {isDayBlackout ? 'Remove' : 'Apply'} Blackout Day
+                    </AlertDialogTitle>
+                    <AlertDialogDescription data-testid="blackout-day-confirmation-text">
+                      {isDayBlackout 
+                        ? `Remove blackout from ${dayName} ${dateISO}? This will allow new bookings.`
+                        : `Blackout ${dayName} ${dateISO}? This will prevent all new bookings for this day.`
+                      }
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleBlackoutToggle(!isDayBlackout)}
+                      className={isDayBlackout ? "" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
+                      data-testid="confirm-blackout-day-action"
+                    >
+                      {isDayBlackout ? 'Remove Blackout' : 'Apply Blackout'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>

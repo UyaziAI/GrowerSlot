@@ -8,9 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- M4 Day view FAB + Slot sheet for mobile-first slot management
+- SlotSheet bottom drawer with overview stats, capacity/notes editing, blackout toggle
+- FAB dialog in Day view for quick slot creation (time, duration, capacity, notes)
+- Complete mobile UX with touch-friendly interactions and proper query invalidation
+- M5 Copy & safeguards with comprehensive client-side validation and error handling
+- Past date blocking using Africa/Johannesburg timezone across all admin interfaces
+- Scoped confirmation dialogs showing specific dates or selection counts
+- Verbatim HTTP error display (422/403/409) with server json.error messages
+- Date input validation with min attributes preventing past date selection
 - B21 Feature flag rollout checklist and deployment strategy
 - Comprehensive release procedures with staging and production phases
 - Risk assessment and monitoring guidelines for feature rollouts
+
+### Changed
+- AdminPage Day view now shows slot list with click-to-manage functionality
+- Enhanced mobile responsiveness across all admin calendar components
+- All destructive actions (blackout, restrictions) now require explicit confirmation
+- Form submissions disabled for past dates with clear warning messages
 
 ## [1.2.0] - 2025-08-15
 

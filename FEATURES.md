@@ -130,6 +130,15 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - API Integration: /v1/slots/bulk, PATCH /v1/slots/{id}, PATCH /v1/slots/{id}/blackout, /v1/restrictions/apply
   - Testing: 7/7 tests passing for FAB creation, slot sheet actions, and API calls
 
+- **M5 Copy & safeguards** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/app/frontend/src/pages/DayPeekSheet.tsx`, `/app/frontend/src/pages/DayEditorSheet.tsx`, `/app/frontend/src/pages/BulkBar.tsx`
+  - Features: Client-side validations, scoped confirmations, proper error handling using Africa/Johannesburg timezone
+  - Past Date Blocking: min attribute on date inputs, disabled buttons for past dates with warning messages
+  - Scoped Confirmations: "Blackout Fri 2025-08-15?" or "Blackout 3 selected days?" with AlertDialog components
+  - Error Handling: 422/403/409 HTTP errors display json.error messages verbatim, never generic errors
+  - Testing: 12/12 tests passing for date validation, confirmation dialogs, and error message display
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

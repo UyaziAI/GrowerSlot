@@ -613,6 +613,8 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 
 **Day View FAB + Slot Sheet**: Mobile-first day management with floating action button for quick slot creation. FAB opens time picker dialog (start_time, duration, capacity, notes) posting to /v1/slots/bulk for single slot creation. Tapping existing slots opens bottom SlotSheet with overview stats (capacity/remaining/booked), settings (capacity/notes editing), blackout toggle (PATCH /v1/slots/{id}/blackout), restrictions button, and delete for empty slots. Provides complete mobile slot management workflow.
 
+**Copy & Safeguards (Client Validation)**: Enforces usability rules across all admin interfaces. Past dates (determined by Africa/Johannesburg timezone) automatically disable form actions with warning messages. All destructive operations (blackout, restrictions) show scoped confirmation dialogs ("Blackout Fri 2025-08-15?" or "Blackout 3 selected days?"). HTTP errors (422/403/409) display server json.error messages verbatim, never generic fallbacks. Date inputs have min attributes set to today, preventing past date selection entirely.
+
 ### API (§6) Additions:
 - **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates` (stub endpoints implemented)
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency

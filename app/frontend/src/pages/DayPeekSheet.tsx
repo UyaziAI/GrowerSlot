@@ -2,8 +2,10 @@ import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Eye, Edit } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isBefore, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 interface DayPeekSummary {
   remaining: number;
@@ -37,6 +39,12 @@ export function DayPeekSheet({
 }: DayPeekSheetProps) {
   const date = new Date(dateISO);
   const formattedDate = format(date, 'EEEE, MMM d, yyyy');
+  const dayName = format(date, 'EEE'); // For confirmation dialogs
+  
+  // Check if date is in the past (using Africa/Johannesburg timezone)
+  const today = startOfDay(toZonedTime(new Date(), 'Africa/Johannesburg'));
+  const targetDate = startOfDay(date);
+  const isPastDate = isBefore(targetDate, today);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -95,6 +103,7 @@ export function DayPeekSheet({
             <Button
               onClick={onCreateDay}
               className="w-full justify-start"
+              disabled={isPastDate}
               data-testid="button-create-day"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -102,26 +111,79 @@ export function DayPeekSheet({
             </Button>
             
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={onBlackoutDay}
-                variant="outline"
-                className="justify-start"
-                data-testid="button-blackout-day"
-              >
-                <Ban className="h-4 w-4 mr-2" />
-                Blackout Day
-              </Button>
-              <Button
-                onClick={onRestrictDay}
-                variant="outline"
-                className="justify-start"
-                data-testid="button-restrict-day"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Restrict Day
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    disabled={isPastDate}
+                    data-testid="button-blackout-day"
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    Blackout Day
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Blackout Day</AlertDialogTitle>
+                    <AlertDialogDescription data-testid="blackout-confirmation-text">
+                      Blackout {dayName} {dateISO}? This will prevent all new bookings for this day.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={onBlackoutDay}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      data-testid="confirm-blackout-day"
+                    >
+                      Blackout Day
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    disabled={isPastDate}
+                    data-testid="button-restrict-day"
+                  >
+                    <Lock className="h-4 w-4 mr-2" />
+                    Restrict Day
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Restrict Day</AlertDialogTitle>
+                    <AlertDialogDescription data-testid="restrict-confirmation-text">
+                      Apply restrictions to {dayName} {dateISO}? This will limit access to specific growers or cultivars.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={onRestrictDay}
+                      data-testid="confirm-restrict-day"
+                    >
+                      Apply Restrictions
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
+
+          {/* Past Date Warning */}
+          {isPastDate && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800" data-testid="past-date-warning">
+                Actions disabled for past dates. Select today or a future date to make changes.
+              </p>
+            </div>
+          )}
 
           {/* Navigation Links */}
           <div className="pt-4 border-t">

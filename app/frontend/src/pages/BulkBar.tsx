@@ -8,9 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, X, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, isBefore, startOfDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 interface BulkBarProps {
   selectedDates: string[];
@@ -37,9 +39,20 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
     notes: ''
   });
   const [sourceDate, setSourceDate] = useState('');
+  const [apiError, setApiError] = useState<string>('');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Check if any selected dates are in the past
+  const today = startOfDay(toZonedTime(new Date(), 'Africa/Johannesburg'));
+  const hasPastDates = selectedDates.some(dateStr => {
+    const date = startOfDay(new Date(dateStr));
+    return isBefore(date, today);
+  });
+
+  // Get today's date string for min attribute
+  const todayISO = toZonedTime(new Date(), 'Africa/Johannesburg').toISOString().split('T')[0];
 
   // Compute weekday mask from selected dates
   const getWeekdayMask = (dates: string[]) => {
@@ -119,10 +132,14 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
         })
       });
       
-      if (!response.ok) throw new Error('Failed to apply blackout');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to apply blackout');
+      }
       return response.json();
     },
     onSuccess: () => {
+      setApiError('');
       toast({
         title: 'Blackout Applied',
         description: `Successfully applied blackout to ${selectedDates.length} selected days`
@@ -131,9 +148,11 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
       onDone();
     },
     onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to apply blackout';
+      setApiError(errorMessage);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to apply blackout',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -328,28 +347,69 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
               </Sheet>
 
               {/* Blackout - Selected days */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => blackoutMutation.mutate()}
-                disabled={blackoutMutation.isPending}
-                data-testid="button-bulk-blackout"
-              >
-                <Ban className="h-4 w-4 mr-1" />
-                {blackoutMutation.isPending ? 'Applying...' : 'Blackout — Selected days'}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={blackoutMutation.isPending || hasPastDates}
+                    data-testid="button-bulk-blackout"
+                  >
+                    <Ban className="h-4 w-4 mr-1" />
+                    Blackout — Selected days
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Blackout Selected Days</AlertDialogTitle>
+                    <AlertDialogDescription data-testid="bulk-blackout-confirmation-text">
+                      Blackout {selectedDates.length} selected days? This will prevent all new bookings for these days.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => blackoutMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      data-testid="confirm-bulk-blackout"
+                    >
+                      {blackoutMutation.isPending ? 'Applying...' : 'Blackout Days'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               {/* Apply Restrictions - Selected days */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => restrictionsMutation.mutate()}
-                disabled={restrictionsMutation.isPending}
-                data-testid="button-bulk-restrictions"
-              >
-                <Lock className="h-4 w-4 mr-1" />
-                {restrictionsMutation.isPending ? 'Applying...' : 'Apply Restrictions — Selected days'}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={restrictionsMutation.isPending || hasPastDates}
+                    data-testid="button-bulk-restrictions"
+                  >
+                    <Lock className="h-4 w-4 mr-1" />
+                    Apply Restrictions — Selected days
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Apply Restrictions</AlertDialogTitle>
+                    <AlertDialogDescription data-testid="bulk-restrictions-confirmation-text">
+                      Apply restrictions to {selectedDates.length} selected days? This will limit access to specific growers or cultivars.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => restrictionsMutation.mutate()}
+                      data-testid="confirm-bulk-restrictions"
+                    >
+                      {restrictionsMutation.isPending ? 'Applying...' : 'Apply Restrictions'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               {/* Duplicate From */}
               <Sheet open={duplicateSheetOpen} onOpenChange={setDuplicateSheetOpen}>
@@ -369,6 +429,7 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
                       <Input
                         id="source-date"
                         type="date"
+                        min={todayISO}
                         value={sourceDate}
                         onChange={(e) => setSourceDate(e.target.value)}
                         data-testid="input-source-date"
@@ -376,12 +437,21 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
                     </div>
                     <Button
                       onClick={() => duplicateMutation.mutate()}
-                      disabled={duplicateMutation.isPending || !sourceDate}
+                      disabled={duplicateMutation.isPending || !sourceDate || hasPastDates}
                       className="w-full"
                       data-testid="button-confirm-duplicate"
                     >
                       {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate Slots'}
                     </Button>
+
+                    {/* API Error Display */}
+                    {apiError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-4">
+                        <p className="text-sm text-red-800" data-testid="bulk-api-error-message">
+                          {apiError}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>
