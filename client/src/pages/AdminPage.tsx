@@ -5,6 +5,8 @@ import DayPeekSheet, { DayPeekSummary } from './DayPeekSheet';
 import DayEditorSheet from './DayEditorSheet';
 import { BulkBar } from './BulkBar';
 import { SlotSheet } from './SlotSheet';
+import TopNavigation from '@/components/top-navigation';
+import { authService } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -29,6 +31,7 @@ export default function AdminPage() {
   const [slots, setSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const user = authService.getUser();
   
   // Fetch slots for visible range
   const fetchSlots = async () => {
@@ -193,52 +196,69 @@ export default function AdminPage() {
   };
 
   return (
-    <div data-testid="admin-page">
-      <header className="flex items-center justify-between p-3 border-b">
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
-            <button 
-              onClick={()=>setView('month')}
-              className={`px-3 py-1 rounded ${view === 'month' ? 'bg-blue-500 text-white' : ''}`}
-            >
-              Month
-            </button>
-            <button 
-              onClick={()=>setView('week')}
-              className={`px-3 py-1 rounded ${view === 'week' ? 'bg-blue-500 text-white' : ''}`}
-            >
-              Week
-            </button>
-            <button 
-              onClick={()=>setView('day')}
-              className={`px-3 py-1 rounded ${view === 'day' ? 'bg-blue-500 text-white' : ''}`}
-            >
-              Day
-            </button>
+    <div data-testid="admin-page" className="min-h-screen bg-gray-50">
+      <TopNavigation userRole={user?.role} userName="Admin" />
+      
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <header className="flex items-center justify-between mb-6 bg-white p-4 rounded-lg shadow">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              <button 
+                onClick={()=>setView('month')}
+                className={`px-3 py-1 rounded ${view === 'month' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'}`}
+              >
+                Month
+              </button>
+              <button 
+                onClick={()=>setView('week')}
+                className={`px-3 py-1 rounded ${view === 'week' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'}`}
+              >
+                Week
+              </button>
+              <button 
+                onClick={()=>setView('day')}
+                className={`px-3 py-1 rounded ${view === 'day' ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'}`}
+              >
+                Day
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={selectMode}
+                onCheckedChange={setSelectMode}
+                id="select-mode"
+              />
+              <Label htmlFor="select-mode">Select days</Label>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <Switch
-              checked={selectMode}
-              onCheckedChange={setSelectMode}
-              id="select-mode"
-            />
-            <Label htmlFor="select-mode">Select days</Label>
+            <button 
+              data-testid="admin-header-create"
+              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Create ▾
+            </button>
+            <button 
+              data-testid="admin-header-more"
+              className="px-3 py-1 border rounded hover:bg-gray-100"
+            >
+              More ▾
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button data-testid="admin-header-create">Create ▾</button>
-          <button data-testid="admin-header-more">More ▾</button>
-        </div>
-      </header>
-      <main className="p-3">
-        <h1 className="text-xl font-semibold">Admin Calendar</h1>
-        <div data-testid="admin-calendar-grid" className="mt-3 border rounded p-6">
-          {loading && <div>Loading...</div>}
-          {!loading && view === 'month' && renderMonthView()}
-          {!loading && view === 'week' && renderWeekView()}
-          {!loading && view === 'day' && renderDayView()}
-        </div>
-      </main>
+        </header>
+        
+        <main className="bg-white rounded-lg shadow">
+          <div className="p-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Calendar</h1>
+            <div data-testid="admin-calendar-grid" className="border rounded-lg p-6">
+              {loading && <div className="text-center py-8">Loading...</div>}
+              {!loading && view === 'month' && renderMonthView()}
+              {!loading && view === 'week' && renderWeekView()}
+              {!loading && view === 'day' && renderDayView()}
+            </div>
+          </div>
+        </main>
+      </div>
       
       {selectedDates.length > 0 && (
         <BulkBar
@@ -314,10 +334,10 @@ export default function AdminPage() {
         <DayEditorSheet
           dateISO={editDay}
           onClose={() => setEditDay(null)}
-          onToggleBlackout={async (next) => {
+          onToggleBlackout={async () => {
             try {
               const res = await fetch('/v1/slots/blackout', {
-                method: next ? 'POST' : 'DELETE',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dates: [editDay] })
               });

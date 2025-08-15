@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - UI reconcile — Admin uses existing app shell, theme, and mobile layout (no new files).
+
 ### August 15, 2025 - FE reconcile — Admin wired in /src, routes unified to component prop, calendar views and day sheets integrated.
 
 ### August 15, 2025 - Admin Calendar — Reconcile & Wire V1 (no-new-files).
