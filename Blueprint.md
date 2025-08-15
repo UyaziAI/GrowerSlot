@@ -587,6 +587,17 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - Admin UI Apply Template Dialog Implementation (B5 Complete)
+- **dialog:** Enhanced Apply Template dialog with real preview/publish flow behind VITE_FEATURE_ADMIN_TEMPLATES flag
+- **flow:** Template selection → Preview generation → Publish with real backend integration
+- **preview:** Shows created/updated/skipped counts and sample slot lists from actual API responses
+- **publish:** Real publish mode with cache invalidation and grid refresh on completion
+- **ux:** Proper state management with dialog reset, change template option, disabled publish when no changes
+- **api:** Calls POST /v1/slots/apply-template with template_id, date range, and mode (preview/publish)
+- **tests:** Created comprehensive test suite in /client/src/__tests__/admin_apply_template.spec.tsx
+- **scenarios:** Tests template selection, preview generation, publish flow, re-publish zero counts
+- **validation:** Verifies non-zero preview counts, grid updates, proper API calls, state management
+
 ### August 15, 2025 - PATCH Booking Update Implementation (B4 Complete)
 - **endpoint:** Implemented PATCH /v1/bookings/{id} with transactional capacity and restriction checks
 - **capacity:** Enforces slot capacity limits with 409 error when target slot full or quantity exceeds available space

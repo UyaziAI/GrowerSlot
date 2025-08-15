@@ -240,6 +240,8 @@ export default function AdminDashboard() {
   const [showApplyTemplateDialog, setShowApplyTemplateDialog] = useState(false);
   const [showTemplatesDrawer, setShowTemplatesDrawer] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
+  const [previewResult, setPreviewResult] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
@@ -371,22 +373,46 @@ export default function AdminDashboard() {
     }
   });
 
-  const applyTemplateMutation = useMutation({
+  // Preview template mutation
+  const previewTemplateMutation = useMutation({
+    mutationFn: (data: any) => api.applyTemplate(data),
+    onSuccess: (result) => {
+      setPreviewResult(result);
+      toast({ 
+        title: "Preview Generated", 
+        description: `Preview shows ${result.created} new, ${result.updated} updates, ${result.skipped} existing slots`
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Preview Failed", 
+        description: error.message || "Failed to generate preview",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Publish template mutation
+  const publishTemplateMutation = useMutation({
     mutationFn: (data: any) => api.applyTemplate(data),
     onSuccess: (result) => {
       // Invalidate specific range query for immediate grid refresh
       queryClient.invalidateQueries({ queryKey: ['slots', 'range', user?.tenantId, startDate, endDate] });
       queryClient.invalidateQueries({ queryKey: ['slots'] });
       toast({ 
-        title: "Template Applied", 
-        description: `Created: ${result.created}, Updated: ${result.updated}, Skipped: ${result.skipped}` 
+        title: "Template Published", 
+        description: `Applied: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped` 
       });
+      
+      // Reset dialog state and close
+      setPreviewResult(null);
+      setSelectedTemplate(null);
       setShowApplyTemplateDialog(false);
     },
     onError: (error: any) => {
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to apply template",
+        title: "Publish Failed", 
+        description: error.message || "Failed to publish template",
         variant: "destructive" 
       });
     }
@@ -529,37 +555,209 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Apply Template Dialog */}
-                <Dialog open={showApplyTemplateDialog} onOpenChange={setShowApplyTemplateDialog}>
+                <Dialog open={showApplyTemplateDialog} onOpenChange={(open) => {
+                  setShowApplyTemplateDialog(open);
+                  if (!open) {
+                    setPreviewResult(null);
+                    setSelectedTemplate(null);
+                  }
+                }}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" data-testid="apply-template-button">
                       <Settings className="h-4 w-4 mr-2" />
                       Apply Template
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Apply Template</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                      <p className="text-sm text-gray-600 mb-4">
-                        Apply a template to create or modify slots for the selected date range.
-                      </p>
-                      <Button 
-                        onClick={() => {
-                          applyTemplateMutation.mutate({ mode: 'preview' });
-                        }}
-                        disabled={applyTemplateMutation.isPending}
-                        data-testid="preview-template"
-                      >
-                        {applyTemplateMutation.isPending ? 'Previewing...' : 'Preview Changes'}
-                      </Button>
-                      <Button 
-                        className="ml-2"
-                        disabled={true}
-                        data-testid="publish-template"
-                      >
-                        Publish (Disabled)
-                      </Button>
+                      {/* Template Selection */}
+                      {!selectedTemplate ? (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Select a template to apply to the date range {startDate} to {endDate}.
+                          </p>
+                          {templatesLoading ? (
+                            <div className="text-center py-4">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                              <p className="text-sm text-gray-600 mt-2">Loading templates...</p>
+                            </div>
+                          ) : templates.length === 0 ? (
+                            <div className="text-center py-8">
+                              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                              <p className="text-gray-600">No templates available</p>
+                              <p className="text-sm text-gray-500 mt-2">Create a template first to use this feature.</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {templates.map((template: any) => (
+                                <div 
+                                  key={template.id} 
+                                  className="border rounded-lg p-3 cursor-pointer hover:border-blue-500 transition-colors"
+                                  onClick={() => setSelectedTemplate(template)}
+                                  data-testid={`template-${template.id}`}
+                                >
+                                  <h3 className="font-medium">{template.name}</h3>
+                                  <p className="text-sm text-gray-600">{template.description}</p>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Weekdays: {template.weekdays?.join(', ') || 'All'} | 
+                                    Slot Length: {template.slot_length_min || 60}min | 
+                                    Capacity: {template.capacity || 10}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          {/* Selected Template Info */}
+                          <div className="border rounded-lg p-3 mb-4 bg-blue-50">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h3 className="font-medium">{selectedTemplate.name}</h3>
+                                <p className="text-sm text-gray-600">{selectedTemplate.description}</p>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Range: {startDate} to {endDate}
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedTemplate(null);
+                                  setPreviewResult(null);
+                                }}
+                                data-testid="change-template"
+                              >
+                                Change
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Preview Results */}
+                          {previewResult && (
+                            <div className="border rounded-lg p-4 mb-4 bg-gray-50">
+                              <h4 className="font-medium mb-3">Preview Results</h4>
+                              
+                              {/* Summary Counts */}
+                              <div className="grid grid-cols-3 gap-4 mb-4">
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-green-600" data-testid="preview-created-count">
+                                    {previewResult.created || 0}
+                                  </div>
+                                  <div className="text-sm text-gray-600">New Slots</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-blue-600" data-testid="preview-updated-count">
+                                    {previewResult.updated || 0}
+                                  </div>
+                                  <div className="text-sm text-gray-600">Updated</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-2xl font-bold text-gray-600" data-testid="preview-skipped-count">
+                                    {previewResult.skipped || 0}
+                                  </div>
+                                  <div className="text-sm text-gray-600">Unchanged</div>
+                                </div>
+                              </div>
+
+                              {/* Sample Lists */}
+                              {(previewResult.samples?.created?.length > 0 || 
+                                previewResult.samples?.updated?.length > 0 || 
+                                previewResult.samples?.skipped?.length > 0) && (
+                                <div className="space-y-3">
+                                  {previewResult.samples?.created?.length > 0 && (
+                                    <div>
+                                      <h5 className="text-sm font-medium text-green-700 mb-1">New Slots (sample)</h5>
+                                      <div className="text-xs space-y-1" data-testid="preview-created-samples">
+                                        {previewResult.samples.created.slice(0, 5).map((slot: any, i: number) => (
+                                          <div key={i} className="text-gray-600">
+                                            {slot.date} {slot.start_time}-{slot.end_time} (Capacity: {slot.capacity})
+                                          </div>
+                                        ))}
+                                        {previewResult.samples.created.length > 5 && (
+                                          <div className="text-gray-500">... and {previewResult.samples.created.length - 5} more</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {previewResult.samples?.updated?.length > 0 && (
+                                    <div>
+                                      <h5 className="text-sm font-medium text-blue-700 mb-1">Updated Slots (sample)</h5>
+                                      <div className="text-xs space-y-1" data-testid="preview-updated-samples">
+                                        {previewResult.samples.updated.slice(0, 5).map((slot: any, i: number) => (
+                                          <div key={i} className="text-gray-600">
+                                            {slot.date} {slot.start_time}-{slot.end_time} (Capacity: {slot.old_capacity}→{slot.capacity})
+                                          </div>
+                                        ))}
+                                        {previewResult.samples.updated.length > 5 && (
+                                          <div className="text-gray-500">... and {previewResult.samples.updated.length - 5} more</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2">
+                            {!previewResult ? (
+                              <Button 
+                                onClick={() => {
+                                  previewTemplateMutation.mutate({
+                                    template_id: selectedTemplate.id,
+                                    start_date: startDate,
+                                    end_date: endDate,
+                                    mode: 'preview'
+                                  });
+                                }}
+                                disabled={previewTemplateMutation.isPending}
+                                data-testid="preview-template"
+                              >
+                                {previewTemplateMutation.isPending ? 'Previewing...' : 'Preview Changes'}
+                              </Button>
+                            ) : (
+                              <>
+                                <Button 
+                                  onClick={() => {
+                                    previewTemplateMutation.mutate({
+                                      template_id: selectedTemplate.id,
+                                      start_date: startDate,
+                                      end_date: endDate,
+                                      mode: 'preview'
+                                    });
+                                  }}
+                                  disabled={previewTemplateMutation.isPending}
+                                  variant="outline"
+                                  data-testid="refresh-preview"
+                                >
+                                  {previewTemplateMutation.isPending ? 'Refreshing...' : 'Refresh Preview'}
+                                </Button>
+                                <Button 
+                                  onClick={() => {
+                                    publishTemplateMutation.mutate({
+                                      template_id: selectedTemplate.id,
+                                      start_date: startDate,
+                                      end_date: endDate,
+                                      mode: 'publish'
+                                    });
+                                  }}
+                                  disabled={publishTemplateMutation.isPending || (previewResult.created === 0 && previewResult.updated === 0)}
+                                  data-testid="publish-template"
+                                >
+                                  {publishTemplateMutation.isPending ? 'Publishing...' : 'Publish Changes'}
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </DialogContent>
                 </Dialog>
