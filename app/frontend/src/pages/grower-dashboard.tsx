@@ -20,12 +20,12 @@ export default function GrowerDashboard() {
   const user = authService.getUser();
 
   const { data: slots = [], isLoading: slotsLoading } = useQuery<SlotWithUsage[]>({
-    queryKey: ["/api/slots", selectedDate],
+    queryKey: ["/v1/slots", selectedDate],
     queryFn: () => api.getSlots(selectedDate),
   });
 
   const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
-    queryKey: ["/api/bookings"],
+    queryKey: ["/v1/bookings"],
     queryFn: () => api.getBookings(),
   });
 
@@ -36,8 +36,8 @@ export default function GrowerDashboard() {
         title: "Booking Cancelled",
         description: "Your booking has been cancelled successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
+      queryClient.invalidateQueries({ queryKey: ["/v1/bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["/v1/slots"] });
     },
     onError: (error: any) => {
       toast({

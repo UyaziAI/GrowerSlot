@@ -31,12 +31,12 @@ export default function AdminDashboard() {
   const user = authService.getUser();
 
   const { data: slots = [], isLoading: slotsLoading } = useQuery<SlotWithUsage[]>({
-    queryKey: ["/api/slots", selectedDate],
+    queryKey: ["/v1/slots", selectedDate],
     queryFn: () => api.getSlots(selectedDate),
   });
 
   const { data: stats } = useQuery({
-    queryKey: ["/api/admin/stats", selectedDate],
+    queryKey: ["/v1/admin/stats", selectedDate],
     queryFn: () => api.getDashboardStats(selectedDate),
   });
 
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
         title: "Slots Created",
         description: `Successfully created ${result.count} slots`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
+      queryClient.invalidateQueries({ queryKey: ["/v1/slots"] });
       setBulkForm({
         startDate: '',
         endDate: '',
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
   const updateSlotMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.updateSlot(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/slots"] });
+      queryClient.invalidateQueries({ queryKey: ["/v1/slots"] });
       toast({
         title: "Slot Updated",
         description: "Slot has been updated successfully",

@@ -16,10 +16,10 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: JWT-based with localStorage persistence.
 
 ### Backend Architecture
-- **Primary**: FastAPI (Python) with asyncpg for PostgreSQL.
+- **Primary**: Express.js (Node.js) with Drizzle ORM for PostgreSQL.
 - **API Design**: RESTful API with versioned endpoints (`/v1/`) and JWT middleware.
-- **Database Interaction**: Raw SQL with `asyncpg` for performance and transactional safety.
-- **Validation**: Pydantic schemas for request/response validation.
+- **Database Interaction**: Drizzle ORM with direct SQL for complex operations and transactional safety.
+- **Validation**: Zod schemas for request/response validation.
 - **Concurrency**: `SELECT FOR UPDATE` for atomic booking operations.
 - **Events**: Domain events and outbox pattern for reliable webhook delivery.
 

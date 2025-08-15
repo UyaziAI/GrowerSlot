@@ -95,20 +95,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Register login handler for both /api and /v1 routes
-  app.post("/api/auth/login", loginHandler);
+  // Register login handler
   app.post("/v1/auth/login", loginHandler);
 
   const meHandler = async (req: AuthRequest, res: Response) => {
     res.json({ user: req.user });
   };
 
-  // Register me handler for both /api and /v1 routes
-  app.get("/api/auth/me", authenticateToken, meHandler);
+  // Register me handler
   app.get("/v1/auth/me", authenticateToken, meHandler);
 
   // Growers route
-  app.get("/api/growers", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/v1/growers", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const growers = await storage.getGrowersByTenant(req.user!.tenantId);
       res.json(growers);
@@ -119,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cultivars route
-  app.get("/api/cultivars", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/v1/cultivars", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const cultivars = await storage.getCultivarsByTenant(req.user!.tenantId);
       res.json(cultivars);
@@ -130,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Slots routes
-  app.get("/api/slots", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/v1/slots", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { date } = req.query;
       
@@ -147,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Slots range endpoint for calendar view
-  app.get("/api/slots/range", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/v1/slots/range", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { start_date, end_date } = req.query;
       
@@ -175,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/slots/bulk", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  app.post("/v1/slots/bulk", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       const bulkSlotSchema = z.object({
         startDate: z.string(),
@@ -272,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/slots/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  app.patch("/v1/slots/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const updateSchema = z.object({
@@ -321,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bookings routes
-  app.post("/api/bookings", authenticateToken, async (req: AuthRequest, res) => {
+  app.post("/v1/bookings", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const bookingData = insertBookingSchema.parse({
         ...req.body,
@@ -342,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bookings", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/v1/bookings", authenticateToken, async (req: AuthRequest, res) => {
     try {
       if (!req.user?.growerId) {
         return res.status(400).json({ error: "Grower ID required" });
@@ -355,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/bookings/:id", authenticateToken, async (req: AuthRequest, res) => {
+  app.delete("/v1/bookings/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const success = await storage.cancelBooking(id);
@@ -393,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Slot usage endpoint
-  app.get("/api/slots/:id/usage", authenticateToken, async (req: AuthRequest, res) => {
+  app.get("/v1/slots/:id/usage", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const slot = await storage.getSlot(id);
@@ -416,7 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin dashboard stats
-  app.get("/api/admin/stats", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  app.get("/v1/admin/stats", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       const { date } = req.query;
       
@@ -433,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Restrictions endpoint
-  app.post("/api/restrictions/apply", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  app.post("/v1/restrictions/apply", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       const restrictionSchema = z.object({
         slotId: z.string().optional(),
@@ -627,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Health check
-  app.get("/api/health", (req, res) => {
+  app.get("/v1/health", (req, res) => {
     res.json({ status: "ok" });
   });
 

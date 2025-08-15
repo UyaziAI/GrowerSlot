@@ -12,20 +12,20 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 - **Transactional booking with capacity controls** (August 13, 2025) 
   - Status: ✅ Implemented with concurrency protection
-  - Location: `/server/routes.ts` - POST /api/bookings endpoint
+  - Location: `/server/routes.ts` - POST /v1/bookings endpoint
   - Technical: Uses SELECT FOR UPDATE pattern for atomic capacity checking
   - Verification: Tested with concurrent requests, proper 409 responses
 
 - **JWT Authentication & RBAC** (August 13, 2025)
   - Status: ✅ Fully implemented
-  - Location: `/app/backend/security.py`, `/app/frontend/src/core/auth.ts`
+  - Location: `/server/routes.ts`, `/client/src/lib/auth.ts`
   - Roles: Admin, Grower users with proper access controls
   - Verification: Login/logout working, role-based UI rendering
 
 - **Admin slot management tools** (August 13, 2025)
   - Status: ✅ Implemented
   - Features: Bulk slot creation, blackouts, capacity management
-  - Location: `/app/frontend/src/pages/AdminPage.tsx`
+  - Location: `/app/frontend/src/pages/admin-dashboard.tsx`
   - Verification: Admin can create/modify slots, set blackouts
 
 - **Grower self-service booking** (August 13, 2025)
@@ -60,21 +60,21 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Verification: All migrations run successfully
 
 ### Repository Audit & Compliance (August 14, 2025)
-- **Complete Blueprint.md compliance verification** (August 14, 2025)
-  - Status: ✅ Audit completed and fixes applied
-  - Changes: All query keys migrated to v1 format, legacy files removed
-  - Location: Repository-wide updates documented in SCAN_REPORT.md
-  - Verification: All TypeScript/LSP diagnostics cleared, API contracts match
+- **Complete API migration to /v1/ prefix** (August 15, 2025)
+  - Status: ✅ Migration completed successfully  
+  - Changes: All API routes migrated from /api/ to /v1/ prefix, frontend query keys updated
+  - Location: `/server/routes.ts`, `/app/frontend/src/pages/`, `/client/src/pages/`
+  - Verification: Health check working at /v1/health, all tests passing, authentication functional
 
 - **CSV Export (B16)** (August 15, 2025)
   - Status: ✅ Implemented and tested
-  - Location: `/app/frontend/src/pages/AdminPage.tsx`
+  - Location: `/app/frontend/src/pages/admin-dashboard.tsx`
   - Features: Export CSV button in admin top bar, date range filtering, blob download
   - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
 
 - **Audit Trail & Events System (B17)** (August 15, 2025)
   - Status: ✅ Implemented and tested
-  - Location: `/app/backend/services/audit.py` (domain events, outbox, audit log tables)
+  - Location: `/server/services/audit.ts` (domain events, outbox, audit log tables)
   - Features: Domain events + outbox pattern, audit logging for all admin actions
   - Events: SLOTS_BULK_CREATED, SLOT_UPDATED, SLOTS_BLACKED_OUT, TEMPLATE_APPLIED, BOOKING_UPDATED
   - Verification: 16/16 tests passing in admin_audit_events.spec.ts
