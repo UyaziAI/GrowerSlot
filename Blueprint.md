@@ -684,6 +684,14 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
 
+### August 15, 2025 - C1 Create Slots Split + Past Date Blocking
+- **ui:** Split "Create Slots" into single-day vs range creation with distinct dialogs
+- **create slots:** CreateSlotsDialog for focused date (start=end=selectedDate), hides weekdays UI
+- **bulk create:** BulkCreateDialog with date range inputs, weekday checkboxes, defaults today+7
+- **validation:** Africa/Johannesburg timezone past date blocking with inline errors
+- **api:** Both dialogs POST to /v1/slots/bulk with appropriate date ranges and weekday masks
+- **testing:** Comprehensive test coverage for dialog behaviors, validation, API calls
+
 ### August 15, 2025 - Calendar Export & Sync Roadmap Added
 - **roadmap:** Added comprehensive calendar export & sync roadmap with 3-phase implementation plan
 - **P1 planning:** ICS read-only feeds for external calendar subscription (Q1 2026)

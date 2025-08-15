@@ -56,6 +56,7 @@ Preferred communication style: Simple, everyday language.
 - **Feature Flag System**: Staged rollout capabilities with environment-based configuration.
 - **CI/CD Pipeline**: Automated testing with GitHub Actions, PostgreSQL services, and artifact collection.
 - **Audit Trail**: Comprehensive logging system for compliance and administrative tracking.
+- **Split Creation UI**: Separate dialogs for single-day ("Create Slots") vs bulk range ("Bulk Create") slot creation with proper past date validation.
 
 ## External Dependencies
 

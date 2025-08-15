@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, ChevronDown, Calendar, Download, CheckSquare, Square } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, ChevronDown, Calendar, Download, CheckSquare, Square, CalendarPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,8 @@ import { FilterDrawer } from './FilterDrawer';
 import { DayEditorSheet } from './DayEditorSheet';
 import { BulkBar } from './BulkBar';
 import { SlotSheet } from './SlotSheet';
+import { CreateSlotsDialog } from './CreateSlotsDialog';
+import { BulkCreateDialog } from './BulkCreateDialog';
 import { format, addDays, subDays } from 'date-fns';
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -42,6 +44,8 @@ export default function AdminPage() {
   const [slotSheetOpen, setSlotSheetOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [createSlotOpen, setCreateSlotOpen] = useState(false);
+  const [createSlotsDialogOpen, setCreateSlotsDialogOpen] = useState(false);
+  const [bulkCreateDialogOpen, setBulkCreateDialogOpen] = useState(false);
   const [newSlotForm, setNewSlotForm] = useState({
     startTime: '09:00',
     slotLength: 60,
@@ -141,6 +145,14 @@ export default function AdminPage() {
   const handleDoneSelection = () => {
     setSelectionMode(false);
     setSelectedDates([]);
+  };
+
+  const handleCreateSlots = () => {
+    setCreateSlotsDialogOpen(true);
+  };
+
+  const handleBulkCreate = () => {
+    setBulkCreateDialogOpen(true);
   };
 
   const handleSlotClick = (slot: any) => {
@@ -312,10 +324,12 @@ export default function AdminPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleCreateSlots} data-testid="menuitem-create-slots">
-                  Create Slots
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Slots (Day)
                 </DropdownMenuItem>
-                <DropdownMenuItem data-testid="menuitem-bulk-create">
-                  Bulk Create
+                <DropdownMenuItem onClick={handleBulkCreate} data-testid="menuitem-bulk-create">
+                  <CalendarPlus className="h-4 w-4 mr-2" />
+                  Bulk Create (Range)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -577,6 +591,21 @@ export default function AdminPage() {
           setSlotSheetOpen(false);
           setSelectedSlot(null);
         }}
+      />
+
+      {/* Create Slots Dialog */}
+      <CreateSlotsDialog
+        isOpen={createSlotsDialogOpen}
+        onClose={() => setCreateSlotsDialogOpen(false)}
+        focusedDate={selectedDate}
+        tenantId="mock-tenant-id"
+      />
+
+      {/* Bulk Create Dialog */}
+      <BulkCreateDialog
+        isOpen={bulkCreateDialogOpen}
+        onClose={() => setBulkCreateDialogOpen(false)}
+        tenantId="mock-tenant-id"
       />
     </div>
   );

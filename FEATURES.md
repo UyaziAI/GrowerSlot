@@ -197,6 +197,16 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - All changes maintain complete audit trail
   - Round-trip synchronization maintains data integrity
 
+## C1 - Create Slots Split & Past Date Blocking (August 15, 2025)
+
+- **Status**: ✅ Implemented and tested
+- **Location**: `/app/frontend/src/pages/CreateSlotsDialog.tsx`, `/app/frontend/src/pages/BulkCreateDialog.tsx`, `/app/frontend/src/pages/AdminPage.tsx`
+- **Features**: Separated single-day creation from bulk range creation with proper past date validation
+- **Create Slots (Day)**: Single focused date dialog (start=end=selectedDate), no weekdays UI, posts with derived weekday mask
+- **Bulk Create (Range)**: Date range inputs, weekday checkboxes, defaults today+7, comprehensive validation
+- **Past Date Blocking**: Africa/Johannesburg timezone validation with inline error messages and disabled submit buttons
+- **Testing**: 11/11 tests passing for dialog behaviors, validation logic, API calls, and error handling
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)
