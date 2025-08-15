@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../components/ui/sheet';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Switch } from '../components/ui/switch';
+import { Badge } from '../components/ui/badge';
+import { Separator } from '../components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, Trash2, AlertTriangle } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '../hooks/use-toast';
+import { fetchJson } from '../lib/http';
+import { authService } from '../core/auth';
+
+// Feature flags
+const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
+const FEATURE_NEXT_AVAILABLE = import.meta.env.VITE_FEATURE_NEXT_AVAILABLE === 'true';
 
 interface DayEditorSheetProps {
   dateISO: string;
+  isOpen: boolean;
   onClose: () => void;
   onToggleBlackout?: () => void;
   onQuickCreate?: (params: any) => void;
@@ -38,7 +45,7 @@ interface QuickCreateForm {
   notes: string;
 }
 
-export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQuickCreate }: DayEditorSheetProps) {
+export default function DayEditorSheet({ dateISO, isOpen, onClose, onToggleBlackout, onQuickCreate }: DayEditorSheetProps) {
   const [quickCreateForm, setQuickCreateForm] = useState<QuickCreateForm>({
     slot_length_min: 60,
     capacity: 20,
@@ -63,7 +70,10 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Get today's date string for min attribute
   const todayISO = toZonedTime(new Date(), 'Africa/Johannesburg').toISOString().split('T')[0];
 
-  // Fetch day overview data
+  // Enhanced authentication gating for admin queries
+  const isAuthReady = authService.isAuthenticated() && !!authService.getToken();
+
+  // Fetch day overview data with proper auth and sheet state gating
   const { data: dayOverview, isLoading } = useQuery<DayOverview>({
     queryKey: ['/v1/admin/day-overview', dateISO],
     queryFn: async () => {
@@ -80,15 +90,19 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
         ]
       };
     },
-    enabled: isOpen
+    enabled: isOpen && !!dateISO && isAuthReady // Gate by sheet state, valid date, and auth
   });
 
   // Quick create slot mutation
   const quickCreateMutation = useMutation({
     mutationFn: async (formData: QuickCreateForm) => {
-      const response = await fetch('/v1/slots/bulk', {
+      // Ensure authentication before quick create operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for slot creation');
+      }
+      
+      return await fetchJson('/v1/slots/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           startDate: dateISO,
           endDate: dateISO,
@@ -100,9 +114,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
           weekdays: weekdayMask
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to create slot');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -125,9 +136,13 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Blackout day mutation
   const blackoutDayMutation = useMutation({
     mutationFn: async (blackout: boolean) => {
-      const response = await fetch('/v1/slots/blackout', {
+      // Ensure authentication before blackout operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for blackout operations');
+      }
+      
+      return await fetchJson('/v1/slots/blackout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           start_date: dateISO,
           end_date: dateISO,
@@ -135,12 +150,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
           note: blackout ? 'Day blackout from editor' : 'Blackout removed from editor'
         })
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update blackout');
-      }
-      return response.json();
     },
     onSuccess: () => {
       setApiError('');
@@ -165,17 +174,13 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Restrictions mutation
   const restrictionsMutation = useMutation({
     mutationFn: async (restrictions: any) => {
-      const response = await fetch('/v1/restrictions/apply', {
+      return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date_scope: [dateISO],
           restrictions: restrictions
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to apply restrictions');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -409,15 +414,17 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
               <CardTitle className="text-lg">Utilities</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={handleDuplicateFrom}
-                data-testid="button-duplicate-from"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate from...
-              </Button>
+              {FEATURE_ADMIN_TEMPLATES && (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleDuplicateFrom}
+                  data-testid="button-duplicate-from"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate from...
+                </Button>
+              )}
 
               <Button
                 variant="outline"

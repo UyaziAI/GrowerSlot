@@ -1,6 +1,6 @@
 /**
  * Calendar-style slot layout with Day and Week views
- * Week view now uses WeekOverviewGrid with day cards per Blueprint Section 7
+ * Inspired by Playtomic's time-grid booking UI
  */
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,47 +8,36 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { Lock, AlertTriangle, Clock, User } from "lucide-react";
-import { SlotWithUsage } from "@shared/schema";
+import { type SlotResponse } from "../../../v1/endpoints";
 import { getTimeSegments } from "../hooks/useSlotsRange";
-import WeekOverviewGrid from './WeekOverviewGrid';
 
 interface CalendarGridProps {
-  slots: SlotWithUsage[];
+  slots: SlotResponse[];
   viewMode: 'day' | 'week';
   selectedDate: Date;
-  onSlotClick?: (slot: SlotWithUsage) => void;
-  onDateSelect?: (date: string) => void; // For week view day card navigation
+  onSlotClick?: (slot: SlotResponse) => void;
   className?: string;
 }
 
 interface SlotCardProps {
-  slot: SlotWithUsage;
+  slot: SlotResponse;
   onClick?: () => void;
   className?: string;
 }
 
 function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
-  // Helpers for numeric conversion
-  const toNum = (v: unknown, fallback = 0): number => {
-    const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
-    return Number.isFinite(n) ? n : fallback;
-  };
-
-  // Calculate derived values with safe numeric conversion
-  const capacityNum = toNum(slot.capacity, 0);
-  const bookedNum = toNum(slot.booked, 0);
-  const remainingNum = toNum(slot.remaining ?? (capacityNum - bookedNum), 0);
-  const unit = slot.resourceUnit ?? 'tons';
-  const safeCap = Math.max(capacityNum, 0);
+  const usage = slot.usage;
+  const capacity = usage?.capacity ?? 0;
+  const booked = usage?.booked ?? 0;
+  const remaining = usage?.remaining ?? 0;
   
-  // Avoid divide-by-zero for progress bars
-  const utilizationPercent = safeCap > 0 ? Math.min(100, Math.max(0, (bookedNum / safeCap) * 100)) : 0;
+  const utilizationPercent = capacity > 0 ? (booked / capacity) * 100 : 0;
   
   // Status determination
   const isBlackedOut = slot.blackout;
   const isRestricted = slot.restrictions && (slot.restrictions.growers?.length > 0 || slot.restrictions.cultivars?.length > 0);
-  const isFull = remainingNum <= 0;
-  const isLimited = remainingNum > 0 && remainingNum < capacityNum * 0.3; // Less than 30% remaining
+  const isFull = remaining <= 0;
+  const isLimited = remaining > 0 && remaining < capacity * 0.3; // Less than 30% remaining
   
   const getStatusColor = () => {
     if (isBlackedOut) return "bg-gray-500";
@@ -80,7 +69,7 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-500" />
                   <span className="text-sm font-medium">
-                    {slot.startTime} - {slot.endTime}
+                    {slot.start_time} - {slot.end_time}
                   </span>
                 </div>
                 
@@ -109,9 +98,9 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
                     data-testid={`capacity-bar-${slot.id}`}
                   />
                   <div className="flex justify-between text-xs text-gray-600">
-                    <span>{bookedNum.toFixed(1)}/{capacityNum.toFixed(1)} {unit}</span>
-                    <span className={`font-medium ${remainingNum <= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {remainingNum.toFixed(1)} remaining
+                    <span>{booked.toFixed(1)}/{capacity.toFixed(1)} {slot.resource_unit}</span>
+                    <span className={`font-medium ${remaining <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {remaining.toFixed(1)} remaining
                     </span>
                   </div>
                 </div>
@@ -130,14 +119,14 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
         <TooltipContent>
           <div className="p-2 max-w-xs">
             <div className="font-medium mb-1">
-              {slot.startTime} - {slot.endTime}
+              {slot.start_time} - {slot.end_time}
             </div>
             
             {!isBlackedOut && (
               <div className="text-sm mb-2">
-                <div>Capacity: {capacityNum.toFixed(1)} {unit}</div>
-                <div>Booked: {bookedNum.toFixed(1)} {unit}</div>
-                <div>Remaining: {remainingNum.toFixed(1)} {unit}</div>
+                <div>Capacity: {capacity} {slot.resource_unit}</div>
+                <div>Booked: {booked} {slot.resource_unit}</div>
+                <div>Remaining: {remaining} {slot.resource_unit}</div>
                 <div>Utilization: {utilizationPercent.toFixed(1)}%</div>
               </div>
             )}
@@ -145,7 +134,12 @@ function SlotCard({ slot, onClick, className = "" }: SlotCardProps) {
             {isRestricted && slot.restrictions && (
               <div className="text-sm text-orange-600 mb-2">
                 <div className="font-medium">Restrictions:</div>
-                <div>• Grower/cultivar restrictions applied</div>
+                {slot.restrictions.growers?.length > 0 && (
+                  <div>• Growers: {slot.restrictions.growers.length} specific</div>
+                )}
+                {slot.restrictions.cultivars?.length > 0 && (
+                  <div>• Cultivars: {slot.restrictions.cultivars.length} specific</div>
+                )}
               </div>
             )}
             
@@ -173,7 +167,6 @@ export default function CalendarGrid({
   viewMode, 
   selectedDate, 
   onSlotClick, 
-  onDateSelect,
   className = "" 
 }: CalendarGridProps) {
   const timeSegments = getTimeSegments(6, 20, 30); // 6 AM to 8 PM, 30-min segments
@@ -186,7 +179,7 @@ export default function CalendarGrid({
     }
     acc[dateKey].push(slot);
     return acc;
-  }, {} as Record<string, SlotWithUsage[]>);
+  }, {} as Record<string, SlotResponse[]>);
 
   // Generate date columns for week view
   const getWeekDates = (date: Date) => {
@@ -209,21 +202,21 @@ export default function CalendarGrid({
   const findSlotAtTime = (dateStr: string, timeStr: string) => {
     const daySlots = slotsByDate[dateStr] || [];
     return daySlots.find(slot => 
-      slot.startTime <= timeStr && slot.endTime > timeStr
+      slot.start_time <= timeStr && slot.end_time > timeStr
     );
   };
 
   // Calculate slot span in grid units (30-min segments)
-  const getSlotSpan = (slot: SlotWithUsage) => {
-    const start = new Date(`2000-01-01T${slot.startTime}`);
-    const end = new Date(`2000-01-01T${slot.endTime}`);
+  const getSlotSpan = (slot: SlotResponse) => {
+    const start = new Date(`2000-01-01T${slot.start_time}`);
+    const end = new Date(`2000-01-01T${slot.end_time}`);
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
     return Math.max(1, Math.floor(durationMinutes / 30));
   };
 
   // Get grid position for slot
-  const getSlotPosition = (slot: SlotWithUsage) => {
-    const slotStart = slot.startTime;
+  const getSlotPosition = (slot: SlotResponse) => {
+    const slotStart = slot.start_time;
     const segmentIndex = timeSegments.findIndex(segment => segment.time === slotStart);
     return segmentIndex >= 0 ? segmentIndex : 0;
   };
@@ -254,26 +247,7 @@ export default function CalendarGrid({
     );
   }
 
-  // Week view with day cards (replaces hourly time grid)
-  if (viewMode === 'week') {
-    // Calculate start of week (Sunday) for anchor date
-    const startOfWeek = new Date(selectedDate);
-    const dayOfWeek = startOfWeek.getDay();
-    startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
-
-    return (
-      <div className={`calendar-grid-week ${className}`} data-testid="calendar-grid-week">
-        <WeekOverviewGrid
-          anchorDate={startOfWeek}
-          slots={slots}
-          onSelectDate={onDateSelect || (() => {})}
-          className="w-full"
-        />
-      </div>
-    );
-  }
-
-  // This should not be reached as we handle both day and week above
+  // Week view with time grid
   return (
     <div className={`calendar-grid-week ${className}`} data-testid="calendar-grid-week">
       <div className="overflow-x-auto">

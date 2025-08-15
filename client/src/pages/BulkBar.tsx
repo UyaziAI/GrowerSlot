@@ -10,9 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, X, Check } from 'lucide-react';
+import { fetchJson } from '../lib/http';
 import { useToast } from '@/hooks/use-toast';
+import { authService } from '../core/auth';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+
+// Feature flags
+const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
 
 interface BulkBarProps {
   selectedDates: string[];
@@ -76,12 +81,16 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk create slots mutation
   const bulkCreateMutation = useMutation({
     mutationFn: async (formData: BulkCreateForm) => {
+      // Ensure authentication before bulk operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for bulk operations');
+      }
+      
       const { startDate, endDate } = getDateRange(selectedDates);
       const weekdays = getWeekdayMask(selectedDates);
       
-      const response = await fetch('/v1/slots/bulk', {
+      return await fetchJson('/v1/slots/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           startDate,
           endDate,
@@ -93,9 +102,6 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
           weekdays
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to create slots');
-      return response.json();
     },
     onSuccess: (result) => {
       toast({
@@ -108,8 +114,8 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
     },
     onError: (error: any) => {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create slots',
+        title: 'Error', 
+        description: error.message,
         variant: 'destructive'
       });
     }
@@ -118,11 +124,15 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk blackout mutation
   const blackoutMutation = useMutation({
     mutationFn: async () => {
+      // Ensure authentication before blackout operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for blackout operations');
+      }
+      
       const { startDate, endDate } = getDateRange(selectedDates);
       
-      const response = await fetch('/v1/slots/blackout', {
+      return await fetchJson('/v1/slots/blackout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           start_date: startDate,
           end_date: endDate,
@@ -131,12 +141,6 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
           selected_dates: selectedDates
         })
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to apply blackout');
-      }
-      return response.json();
     },
     onSuccess: () => {
       setApiError('');
@@ -148,11 +152,10 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
       onDone();
     },
     onError: (error: any) => {
-      const errorMessage = error.message || 'Failed to apply blackout';
-      setApiError(errorMessage);
+      setApiError(error.message);
       toast({
         title: 'Error',
-        description: errorMessage,
+        description: error.message,
         variant: 'destructive'
       });
     }
@@ -161,9 +164,13 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk restrictions mutation
   const restrictionsMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/v1/restrictions/apply', {
+      // Ensure authentication before restriction operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for restriction operations');
+      }
+      
+      return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date_scope: selectedDates,
           restrictions: {
@@ -173,9 +180,6 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
           }
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to apply restrictions');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -199,17 +203,13 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
     mutationFn: async () => {
       if (!sourceDate) throw new Error('Please select a source date');
       
-      const response = await fetch('/v1/slots/duplicate', {
+      return await fetchJson('/v1/slots/duplicate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source_date: sourceDate,
           target_dates: selectedDates
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to duplicate slots');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -411,50 +411,52 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
                 </AlertDialogContent>
               </AlertDialog>
 
-              {/* Duplicate From */}
-              <Sheet open={duplicateSheetOpen} onOpenChange={setDuplicateSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button size="sm" variant="outline" data-testid="button-bulk-duplicate">
-                    <Copy className="h-4 w-4 mr-1" />
-                    Duplicate From…
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-96">
-                  <SheetHeader>
-                    <SheetTitle>Duplicate Slots to {selectedDates.length} Days</SheetTitle>
-                  </SheetHeader>
-                  <div className="space-y-4 mt-6">
-                    <div>
-                      <Label htmlFor="source-date">Source Date</Label>
-                      <Input
-                        id="source-date"
-                        type="date"
-                        min={todayISO}
-                        value={sourceDate}
-                        onChange={(e) => setSourceDate(e.target.value)}
-                        data-testid="input-source-date"
-                      />
-                    </div>
-                    <Button
-                      onClick={() => duplicateMutation.mutate()}
-                      disabled={duplicateMutation.isPending || !sourceDate || hasPastDates}
-                      className="w-full"
-                      data-testid="button-confirm-duplicate"
-                    >
-                      {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate Slots'}
+              {/* Duplicate From - Templates Feature */}
+              {FEATURE_ADMIN_TEMPLATES && (
+                <Sheet open={duplicateSheetOpen} onOpenChange={setDuplicateSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button size="sm" variant="outline" data-testid="button-bulk-duplicate">
+                      <Copy className="h-4 w-4 mr-1" />
+                      Duplicate From…
                     </Button>
-
-                    {/* API Error Display */}
-                    {apiError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-4">
-                        <p className="text-sm text-red-800" data-testid="bulk-api-error-message">
-                          {apiError}
-                        </p>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-96">
+                    <SheetHeader>
+                      <SheetTitle>Duplicate Slots to {selectedDates.length} Days</SheetTitle>
+                    </SheetHeader>
+                    <div className="space-y-4 mt-6">
+                      <div>
+                        <Label htmlFor="source-date">Source Date</Label>
+                        <Input
+                          id="source-date"
+                          type="date"
+                          min={todayISO}
+                          value={sourceDate}
+                          onChange={(e) => setSourceDate(e.target.value)}
+                          data-testid="input-source-date"
+                        />
                       </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
+                      <Button
+                        onClick={() => duplicateMutation.mutate()}
+                        disabled={duplicateMutation.isPending || !sourceDate || hasPastDates}
+                        className="w-full"
+                        data-testid="button-confirm-duplicate"
+                      >
+                        {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate Slots'}
+                      </Button>
+
+                      {/* API Error Display */}
+                      {apiError && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-4">
+                          <p className="text-sm text-red-800" data-testid="bulk-api-error-message">
+                            {apiError}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
 
               {/* Clear & Done buttons */}
               <Button

@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Clock, Users, Ban, Lock, Trash2, AlertTriangle } from 'lucide-react';
+import { fetchJson } from '../lib/http';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -56,15 +57,10 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
   const updateSlotMutation = useMutation({
     mutationFn: async (updates: Partial<SlotData>) => {
       if (!slot) return;
-      
-      const response = await fetch(`/v1/slots/${slot.id}`, {
+      return fetchJson(`/v1/slots/${slot.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      
-      if (!response.ok) throw new Error('Failed to update slot');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -76,7 +72,7 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update slot',
+        description: error.message,
         variant: 'destructive'
       });
     }
@@ -86,18 +82,13 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
   const blackoutMutation = useMutation({
     mutationFn: async (blackout: boolean) => {
       if (!slot) return;
-      
-      const response = await fetch(`/v1/slots/${slot.id}/blackout`, {
+      return fetchJson(`/v1/slots/${slot.id}/blackout`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           blackout,
           note: blackout ? 'Slot blacked out from management' : 'Blackout removed from management'
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to update blackout');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -109,7 +100,7 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update blackout',
+        description: error.message,
         variant: 'destructive'
       });
     }
@@ -119,13 +110,9 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
   const deleteSlotMutation = useMutation({
     mutationFn: async () => {
       if (!slot) return;
-      
-      const response = await fetch(`/v1/slots/${slot.id}`, {
+      return fetchJson(`/v1/slots/${slot.id}`, {
         method: 'DELETE'
       });
-      
-      if (!response.ok) throw new Error('Failed to delete slot');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -138,7 +125,7 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete slot',
+        description: error.message,
         variant: 'destructive'
       });
     }
@@ -149,9 +136,8 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
     mutationFn: async () => {
       if (!slot) return;
       
-      const response = await fetch('/v1/restrictions/apply', {
+      return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slot_ids: [slot.id],
           restrictions: {
@@ -161,9 +147,6 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
           }
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to apply restrictions');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -175,7 +158,7 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to apply restrictions',
+        description: error.message,
         variant: 'destructive'
       });
     }
