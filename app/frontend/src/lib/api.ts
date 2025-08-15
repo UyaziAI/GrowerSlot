@@ -1,4 +1,6 @@
 import { authService } from "./auth";
+import { fetchJson } from "./http";
+import { logger } from "./logger";
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -11,26 +13,21 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `/api${endpoint}`;
-  const token = authService.getToken();
+  // Use the global authentication enforcement from fetchJson
+  // Convert /api endpoints to /v1 endpoints for consistency
+  const v1Endpoint = endpoint.startsWith('/') ? `/v1${endpoint}` : `/v1/${endpoint}`;
   
-  const config: RequestInit = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-  };
-
-  const response = await fetch(url, config);
+  logger.debug('api_request_legacy', `Legacy API client redirecting to ${v1Endpoint}`, {
+    original_endpoint: endpoint,
+    v1_endpoint: v1Endpoint
+  });
   
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorData.error || response.statusText);
+  try {
+    return await fetchJson<T>(v1Endpoint, options);
+  } catch (error: any) {
+    // Convert to ApiError for compatibility
+    throw new ApiError(error.status || 500, error.message);
   }
-
-  return response.json();
 }
 
 export const api = {
