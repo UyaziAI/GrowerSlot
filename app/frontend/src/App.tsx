@@ -21,7 +21,7 @@ function Router() {
     <Switch>
       <Route path="/" component={isAdmin ? AdminPage : GrowerDashboard} />
       <Route path="/dashboard" component={isAdmin ? AdminPage : GrowerDashboard} />
-      {isAdmin && <Route path="/admin" component={AdminPage} />}
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );
