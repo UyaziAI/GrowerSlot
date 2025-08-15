@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 import os
 from contextlib import asynccontextmanager
 
-from .routers import auth, slots, bookings, restrictions, logistics
+from .routers import auth, slots, bookings, restrictions, logistics, templates
 from .db import init_db
 
 
@@ -48,6 +48,7 @@ app.include_router(slots.router, prefix="/v1/slots", tags=["slots"])
 app.include_router(bookings.router, prefix="/v1/bookings", tags=["bookings"])
 app.include_router(restrictions.router, prefix="/v1/restrictions", tags=["restrictions"])
 app.include_router(logistics.router, prefix="/v1/logistics", tags=["logistics"])
+app.include_router(templates.router)
 
 if __name__ == "__main__":
     import uvicorn

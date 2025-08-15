@@ -63,15 +63,17 @@ class SlotsRangeRequest(BaseModel):
     start_date: date = Field(description="Start date for range query")
     end_date: date = Field(description="End date for range query")
     
-    def model_validate(self):
-        if self.start_date > self.end_date:
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        instance = super().model_validate(obj, **kwargs)
+        if instance.start_date > instance.end_date:
             raise ValueError("start_date must be <= end_date")
         
-        date_diff = (self.end_date - self.start_date).days
+        date_diff = (instance.end_date - instance.start_date).days
         if date_diff > 14:
             raise ValueError("Date range cannot exceed 14 days")
         
-        return self
+        return instance
 
 # Booking schemas
 class BookingCreate(BaseModel):
@@ -96,7 +98,7 @@ class BookingResponse(BaseModel):
 
 # Restriction schemas
 class RestrictionApply(BaseModel):
-    date: Optional[date] = None
+    restriction_date: Optional[date] = None
     slot_id: Optional[str] = None
     grower_ids: Optional[List[str]] = None
     cultivar_ids: Optional[List[str]] = None

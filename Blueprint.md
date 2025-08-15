@@ -504,9 +504,19 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **testing ready:** Structure prepared for comprehensive admin calendar testing and phantom slot regression tests
 
 ### API (§6) Additions:
-- **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates`
+- **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates` (stub endpoints implemented)
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency
 - **Booking Updates**: `PATCH /v1/bookings/{id}` for admin booking moves with 409/403 validation
+
+### API Stubs (§6.7 Templates - Admin Only):
+
+```
+GET    /v1/admin/templates                 -> [] (empty list)
+POST   /v1/admin/templates                 -> { id, tenant_id, name, config, ... }
+PATCH  /v1/admin/templates/{id}            -> { id, tenant_id, name, config, ... } 
+DELETE /v1/admin/templates/{id}            -> { ok: true }
+POST   /v1/slots/apply-template            -> { created, updated, skipped, samples } [NOT YET IMPLEMENTED]
+```
 
 ### Data Model (§4) Additions:
 - **templates table**: tenant-scoped reusable availability patterns with JSON config (weekday blocks, cultivar windows, buffers)
@@ -562,6 +572,9 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **gaps:** Minor API versioning discrepancy (/api/ vs /v1/) and missing CSV export endpoint
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
+
+### August 15, 2025 - Templates Router CRUD Stubs  
+- **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
 ### August 15, 2025 - Templates Backend Schemas
 - **schemas:** Add Pydantic models for templates and apply-template operations

@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 15, 2025**: Templates Router CRUD Stubs Complete - API Endpoints Scaffolded
+  - **Router**: Added /app/backend/routers/templates.py with CRUD stub endpoints  
+  - **API Stubs**: GET returns [], POST/PATCH return placeholder data, DELETE returns {ok:true}
+  - **Integration**: Wired templates.router into main.py FastAPI app
+  - **LSP Fixed**: Resolved schema validation method signature issues
+  - **Testing Ready**: All endpoints compile and return deterministic empty results
+
 - **August 15, 2025**: Templates Backend Schemas Complete - Pydantic Models Added
   - **Schemas**: Added TemplateIn, TemplateOut, ApplyTemplateRequest, ApplyTemplateResult to schemas.py
   - **Validation**: Pydantic models for request/response validation with proper typing
