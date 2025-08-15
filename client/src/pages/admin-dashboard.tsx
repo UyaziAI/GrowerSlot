@@ -15,6 +15,13 @@ import { api } from "@/lib/api";
 import { authService } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { SlotWithUsage } from "@shared/schema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -27,11 +34,208 @@ const TENANT_TZ = 'Africa/Johannesburg';
 
 type ViewMode = 'month' | 'week' | 'day';
 
+// Bulk Create Form Schema - matching backend API
+const bulkCreateSchema = z.object({
+  start_date: z.string().min(1, "Start date is required"),
+  end_date: z.string().min(1, "End date is required"), 
+  weekdays: z.array(z.string()).min(1, "At least one weekday must be selected"),
+  slot_length_min: z.number().min(1, "Slot length must be at least 1 minute").default(60),
+  capacity: z.number().min(1, "Capacity must be at least 1").default(10),
+  notes: z.string().default("")
+});
+
+type BulkCreateFormData = z.infer<typeof bulkCreateSchema>;
+
+interface BulkCreateFormProps {
+  startDate: string;
+  endDate: string;
+  onSubmit: (data: BulkCreateFormData) => void;
+  isPending: boolean;
+}
+
+function BulkCreateForm({ startDate, endDate, onSubmit, isPending }: BulkCreateFormProps) {
+  const form = useForm<BulkCreateFormData>({
+    resolver: zodResolver(bulkCreateSchema),
+    defaultValues: {
+      start_date: startDate,
+      end_date: endDate,
+      weekdays: ['mon', 'tue', 'wed', 'thu', 'fri'], // Default to weekdays
+      slot_length_min: 60,
+      capacity: 10,
+      notes: ""
+    }
+  });
+
+  const weekdayOptions = [
+    { id: 'mon', label: 'Monday' },
+    { id: 'tue', label: 'Tuesday' },
+    { id: 'wed', label: 'Wednesday' },
+    { id: 'thu', label: 'Thursday' },
+    { id: 'fri', label: 'Friday' },
+    { id: 'sat', label: 'Saturday' },
+    { id: 'sun', label: 'Sunday' }
+  ];
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="start_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} data-testid="start-date-input" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="end_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} data-testid="end-date-input" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="weekdays"
+          render={() => (
+            <FormItem>
+              <FormLabel>Days of Week</FormLabel>
+              <div className="flex flex-wrap gap-3 mt-2">
+                {weekdayOptions.map((option) => (
+                  <FormField
+                    key={option.id}
+                    control={form.control}
+                    name="weekdays"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={option.id}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(option.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...field.value, option.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== option.id
+                                      )
+                                    )
+                              }}
+                              data-testid={`weekday-${option.id}`}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-sm font-normal">
+                            {option.label}
+                          </FormLabel>
+                        </FormItem>
+                      )
+                    }}
+                  />
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="slot_length_min"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Slot Length (minutes)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="1"
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    data-testid="slot-length-input"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="capacity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Capacity</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    min="1"
+                    {...field} 
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    data-testid="capacity-input"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes (Optional)</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Additional notes for these slots..."
+                  {...field}
+                  data-testid="notes-textarea"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-2 pt-4">
+          <Button 
+            type="submit" 
+            disabled={isPending}
+            data-testid="confirm-bulk-create"
+          >
+            {isPending ? 'Creating...' : 'Create Slots'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [showBulkCreateDialog, setShowBulkCreateDialog] = useState(false);
+  const [showCreateSlotDialog, setShowCreateSlotDialog] = useState(false);
   const [showEditSlotDialog, setShowEditSlotDialog] = useState(false);
   const [showApplyTemplateDialog, setShowApplyTemplateDialog] = useState(false);
   const [showTemplatesDrawer, setShowTemplatesDrawer] = useState(false);
@@ -130,9 +334,14 @@ export default function AdminDashboard() {
   const bulkCreateSlotsMutation = useMutation({
     mutationFn: (data: any) => api.bulkCreateSlots(data),
     onSuccess: () => {
+      // Invalidate specific range query for immediate grid refresh
+      queryClient.invalidateQueries({ queryKey: ['slots', 'range', user?.tenantId, startDate, endDate] });
+      // Also invalidate general slots queries for comprehensive cache refresh
       queryClient.invalidateQueries({ queryKey: ['slots'] });
       toast({ title: "Success", description: "Slots created successfully" });
+      // Close both dialogs since they use the same mutation
       setShowBulkCreateDialog(false);
+      setShowCreateSlotDialog(false);
     },
     onError: (error: any) => {
       toast({ 
@@ -146,6 +355,8 @@ export default function AdminDashboard() {
   const updateSlotMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.updateSlot(id, data),
     onSuccess: () => {
+      // Invalidate specific range query for immediate grid refresh
+      queryClient.invalidateQueries({ queryKey: ['slots', 'range', user?.tenantId, startDate, endDate] });
       queryClient.invalidateQueries({ queryKey: ['slots'] });
       toast({ title: "Success", description: "Slot updated successfully" });
       setShowEditSlotDialog(false);
@@ -163,6 +374,8 @@ export default function AdminDashboard() {
   const applyTemplateMutation = useMutation({
     mutationFn: (data: any) => api.applyTemplate(data),
     onSuccess: (result) => {
+      // Invalidate specific range query for immediate grid refresh
+      queryClient.invalidateQueries({ queryKey: ['slots', 'range', user?.tenantId, startDate, endDate] });
       queryClient.invalidateQueries({ queryKey: ['slots'] });
       toast({ 
         title: "Template Applied", 
@@ -351,6 +564,27 @@ export default function AdminDashboard() {
                   </DialogContent>
                 </Dialog>
 
+                {/* Create Slots Dialog */}
+                <Dialog open={showCreateSlotDialog} onOpenChange={setShowCreateSlotDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" data-testid="create-slots-button">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Slots
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create Slots</DialogTitle>
+                    </DialogHeader>
+                    <BulkCreateForm
+                      startDate={startDate}
+                      endDate={endDate}
+                      onSubmit={(data) => bulkCreateSlotsMutation.mutate(data)}
+                      isPending={bulkCreateSlotsMutation.isPending}
+                    />
+                  </DialogContent>
+                </Dialog>
+
                 <Dialog open={showBulkCreateDialog} onOpenChange={setShowBulkCreateDialog}>
                   <DialogTrigger asChild>
                     <Button size="sm" data-testid="bulk-create-button">
@@ -362,26 +596,12 @@ export default function AdminDashboard() {
                     <DialogHeader>
                       <DialogTitle>Bulk Create Slots</DialogTitle>
                     </DialogHeader>
-                    <div className="py-4">
-                      <p className="text-sm text-gray-600 mb-4">
-                        Create multiple slots for the selected date range.
-                      </p>
-                      <Button 
-                        onClick={() => {
-                          // Mock bulk create - would use actual form
-                          bulkCreateSlotsMutation.mutate({
-                            startDate,
-                            endDate,
-                            capacity: 100,
-                            timeSlots: ['08:00', '10:00', '14:00', '16:00']
-                          });
-                        }}
-                        disabled={bulkCreateSlotsMutation.isPending}
-                        data-testid="confirm-bulk-create"
-                      >
-                        {bulkCreateSlotsMutation.isPending ? 'Creating...' : 'Create Slots'}
-                      </Button>
-                    </div>
+                    <BulkCreateForm
+                      startDate={startDate}
+                      endDate={endDate}
+                      onSubmit={(data) => bulkCreateSlotsMutation.mutate(data)}
+                      isPending={bulkCreateSlotsMutation.isPending}
+                    />
                   </DialogContent>
                 </Dialog>
 

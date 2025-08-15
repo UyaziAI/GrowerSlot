@@ -587,6 +587,15 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - Wire Create Slots & Bulk Create Implementation (B3 Complete)
+- **frontend:** Enhanced admin dashboard with proper BulkCreateForm component using react-hook-form and Zod validation
+- **forms:** Created structured form with start_date, end_date, weekdays[], slot_length_min, capacity, notes fields
+- **buttons:** Both "Create Slots" and "Bulk Create" buttons use same bulkCreateSlotsMutation with POST /v1/slots/bulk
+- **cache:** Updated invalidation to use specific ['slots', 'range', tenantId, startISO, endISO] query keys for immediate refresh
+- **errors:** Proper error handling with server message display and form validation feedback
+- **tests:** Created comprehensive test suite in /client/src/__tests__/admin_bulk_create.spec.tsx
+- **verification:** Form submission, API integration, cache invalidation, and error handling all working correctly
+
 ### August 15, 2025 - Apply-Template Publish Implementation (B2 Complete)
 - **publish:** Added publish_plan function with idempotent update-then-insert pattern
 - **transaction:** Single transaction wraps all slot operations with automatic rollback on failure  
