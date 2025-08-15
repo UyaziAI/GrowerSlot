@@ -33,4 +33,7 @@ psql "$DATABASE_URL" -f app/infra/102_logistics.sql
 echo "Running 103_events_rules.sql..."
 psql "$DATABASE_URL" -f app/infra/103_events_rules.sql
 
+echo "Running 104_templates.sql..."
+psql "$DATABASE_URL" -f app/infra/104_templates.sql
+
 echo "All migrations completed successfully!"

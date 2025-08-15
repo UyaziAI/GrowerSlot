@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 15, 2025**: Templates Migration Scaffold Added - Database Schema Preparation Complete
+  - **Migration**: Created 104_templates.sql with tenant-scoped templates table structure
+  - **Schema**: Added templates table with JSONB config, date ranges, tenant isolation, proper indexing
+  - **Runner**: Updated run_migrations.sh to include new 104_templates.sql in migration order
+  - **Compliance**: Deterministic migration, no existing table alterations, follows Admin Addendum specs
+  - **Ready**: Database schema prepared for Templates feature implementation
+
 - **August 15, 2025**: Documentation Consistency Pass Complete - Admin Addendum Integration Finalized
   - **Consistency Updates**: Made docs truthful and consistent after Admin Addendum adoption
   - **Blueprint.md**: Moved implementation details to Delta section, updated changelog to reflect docs-only status

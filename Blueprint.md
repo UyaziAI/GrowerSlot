@@ -563,6 +563,9 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
 
+### August 15, 2025 - Templates Migration Scaffold
+- **migration:** Add 104_templates.sql (docs-only scaffold)
+
 ### August 15, 2025 - Documentation Consistency Pass
 - **docs:** Admin Addendum docs consistency pass after adoption
 - **endpoints:** Updated remaining /api/ references to /v1/ per Section 6
