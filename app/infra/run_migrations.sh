@@ -1,39 +1,81 @@
 #!/bin/bash
 
-# Migration runner for Grower Slot App
-# Runs all SQL migration files in order
+# Database migration runner for CI and local development
+# Runs SQL migrations in sequence and sets up database schema
 
 set -e
 
-# Default to development if no environment specified
-DATABASE_URL=${DATABASE_URL:-$1}
-
-if [ -z "$DATABASE_URL" ]; then
-  echo "Usage: $0 [DATABASE_URL]"
-  echo "Or set DATABASE_URL environment variable"
-  exit 1
+# Check required environment variables
+if [ -z "$DATABASE_URL" ] && [ -z "$PGHOST" ]; then
+    echo "Error: DATABASE_URL or PGHOST environment variable required"
+    exit 1
 fi
 
-echo "Running migrations against database..."
+# Set PostgreSQL connection parameters
+PGHOST=${PGHOST:-localhost}
+PGPORT=${PGPORT:-5432}
+PGUSER=${PGUSER:-postgres}
+PGDATABASE=${PGDATABASE:-grower_slot_test}
 
-# Run core migrations
-echo "Running 001_init.sql..."
-psql "$DATABASE_URL" -f app/infra/001_init.sql
+echo "Starting database migrations..."
+echo "Target database: $PGDATABASE on $PGHOST:$PGPORT"
 
-echo "Running 002_seed.sql..."
-psql "$DATABASE_URL" -f app/infra/002_seed.sql
+# Check database connection
+echo "Testing database connection..."
+if ! pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER"; then
+    echo "Error: Cannot connect to PostgreSQL database"
+    exit 1
+fi
 
-# Run extensibility migrations
-echo "Running 101_parties_products.sql..."
-psql "$DATABASE_URL" -f app/infra/101_parties_products.sql
+# Function to run SQL file
+run_migration() {
+    local sql_file="$1"
+    local filename=$(basename "$sql_file")
+    
+    echo "Running migration: $filename"
+    
+    if [ -f "$sql_file" ]; then
+        psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -f "$sql_file"
+        if [ $? -eq 0 ]; then
+            echo "✓ $filename completed successfully"
+        else
+            echo "✗ $filename failed"
+            exit 1
+        fi
+    else
+        echo "Warning: Migration file not found: $sql_file"
+    fi
+}
 
-echo "Running 102_logistics.sql..."
-psql "$DATABASE_URL" -f app/infra/102_logistics.sql
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "Running 103_events_rules.sql..."
-psql "$DATABASE_URL" -f app/infra/103_events_rules.sql
+# Core migrations (MVP tables)
+echo "Running core migrations..."
+run_migration "$SCRIPT_DIR/001_init.sql"
+run_migration "$SCRIPT_DIR/002_seed.sql"
 
-echo "Running 104_templates.sql..."
-psql "$DATABASE_URL" -f app/infra/104_templates.sql
+# Extensibility migrations
+echo "Running extensibility migrations..."
+run_migration "$SCRIPT_DIR/101_parties_products.sql"
+run_migration "$SCRIPT_DIR/102_logistics.sql"
+run_migration "$SCRIPT_DIR/103_events_rules.sql"
+
+# Audit system migrations
+echo "Running audit system migrations..."
+run_migration "$SCRIPT_DIR/104_audit_system.sql"
 
 echo "All migrations completed successfully!"
+
+# Verify key tables exist
+echo "Verifying database schema..."
+psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -c "
+SELECT 
+    schemaname,
+    tablename 
+FROM pg_tables 
+WHERE schemaname = 'public' 
+ORDER BY tablename;
+"
+
+echo "Database migration verification complete!"

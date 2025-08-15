@@ -66,6 +66,20 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Location: `/server/routes.ts`, `/app/frontend/src/pages/`, `/client/src/pages/`
   - Verification: Health check working at /v1/health, all tests passing, authentication functional
 
+- **B19 Month view virtualization + query tuning** (August 15, 2025)
+  - Status: ✅ Implemented with performance optimization
+  - Location: `/app/frontend/src/features/booking/components/CalendarMonth.tsx`
+  - Features: TanStack Virtual for week virtualization, optimized query caching (staleTime: 15s, gcTime: 5min)
+  - Testing: 11/11 performance tests passing, no phantom slots, smooth scrolling
+  - Admin Interface: View toggle between list and month modes with proper navigation
+
+- **B20 CI: E2E workflow & migrations** (August 15, 2025)
+  - Status: ✅ GitHub Actions workflow implemented
+  - Location: `.github/workflows/e2e.yml`, `/app/infra/run_migrations.sh`
+  - Features: PostgreSQL service, database migrations, test data seeding, multi-browser testing
+  - Artifacts: Screenshots, videos, test reports with 30-day retention
+  - Database: 5 migration files (001-104) with full schema setup and audit system
+
 - **CSV Export (B16)** (August 15, 2025)
   - Status: ✅ Implemented and tested
   - Location: `/app/frontend/src/pages/admin-dashboard.tsx`

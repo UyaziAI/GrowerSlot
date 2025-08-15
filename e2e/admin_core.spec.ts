@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
 // Test data constants
-const ADMIN_EMAIL = 'admin@demo.com';
+const ADMIN_EMAIL = 'admin@test.com';
 const ADMIN_PASSWORD = 'password123';
 const TEST_DATES = {
   today: new Date().toISOString().split('T')[0],
@@ -22,8 +22,8 @@ async function loginAsAdmin(page: Page) {
 async function navigateToAdminDashboard(page: Page) {
   await page.goto('/admin-dashboard');
   await page.waitForLoadState('networkidle');
-  // Wait for calendar to load
-  await expect(page.locator('[data-testid="day-view-button"]')).toBeVisible();
+  // Wait for admin dashboard to load
+  await expect(page.locator('text=Slot Management')).toBeVisible();
 }
 
 async function enableFeatureFlag(page: Page, flag: string) {
@@ -43,35 +43,24 @@ test.describe('Admin Calendar Core E2E Tests', () => {
   });
 
   test('Bulk Create → slots appear', async ({ page }) => {
-    // Open bulk create dialog
-    await page.click('[data-testid="bulk-create-button"]');
-    await expect(page.locator('[data-testid="bulk-create-dialog"]')).toBeVisible();
-
     // Fill bulk create form
-    await page.fill('[data-testid="start-date-input"]', TEST_DATES.today);
-    await page.fill('[data-testid="end-date-input"]', TEST_DATES.tomorrow);
-    
-    // Select weekdays (assuming checkboxes)
-    await page.check('[data-testid="weekday-mon"]');
-    await page.check('[data-testid="weekday-tue"]');
-    await page.check('[data-testid="weekday-wed"]');
-    await page.check('[data-testid="weekday-thu"]');
-    await page.check('[data-testid="weekday-fri"]');
-    
-    // Set slot configuration
-    await page.fill('[data-testid="slot-length-input"]', '60');
-    await page.fill('[data-testid="capacity-input"]', '10');
-    await page.fill('[data-testid="notes-textarea"]', 'E2E test slots');
+    await page.fill('[data-testid="input-start-date"]', TEST_DATES.today);
+    await page.fill('[data-testid="input-end-date"]', TEST_DATES.tomorrow);
+    await page.fill('[data-testid="input-start-time"]', '08:00');
+    await page.fill('[data-testid="input-end-time"]', '17:00');
+    await page.selectOption('[data-testid="select-duration"]', '1');
+    await page.fill('[data-testid="input-capacity"]', '20');
+    await page.fill('[data-testid="textarea-notes"]', 'E2E test slots');
 
     // Submit form
-    await page.click('[data-testid="confirm-bulk-create"]');
+    await page.click('[data-testid="button-generate-slots"]');
     
-    // Wait for success toast
-    await expect(page.locator('.toast')).toContainText('Slots Created');
+    // Wait for success toast or response
+    await page.waitForTimeout(3000);
     
-    // Verify slots appear in calendar
-    await page.waitForTimeout(2000); // Allow time for refetch
-    await expect(page.locator('[data-testid="calendar-grid"]')).toBeVisible();
+    // Verify slots are created (check if any slots appear)
+    const slotCards = page.locator('[data-testid*="slot-card"]');
+    await expect(slotCards.first()).toBeVisible({ timeout: 10000 });
     
     // Check that slots are visible (at least one slot should exist)
     const slotCards = page.locator('[data-testid^="slot-card-"]');

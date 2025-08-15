@@ -1,49 +1,52 @@
--- Events and Rules: Domain Events and Outbox Pattern
+-- Domain events and business rules system
+-- For event sourcing and business rule engine
 
--- Domain events (audit + webhook source)
+-- Domain Events
 CREATE TABLE IF NOT EXISTS domain_events (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_type text NOT NULL, -- BOOKING_CREATED, CONSIGNMENT_UPDATED, etc.
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  event_type text NOT NULL,
   aggregate_id uuid NOT NULL,
-  payload jsonb NOT NULL,
-  tenant_id uuid NOT NULL REFERENCES tenants(id),
+  aggregate_type text DEFAULT 'unknown',
+  data jsonb NOT NULL,
+  metadata jsonb,
+  sequence_number bigserial,
   created_at timestamptz DEFAULT now()
 );
 
--- Create indexes for domain events
-CREATE INDEX IF NOT EXISTS domain_events_tenant_idx ON domain_events(tenant_id);
-CREATE INDEX IF NOT EXISTS domain_events_type_idx ON domain_events(event_type);
-CREATE INDEX IF NOT EXISTS domain_events_created_idx ON domain_events(created_at);
-
--- Outbox (reliable webhook delivery)
-CREATE TABLE IF NOT EXISTS outbox (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id uuid NOT NULL REFERENCES domain_events(id),
-  webhook_url text NOT NULL,
+-- Outbox Events (for reliable event delivery)
+CREATE TABLE IF NOT EXISTS outbox_events (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  event_id uuid NOT NULL REFERENCES domain_events(id) ON DELETE CASCADE,
+  destination text NOT NULL, -- webhook URL, queue name, etc.
   payload jsonb NOT NULL,
   status text DEFAULT 'pending', -- pending, sent, failed
-  attempts int DEFAULT 0,
+  attempts integer DEFAULT 0,
+  max_attempts integer DEFAULT 3,
+  next_retry timestamptz,
   created_at timestamptz DEFAULT now(),
   sent_at timestamptz
 );
 
--- Create indexes for outbox
-CREATE INDEX IF NOT EXISTS outbox_status_idx ON outbox(status);
-CREATE INDEX IF NOT EXISTS outbox_created_idx ON outbox(created_at);
-
--- Rules and workflows (JSON configurations)
+-- Business Rules (JSON-based workflow)
 CREATE TABLE IF NOT EXISTS rules (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name text NOT NULL,
-  type text NOT NULL, -- quota, workflow, validation
-  config jsonb NOT NULL,
-  active boolean DEFAULT true,
+  description text,
+  rule_type text NOT NULL, -- 'validation', 'workflow', 'notification'
+  conditions jsonb NOT NULL,
+  actions jsonb NOT NULL,
+  is_active boolean DEFAULT true,
+  priority integer DEFAULT 0,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
 
--- Create indexes for rules
-CREATE INDEX IF NOT EXISTS rules_tenant_idx ON rules(tenant_id);
-CREATE INDEX IF NOT EXISTS rules_type_idx ON rules(type);
-CREATE INDEX IF NOT EXISTS rules_active_idx ON rules(active);
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_domain_events_tenant_type ON domain_events(tenant_id, event_type);
+CREATE INDEX IF NOT EXISTS idx_domain_events_aggregate ON domain_events(aggregate_id, aggregate_type);
+CREATE INDEX IF NOT EXISTS idx_domain_events_sequence ON domain_events(sequence_number);
+CREATE INDEX IF NOT EXISTS idx_outbox_events_status ON outbox_events(status, next_retry);
+CREATE INDEX IF NOT EXISTS idx_rules_tenant_active ON rules(tenant_id, is_active);

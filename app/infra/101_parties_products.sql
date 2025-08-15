@@ -1,36 +1,38 @@
--- Extensibility: Parties and Products
+-- Extensibility: Parties and Products system
+-- For future expansion beyond growers/cultivars
 
--- Parties (generic stakeholders)
+-- Parties (generic entity system)
 CREATE TABLE IF NOT EXISTS parties (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name text NOT NULL,
-  type text NOT NULL, -- 'grower','transporter','buyer','warehouse'
-  contact jsonb DEFAULT '{}'
+  type text NOT NULL, -- 'grower', 'transporter', 'inspector', etc.
+  contact_info jsonb,
+  address_info jsonb,
+  created_at timestamptz DEFAULT now()
 );
 
--- Create index for parties
-CREATE INDEX IF NOT EXISTS parties_tenant_type_idx ON parties(tenant_id, type);
-
--- Products and variants (map cultivars later)
+-- Products (generic product system)
 CREATE TABLE IF NOT EXISTS products (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name text NOT NULL,
-  variant text,
-  category text
+  category text, -- 'macadamia', 'avocado', etc.
+  attributes jsonb, -- flexible attributes
+  created_at timestamptz DEFAULT now()
 );
 
--- Create index for products
-CREATE INDEX IF NOT EXISTS products_tenant_idx ON products(tenant_id);
+-- Product variants (cultivars, grades, etc.)
+CREATE TABLE IF NOT EXISTS product_variants (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  attributes jsonb,
+  created_at timestamptz DEFAULT now()
+);
 
--- Create a view to maintain compatibility with existing growers table
-CREATE OR REPLACE VIEW growers_v AS
-SELECT 
-  id,
-  tenant_id,
-  name,
-  contact->>'email' as contact,
-  'grower' as role
-FROM parties 
-WHERE type = 'grower';
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_parties_tenant_type ON parties(tenant_id, type);
+CREATE INDEX IF NOT EXISTS idx_products_tenant_category ON products(tenant_id, category);
+CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants(product_id);
