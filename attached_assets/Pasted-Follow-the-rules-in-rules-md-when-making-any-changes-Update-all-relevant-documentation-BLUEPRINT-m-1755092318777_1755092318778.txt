@@ -1,0 +1,196 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Goal
+Implement a calendar-style slot layout (Day and Week view) inspired by Playtomic’s time-grid booking UI, with feature-rich slot cards showing capacity usage, restrictions, blackout status, and notes. Keep the existing single-day API intact and add a non‑breaking range endpoint to fetch slots for a multi-day window.
+
+Context & Constraints
+Blueprint requires Day/Week availability and React (Vite) frontend using TanStack Query; backend FastAPI with documented REST contracts. Additions must preserve v1 compatibility.
+
+Current API only documents GET /v1/slots?date=YYYY-MM-DD; we’ll add GET /v1/slots/range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD. Do not remove or break the existing endpoint.
+
+FEATURES.md lists Week view calendar as a gap; move it to In‑Progress and then Implemented when done.
+
+No database schema changes are needed.
+
+Exact Changes
+1) Backend (FastAPI)
+Files to edit/add
+
+app/backend/routers/slots.py
+
+Add new handler:
+
+GET /v1/slots/range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+
+Validates start_date <= end_date and a max span of 14 days.
+
+Queries slots for the date range scoped to tenant_id.
+
+Returns array grouped by day (or a flat list with a date field—frontend can group).
+
+Keep existing GET /v1/slots?date= unchanged.
+
+app/backend/schemas.py
+
+Add Pydantic models for SlotsRangeRequest (query params) and SlotResponse already used by day endpoint; reuse for range.
+
+app/backend/security.py, app/backend/db.py
+
+No functional changes; ensure helpers exposed as needed.
+
+Implementation notes
+
+Use parameterized SQL filtering date BETWEEN $1 AND $2 AND tenant_id=$tenant.
+
+Reuse existing serialization used by day endpoint for consistency.
+
+Return per‑slot metadata already supported by schema (capacity, blackout, notes); if restrictions aren’t embedded today, add a follow‑up task to also include restrictions when available (non‑blocking).
+
+Tests (backend)
+
+Add app/backend/tests/test_slots_range.py
+
+test_range_basic_ok() → returns slots for 3 days.
+
+test_range_tenant_scoping() → only tenant’s slots.
+
+test_range_span_limit() → >14 days → 400.
+
+test_range_invalid_dates() → start > end → 400.
+
+Docs
+
+Update BLUEPRINT.md §6.2 Slots to document the new endpoint and response shape; explicitly state backward compatibility.
+
+Add a changelog entry at bottom of BLUEPRINT.md.
+
+Update FEATURES.md: move “Week view calendar” from Gaps → In‑Progress with this PR.
+
+2) Frontend (React / Vite)
+Files to add
+
+app/frontend/src/features/booking/components/CalendarGrid.tsx
+
+A responsive time-grid component:
+
+Columns: Time segments (e.g., 30‑min).
+
+Rows: For Day view, one row; for Week view, 7 columns of days × time slots grid (or vice versa).
+
+Snap slot boxes to their start/end time.
+
+Slot Card UI (feature-rich):
+
+Capacity bar (booked vs. capacity) with % fill.
+
+Badges/icons:
+
+Blackout (e.g., strikethrough or shaded background).
+
+Restrictions (grower/cultivar lock icon).
+
+Notes (tooltip on hover).
+
+Remaining capacity text (e.g., “12/20 tons”).
+
+Status color accents (available / limited / full).
+
+app/frontend/src/features/booking/hooks/useSlotsRange.ts
+
+TanStack Query hook to fetch range data from /v1/slots/range.
+
+app/frontend/src/features/booking/CalendarPage.tsx
+
+Page with Day/Week toggle, date picker, and the CalendarGrid.
+
+Feature flag guard: show Week view only if import.meta.env.VITE_FEATURE_WEEKVIEW === 'true'.
+
+Files to edit
+
+app/frontend/src/api/endpoints.ts
+
+Add typed client method getSlotsRange(startDate, endDate).
+
+app/frontend/src/App.tsx (or routing file)
+
+Add route for "/calendar" (and/or replace old vertical view route).
+
+app/frontend/src/features/booking/BookingPage.tsx
+
+Option A (preferred): Replace vertical scroller with CalendarGrid Day mode.
+
+Option B: Keep vertical as legacy behind a flag, default to Calendar.
+
+Tests (frontend)
+
+Add app/frontend/src/features/booking/__tests__/CalendarGrid.test.tsx
+
+Renders correct number of time cells.
+
+Places slot cards at expected time positions.
+
+Shows capacity bar and badges for blackout/restrictions.
+
+Add app/frontend/src/features/booking/__tests__/useSlotsRange.test.ts
+
+Queries API and normalizes results for the grid.
+
+E2E (if present or as follow-up): Day → Week toggle, hover tooltips, restricted slot booking prevented via existing flow.
+
+UX/Styling notes
+
+Keep Tailwind utility classes; avoid heavy CSS frameworks.
+
+Ensure mobile usability: horizontal scroll for time axis, sticky day headers.
+
+Accessibility: tooltips with aria-describedby, color + icon redundancy for statuses.
+
+Env/Flags
+
+Add VITE_FEATURE_WEEKVIEW=true to .env.example.
+
+Docs
+
+Update README.md quickstart screenshots (optional).
+
+Update BLUEPRINT.md §7 Frontend Plan to mention CalendarGrid and feature flag.
+
+Update FEATURES.md:
+
+Move “Week view calendar” → In‑Progress with checklist; mark Implemented when merged.
+
+Acceptance Criteria
+Day view renders in a calendar grid with time axis; existing bookings visible and interactable as before.
+
+Week view toggle shows 7 days with their time grids; performance acceptable for typical slot counts.
+
+Slot cards display: capacity bar, remaining capacity text, blackout visual, restriction/notes indicators with tooltips.
+
+API: GET /v1/slots?date= continues to work; GET /v1/slots/range returns expected data and is documented.
+
+Tests: Backend unit tests for range endpoint; frontend unit tests for grid rendering; CI passes.
+
+Docs updated: BLUEPRINT changelog + API section; FEATURES moved; no rule violations.
+
+Governance & Tracking (do these within the PR)
+BLUEPRINT.md: Add the new endpoint to §6.2 + changelog entry; update §7 with CalendarGrid component.
+
+FEATURES.md: Move “Week view calendar” to In‑Progress and then Implemented when done.
+
+ISSUES.md: If any LSP/type errors arise from new files, log them under Active Issues per format.
+
+Commit messages: Use feat: for UI and API additions, docs: for doc updates, test: or feat: for test files. Reference BLUEPRINT and FEATURES sections.
+
+Potential Conflicts (flagged)
+API contract change: Adding a range endpoint is additive (non‑breaking) and complies with the rule to maintain v1 compatibility.
+
+Frontend routing: If the legacy vertical list is still linked elsewhere, either (a) redirect to new CalendarPage or (b) keep behind a feature flag to avoid breaking bookmarks.
+
+Restrictions data: If the day endpoint injects more detail than range, normalize responses or create a follow‑up issue to extend range payload parity.
+
+Follow-up Tasks (create if not completed in this PR)
+Extend /v1/slots/range payload to include restrictions object identical to day endpoint (if missing).
+
+Add Week view virtualization if slot density causes performance issues.
+
+E2E tests for end-to-end booking from the new grid.

@@ -714,8 +714,6 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Admin authentication fixed (comprehensive) — Request IDs wwd0c4nt4medd4rjm, w4k3xb5h5medd4vym, conh6w30qmedd4yij, 9d6rvi3upmedd4zba traced to Admin components: CalendarPage.tsx hooks, BulkBar.tsx mutations, DayEditorSheet.tsx queries missing auth gating. Enhanced logging with caller context. Added comprehensive authentication validation across all Admin flows.
 
-### August 15, 2025 - Repository cleanup to production-minimal core — Removed ~1.1GB of non-essential content: attached_assets/, docs/, e2e/, playwright-report/, test-results/, reports/, legacy/, tools/, migrations/ (moved to app/infra/), and non-canonical documentation. Preserved only Blueprint.md, FEATURES.md, ISSUES.md, CHANGELOG.md plus runtime-required files. Repo reduced from 34,282 to 34,104 files (-178 files, -32% bloat).
-
 ### August 15, 2025 - Test coverage pack P3.1 — Implemented comprehensive test suite for API compliance, error handling, accessibility, and feature flags.
 
 ### August 15, 2025 - Day view timeline + FAB P2.4 — Implemented desktop timeline draw-to-create and mobile FAB for slot creation.

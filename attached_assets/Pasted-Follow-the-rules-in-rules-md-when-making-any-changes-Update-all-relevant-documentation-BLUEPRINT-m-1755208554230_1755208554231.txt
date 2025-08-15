@@ -1,0 +1,137 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Context (fix in place; do not create a new admin module)
+
+Primary file: /app/frontend/src/pages/AdminPage.tsx
+
+Related components (scan & fix): /app/frontend/src/pages/**, /app/frontend/src/features/booking/**, /app/frontend/src/core/**, /app/frontend/src/api/{client.ts,endpoints.ts}
+
+Backend contracts (no changes unless required): /app/backend/routers/{slots.py,bookings.py,restrictions.py}, /app/backend/schemas.py
+
+Goal
+Scan the current Admin dashboard code and repair in place to meet the blueprint’s Admin requirements:
+
+Full calendar control (Month/Week/Day) showing only backend data.
+
+CRUD for slots (bulk create, edit capacity/notes/blackout, apply restrictions) and bookings (create/move/update/cancel) using /v1 endpoints.
+
+Strict RBAC for admin.
+
+No client‑side fabrication of slots/cells—render only what the API returns.
+
+Fix TypeScript errors, legacy API calls, and state/query bugs.
+References: Admin tools & API contracts in Blueprint §6 (Slots/Bookings/Restrictions), Week view requirement, and Frontend Plan §7.
+
+1) Automated audit & grep checklist (apply fixes in place)
+
+Search across /app/frontend and fix findings directly in AdminPage.tsx and any referenced components:
+
+Legacy endpoints: find "/api/" or old fetchers; replace with typed /v1 client:
+
+GET /v1/slots?start=&end=, POST /v1/slots/bulk, PATCH /v1/slots/{id}, GET /v1/slots/{id}/usage.
+
+GET /v1/bookings?start=&end=&grower_id=, POST /v1/bookings, DELETE /v1/bookings/{id}; add PATCH /v1/bookings/{id} usage if available.
+
+POST /v1/restrictions/apply.
+
+UI fabrication: remove helpers/props like ensureSlots|generateSlots|buildDayGrid|createDefaultCells|placeholderData|initialData|keepPreviousData that create “phantom” availability. The Admin UI must render only backend results. (Blueprint says the page data should come from API, not local scaffolding.)
+
+Query keys: standardize React Query keys to include ['slots', tenantId, startISO, endISO, filters] and ['bookings', tenantId, startISO, endISO, filters] to prevent stale reuse.
+
+Timezone: normalize all range math to Africa/Johannesburg. (Blueprint default tenant TZ.)
+
+RBAC: ensure AdminPage route and controls are gated by role==='admin' (via /auth/me).
+
+Types: align FE types with FastAPI schemas.py (Slot, Booking, Restriction). Fix any prop/type drift surfaced by LSP diagnostics recorded in ISSUES.md.
+
+Deliverables for this step
+
+A cleaned AdminPage.tsx that imports only /v1 endpoints, uses correct query keys, and has no placeholder/fabrication logic.
+
+Fixed TypeScript errors in Admin components.
+
+2) Upgrade the current AdminPage to full calendar views (in place)
+
+Do not create a new module. If needed, split small supporting components in the same folder and import them.
+
+Required features (wired to /v1)
+
+Views: Month / Week / Day tabs; date picker; filters (grower, cultivar).
+
+Render:
+
+Slot badges show capacity/booked/remaining, blackout, notes.
+
+Booking chips inside slots show grower, optional cultivar, qty; tooltip shows full detail.
+
+Actions:
+
+Bulk create slots dialog → POST /v1/slots/bulk (existing blueprint tool).
+
+Edit slot dialog → PATCH /v1/slots/{id} (capacity, notes, blackout, restrictions link).
+
+Create booking (admin) → POST /v1/bookings; show 403/409 messages from API.
+
+Move/resize booking (if supported): call PATCH /v1/bookings/{id} to change slot_id/quantity with same 409/403 enforcement.
+
+Cancel booking → DELETE /v1/bookings/{id}.
+
+Apply restrictions → POST /v1/restrictions/apply (by date/slot range).
+
+Empty state: When slots array is empty for a range, show “No slots defined by admin for this period.” No grid fabrication. (Blueprint Frontend Plan requires API‑driven data.)
+
+Implementation notes
+
+Replace any legacy handlers that mutate in‑memory slot arrays on click; clicks must only change view state and trigger range refetch.
+
+Keep domain logic server‑side (capacity/restrictions; 409/403 on violations).
+
+3) Tests (add or update, minimal but effective)
+
+FE (same folder or /__tests__/)
+
+AdminPage Month/Week/Day with empty API → shows empty state, no clickable cells.
+
+Creating a booking into a full slot → surfaces API 409 toast; no optimistic write.
+
+Moving a booking to another slot:
+
+On 403/409 → revert UI to original.
+
+On success → chip moves; refetch confirms.
+
+Navigating Aug→Sep boundary does not show phantom slots.
+
+BE (only if we add PATCH usage and it’s missing tests)
+
+PATCH /v1/bookings/{id} enforces capacity + restrictions and emits BOOKING_UPDATED (existing event pattern).
+
+Update BLUEPRINT.md §11 Testing with these cases; keep E2E flow aligned with Admin actions.
+
+4) Documentation & issues (governance)
+
+FEATURES.md: move “Week view calendar” from Gaps → Implemented (once Week is working in Admin); note verification status.
+
+ISSUES.md: add “Legacy Admin page errors & mixed endpoints (High)” and mark fixed with commit refs when tests pass. (Aligns with active “Frontend API integration” issue.)
+
+BLUEPRINT.md:
+
+§6 API: if we’re now using PATCH /v1/bookings/{id}, ensure it’s documented in the file’s API section.
+
+§7 Frontend Plan: clarify Admin calendar behavior (no fabrication, RBAC, TZ), and the dialogs/actions available.
+
+Acceptance criteria
+
+AdminPage.tsx renders Month/Week/Day based only on /v1 data; no phantom slots.
+
+CRUD works for slots and bookings with correct error handling (409/403).
+
+RBAC enforced; no admin controls for non‑admin users.
+
+All new/updated tests pass; docs updated per rules.md §§2 & 6.
+
+Notes
+
+Do not create a new admin module or route. Keep the current path and refactor in place.
+
+Only introduce new small components inside the current folder if absolutely necessary to simplify AdminPage.tsx.

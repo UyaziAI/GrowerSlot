@@ -1,0 +1,94 @@
+Follow the rules in rules.md when making any changes. Update BLUEPRINT.md, FEATURES.md, and ISSUES.md as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Goal: Ensure the /admin route renders AdminPage.tsx (new UI) and not any legacy component. Remove legacy header buttons from the rendered Admin page. Add a test that fails if the old header appears.
+
+Files to scan/update (only these):
+
+/app/frontend/src/main.tsx (or index.tsx)
+
+/app/frontend/src/App.tsx (or router file such as /app/frontend/src/routes.tsx)
+
+/app/frontend/src/pages/AdminPage.tsx
+
+(remove/rename if present) /app/frontend/src/pages/AdminCalendar.tsx, /app/frontend/src/pages/AdminDashboard.tsx, or similarly named files referenced by the route
+
+Tests: /app/frontend/src/__tests__/admin_route_wires_new_ui.spec.tsx
+
+Steps (do exactly this):
+
+Find the Router entry. Locate where React Router is created (either <BrowserRouter> with <Routes> or createBrowserRouter).
+
+Normalize the /admin route to the new page.
+
+Import the page strictly as:
+
+import AdminPage from './pages/AdminPage';
+
+
+Define the route strictly as:
+
+<Route path="/admin" element={<AdminPage />} />
+
+
+Remove any other /admin route definitions and any imports like AdminCalendar, AdminDashboard, AdminCalendarPage, etc.
+
+Kill legacy header in the rendered Admin page. Open whatever file the /admin route currently renders (after step 2 it must be AdminPage.tsx). In that file:
+
+Delete top-level buttons labeled: “Export CSV”, “Apply Template”, “Create Slots”, “Bulk Create”, “Blackout”, “Apply Restrictions” from the global header.
+
+Replace the right side with exactly two controls:
+
+Create ▾ (menu items: “Create Slots (Day)”, “Bulk Create Slots”, “Apply Template”)
+
+More ▾ (menu items: “Export CSV”, “Open Filters…”, “Help”)
+
+Add data-testid="admin-header-create" to the Create button and data-testid="admin-header-more" to the More button.
+
+Guard against shadow imports. If files named AdminCalendar*.tsx or AdminDashboard*.tsx exist and are not used anywhere after step 2, rename them with a .bak suffix or delete them to prevent accidental re-import.
+
+Add a route wiring test at /app/frontend/src/__tests__/admin_route_wires_new_ui.spec.tsx with the following content:
+
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import AdminPage from '../pages/AdminPage';
+
+describe('Admin route renders new UI', () => {
+  it('shows Create and More, and does NOT show legacy header buttons', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin']}>
+        <Routes>
+          <Route path="/admin" element={<AdminPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    // New buttons exist
+    expect(screen.getByTestId('admin-header-create')).toBeInTheDocument();
+    expect(screen.getByTestId('admin-header-more')).toBeInTheDocument();
+    // Legacy labels must not be present at top level
+    const legacy = ['Blackout', 'Apply Restrictions', 'Bulk Create', 'Create Slots', 'Export CSV', 'Apply Template'];
+    legacy.forEach(txt => {
+      // Allow these to appear inside menus or sheets later; here we assert not present in the header region.
+      expect(screen.queryByRole('button', { name: txt })).toBeNull();
+    });
+  });
+});
+
+
+Docs:
+
+BLUEPRINT.md changelog: add “UI-ROUTE-FIX — /admin now renders AdminPage.tsx; legacy header removed.”
+
+FEATURES.md: mark “M1 Toolbar cleanup + Day Peek” Implemented only if this test passes.
+
+ISSUES.md: close any issue referencing “Legacy Admin header still visible”.
+
+Acceptance (must all be true):
+
+The router renders AdminPage at /admin.
+
+The global header shows only Create ▾ and More ▾ (with specified menus).
+
+No top-level “Blackout”, “Apply Restrictions”, “Bulk Create”, or “Create Slots” buttons remain in the header.
+
+The new test passes.

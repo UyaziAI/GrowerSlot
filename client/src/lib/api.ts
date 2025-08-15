@@ -1,6 +1,4 @@
 import { authService } from "./auth";
-import { fetchJson } from "./http";
-import { logger } from "./logger";
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -13,21 +11,26 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  // Use the global authentication enforcement from fetchJson
-  // Convert /api endpoints to /v1 endpoints for consistency
-  const v1Endpoint = endpoint.startsWith('/') ? `/v1${endpoint}` : `/v1/${endpoint}`;
+  const url = `/v1${endpoint}`;
+  const token = authService.getToken();
   
-  logger.debug('api_request_legacy', `Legacy API client redirecting to ${v1Endpoint}`, {
-    original_endpoint: endpoint,
-    v1_endpoint: v1Endpoint
-  });
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  };
+
+  const response = await fetch(url, config);
   
-  try {
-    return await fetchJson<T>(v1Endpoint, options);
-  } catch (error: any) {
-    // Convert to ApiError for compatibility
-    throw new ApiError(error.status || 500, error.message);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, errorData.error || response.statusText);
   }
+
+  return response.json();
 }
 
 export const api = {
@@ -43,6 +46,9 @@ export const api = {
   // Slots
   getSlots: (date: string) =>
     apiRequest(`/slots?date=${date}`),
+    
+  getSlotsRange: (startDate: string, endDate: string) =>
+    apiRequest(`/slots/range?start_date=${startDate}&end_date=${endDate}`),
 
   bulkCreateSlots: (data: any) =>
     apiRequest('/slots/bulk', {
@@ -56,6 +62,15 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  getSlotUsage: (id: string) =>
+    apiRequest(`/slots/${id}/usage`),
+
+  applyRestrictions: (data: any) =>
+    apiRequest('/restrictions/apply', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // Bookings
   createBooking: (data: any) =>
     apiRequest('/bookings', {
@@ -65,6 +80,12 @@ export const api = {
 
   getBookings: () =>
     apiRequest('/bookings'),
+
+  updateBooking: (id: string, data: any) =>
+    apiRequest(`/bookings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
 
   cancelBooking: (id: string) =>
     apiRequest(`/bookings/${id}`, {
@@ -78,4 +99,44 @@ export const api = {
   // Admin
   getDashboardStats: (date: string) =>
     apiRequest(`/admin/stats?date=${date}`),
+
+  // Templates
+  getTemplates: () =>
+    apiRequest('/admin/templates'),
+
+  createTemplate: (data: any) =>
+    apiRequest('/admin/templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTemplate: (id: string, data: any) =>
+    apiRequest(`/admin/templates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTemplate: (id: string) =>
+    apiRequest(`/admin/templates/${id}`, {
+      method: 'DELETE',
+    }),
+
+  applyTemplate: (data: any) =>
+    apiRequest('/slots/apply-template', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Blackout operations
+  blackoutSlot: (id: string, data: any) =>
+    apiRequest(`/slots/${id}/blackout`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  bulkBlackoutSlots: (data: any) =>
+    apiRequest('/slots/blackout', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };

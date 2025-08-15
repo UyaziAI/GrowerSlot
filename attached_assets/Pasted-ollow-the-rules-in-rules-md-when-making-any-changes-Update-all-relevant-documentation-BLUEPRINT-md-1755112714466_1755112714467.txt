@@ -1,0 +1,103 @@
+ollow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Problem
+
+The Day/Week toggle doesn’t work.
+
+Admin slot-management controls are missing.
+
+The app must implement all slot features per the blueprint (keep v1 API compatible).
+
+Objectives
+
+Make the Day/Week calendar grid fully functional.
+
+Restore Admin slot-management UI (bulk create, blackout, capacity, notes, restrictions).
+
+Align FE/BE to the v1 API contracts used by the blueprint; keep legacy endpoints only as compatibility adapters.
+
+Exact changes
+
+A) Calendar toggle & data range
+
+Ensure CalendarPage manages viewMode = "day" | "week" with a working toggle.
+
+Day → query 1 date; Week → query 7-day range via the range endpoint.
+
+Confirm env flag wiring:
+
+.env and .env.example: VITE_FEATURE_WEEKVIEW=true.
+
+Use import.meta.env.VITE_FEATURE_WEEKVIEW to show the Week toggle; Day view must always work.
+
+Persist viewMode and selected date in URL or local state so navigation doesn’t reset it.
+
+B) Admin slot-management (UI + actions)
+
+Restore/implement Admin route (e.g. /admin/slots) guarded by RBAC.
+
+Provide the following controls (Admin-only):
+
+Bulk slot creation (date/time window, capacity, unit) → POST /v1/slots/bulk.
+
+Blackout toggle and capacity/notes edits per slot → PATCH /v1/slots/{id}.
+
+Usage panel (capacity/booked/remaining) → GET /v1/slots/{id}/usage.
+
+Restrictions panel (allowed growers/cultivars) → POST /v1/restrictions/apply (slot or date).
+
+From CalendarGrid slot context menu, expose Admin actions above (disabled for growers).
+
+C) API consistency & client
+
+Standardize FE client on /v1 routes. If anything still hits /api, add a thin compatibility adapter or update calls to /v1.
+
+Ensure the range endpoint exists and matches the day schema:
+
+GET /v1/slots/range?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD (≤14 days), tenant-scoped.
+
+FE API module:
+
+getSlots(date), getSlotsRange(start, end), patchSlot(id, payload), bulkCreateSlots(payload), getSlotUsage(id), applyRestrictions(payload).
+
+D) Type & numeric safety
+
+Normalize slot numbers in the data hook (useSlotsRange / useSlots): coerce capacity, booked, remaining to numbers; compute remaining = max(capacity - booked, 0).
+
+In CalendarGrid/SlotCard, render using numeric locals only (no .toFixed on non-numbers). Guard divide-by-zero for progress bars.
+
+E) RBAC & routing
+
+Ensure Admin and Grower both land on the calendar route for viewing slots.
+
+Admin sees slot-management controls; Grower does not.
+
+Remove/redirect any legacy vertical list routes to the calendar.
+
+Tests
+
+FE:
+
+Toggle switches Day↔Week and adjusts range fetch.
+
+Admin route renders Bulk, Blackout, Capacity/Notes, Restrictions controls (hidden for Grower).
+
+SlotCard renders with string numeric inputs without crashing; progress bar clamps 0–100%.
+
+BE:
+
+/v1/slots/range enforces ≤14 days and returns numeric JSON fields.
+
+(Optional E2E): Admin creates slots in bulk → visible on calendar; patch blackout; apply restrictions; Grower can’t see Admin controls.
+
+Acceptance
+
+Day/Week toggle works; Week shows 7-day grid fed by /v1/slots/range.
+
+Admin slot-management UI is present and functional (bulk, blackout, capacity/notes, restrictions).
+
+Grower sees only the calendar (no admin controls).
+
+Numeric formatting errors resolved; no runtime crash.
+
+Docs updated per rules (BLUEPRINT.md: confirm UI + endpoints; FEATURES.md: move items from gaps to implemented if done).

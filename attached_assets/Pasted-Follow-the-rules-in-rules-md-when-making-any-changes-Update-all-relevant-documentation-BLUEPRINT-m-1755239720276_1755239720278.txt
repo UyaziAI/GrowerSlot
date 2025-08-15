@@ -1,0 +1,78 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Context
+
+A new file exists at the repo root: ./Admin_Addendum.md. This document augments the Admin experience with templates, preview/publish, no UI fabrication, and Month/Week/Day admin calendar behavior.
+
+This task is documentation-only (no app code).
+
+Goals
+
+Incorporate the addendum into the canonical blueprint with zero duplication/conflicts.
+
+Record status in tracking files per governance.
+
+Tasks
+
+Blueprint delta (no duplication):
+
+Open Blueprint.md. Add a new section near the end titled “Admin Addendum (15 Aug 2025) — Delta” that:
+
+Links to ./Admin_Addendum.md.
+
+Summarizes only the differences/additions vs the current blueprint:
+
+Frontend Plan (§7): Admin Calendar Month/Week/Day, right-hand Inspector, Preview & Publish, no client-side fabrication rule, Next Available finder.
+
+API (§6): add PATCH /v1/bookings/{id}, template CRUD, and POST /v1/slots/apply-template (preview/publish, idempotent).
+
+Data Model (§4): new templates table (and optional template_runs).
+
+Testing (§11): add tests for template apply (preview vs publish idempotency), no-fabrication guarantees, admin drag-drop with 403/409 behavior.
+
+Security/Tenancy (§8): clarify RBAC for admin routes and template ops.
+
+Do not restate existing content; keep the delta concise (bullet list).
+
+Cross-link: In Blueprint.md’s table of contents (if present), add an entry that points to the new Delta section, and add a link at the top “See also: Admin_Addendum.md”.
+
+FEATURES.md:
+
+Add the following to In-Progress: “Admin full calendar (Month/Week/Day)”, “Templates + Apply Template”, “Next Available finder”.
+
+Move “Week view calendar” from Gaps to In-Progress (leave as Implemented only after code PR passes tests).
+
+ISSUES.md:
+
+Create a new issue: “Adopt Admin Addendum (docs phase)” with acceptance criteria:
+
+Blueprint.md Delta added + cross-links.
+
+FEATURES.md and ISSUES.md updated.
+
+Changelog entry appended.
+
+Add two follow-up issues (status: Open):
+
+“Implement Templates & Apply-Template endpoints + UI (feature-flagged)”
+
+“Wire Admin calendar to /v1 only; remove UI fabrication; add tests”
+
+Changelog: Append to the Blueprint.md changelog: date, author, and a single line: “Admin Addendum adopted (docs-only); code rollout in next PR behind flags.”
+
+Constraints
+
+Do not modify any code files in this task.
+
+Preserve v1 API backward compatibility.
+
+Avoid duplicate sections; use Delta bullets + cross-links instead.
+
+Outputs
+
+Updated Blueprint.md (Delta section + links + changelog)
+
+Updated FEATURES.md, ISSUES.md
+
+Commit message
+docs: adopt Admin_Addendum.md via Blueprint Delta; update FEATURES/ISSUES; add changelog

@@ -1,0 +1,170 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Context (files/modules)
+
+Frontend:
+
+/app/frontend/src/features/admin/ (create this module)
+
+/app/frontend/src/features/booking/ (ensure no leakage of grower timeline logic into admin)
+
+/app/frontend/src/api/client.ts, /app/frontend/src/api/endpoints.ts
+
+/app/frontend/src/App.tsx (routing/guards)
+
+Backend (FastAPI):
+
+/app/backend/routers/slots.py, /app/backend/routers/bookings.py, /app/backend/routers/restrictions.py
+
+/app/backend/schemas.py, /app/backend/security.py
+
+Tests:
+
+/app/frontend/src/__tests__/adminCalendar.spec.tsx
+
+/app/backend/tests/test_admin_calendar.py
+
+Goal
+Rework the Admin page into a comprehensive calendar view (month/week/day) that shows real bookings/slots only (no client‑side fabrication), supports CRUD on days, slots, and bookings, honors restrictions, and fixes the regression introduced by recent grower timeline changes.
+
+Functional Requirements
+
+Calendar Views
+
+Views: Month | Week | Day.
+
+Timezone: Africa/Johannesburg (display + range math).
+
+Always fetch from backend by range; render exactly what backend returns.
+
+Data shown per cell/event
+
+Slot badge: capacity, booked, remaining, blackout flag, notes.
+
+Booking chips inside a slot: grower name, cultivar (if any), qty. Tooltip with full details.
+
+Color rules: blackout slots muted; over‑threshold warning never allowed (backend prevents overbooking already).
+
+Admin actions
+
+Bulk create slots (existing flow) from a dialog usable from any view (month/week/day).
+
+Edit slot: capacity, notes, blackout toggle, restrictions (growers/cultivars).
+
+Create booking (admin override): pick grower, cultivar, qty → POST /v1/bookings. Respect restrictions; show 403/409 from backend.
+
+Move/resize booking (drag/drop or dialog) → PATCH booking (implement in backend if missing).
+
+Cancel booking → DELETE /v1/bookings/{id} with confirm.
+
+Apply restrictions using /v1/restrictions/apply for a day/slot range.
+
+Jump to date and filter by grower/cultivar.
+
+Safety & RBAC
+
+Admin‑only route guard (role check via /auth/me).
+
+No GET endpoints must have side‑effects (verify).
+
+Disable all editor controls if not admin.
+
+Performance & UX
+
+React Query queryKey must include tenantId + startISO + endISO + filters.
+
+Remove placeholderData/keepPreviousData for slots in admin views; show loading skeleton/spinner instead.
+
+Virtualize large month grids; debounce range fetches on fast navigation.
+
+Regression fix
+
+Ensure admin calendar and grower timeline do not fabricate slots in the UI. Render empty state when backend returns [].
+
+Add tests to prevent re‑introduction of “phantom slots.”
+
+API: required/confirmed endpoints (per blueprint)
+
+Slots:
+
+GET /v1/slots?start=YYYY-MM-DD&end=YYYY-MM-DD
+
+POST /v1/slots/bulk
+
+PATCH /v1/slots/{id} (blackout/capacity/notes)
+
+GET /v1/slots/{id}/usage
+
+Bookings:
+
+POST /v1/bookings
+
+DELETE /v1/bookings/{id}
+
+GET /v1/bookings?start=&end=&grower_id=
+
+Add PATCH /v1/bookings/{id} (optional if drag/drop/edit required): allow slot_id, quantity, cultivar_id; enforce capacity/restrictions.
+
+Restrictions:
+
+POST /v1/restrictions/apply
+
+Backend tasks
+
+Confirm GETs are side‑effect free (no seeding/ensure‑range). If found, remove and expose behavior only via admin tools.
+
+Add PATCH /v1/bookings/{id} if not present; reuse concurrency/409 logic from create path.
+
+Extend Pydantic schemas as needed; update schemas.py.
+
+Keep domain events emitting on booking create/cancel/update (BOOKING_CREATED/UPDATED/CANCELLED).
+
+Add unit tests for range fetch (empty vs populated), and for PATCH move between slots (capacity checks, 403/409).
+
+Frontend tasks
+
+Create /features/admin/AdminCalendarPage.tsx with Month/Week/Day tabs.
+
+Build useSlotsByRange and useBookingsByRange hooks with strict query keys: ['slots', tenantId, startISO, endISO, filters].
+
+Replace any placeholder grid generation with pure render of API data.
+
+Implement dialogs: BulkCreateSlotsDialog, EditSlotDialog, CreateBookingDialog, EditBookingDialog, ApplyRestrictionsDialog.
+
+Add drag/drop in Week/Day (optional): on drop → PATCH booking; on failure show toast with backend message.
+
+Route: /admin/calendar behind RBAC guard; add to nav.
+
+Empty state when []: “No slots defined by admin for this period.”
+
+Testing
+
+Frontend:
+
+AdminCalendar shows empty state when API returns [].
+
+Creating a booking in a full slot surfaces 409 toast (no UI write).
+
+Navigation across Aug‑Sep boundary does not create or show phantom availability.
+
+Backend:
+
+GET /v1/slots for empty range returns [].
+
+PATCH /v1/bookings/{id} enforces capacity/restrictions and emits BOOKING_UPDATED.
+
+Docs
+
+Update BLUEPRINT.md §7 (Frontend Plan) to include Admin Calendar (Month/Week/Day), dialogs, and non‑fabrication rule; §11 (Testing) to include admin flows and the phantom‑slot regression tests.
+
+Update FEATURES.md: move “Week view calendar” from Gaps → Implemented (when done); add “Admin full calendar” to Implemented with verification notes.
+
+Update ISSUES.md:
+
+Add issue “Admin Calendar: replace placeholder grid; fix phantom slots (regression from grower timeline)”.
+
+Close when tests added and passing; reference commits.
+
+Acceptance
+
+Admin can see Month/Week/Day with true backend data only, perform CRUD on slots/bookings/restrictions, no phantom slots, and all tests pass.

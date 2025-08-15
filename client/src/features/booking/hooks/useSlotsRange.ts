@@ -2,30 +2,57 @@
  * TanStack Query hook for fetching slots within a date range
  */
 import { useQuery } from "@tanstack/react-query";
-import { slotsApi, type SlotResponse } from "../../../api/endpoints";
+import { api } from "@/lib/api";
+import { SlotWithUsage } from "@shared/schema";
+import { authService } from "@/lib/auth";
+
+// Helper to normalize numeric fields
+const toNum = (v: unknown, fallback = 0): number => {
+  const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const normalizeSlot = (s: any): SlotWithUsage => ({
+  ...s,
+  capacity: toNum(s.capacity, 0),
+  booked: toNum(s.booked, 0),
+  remaining: toNum(s.remaining ?? (toNum(s.capacity, 0) - toNum(s.booked, 0)), 0),
+});
 
 export function useSlotsRange(startDate: string, endDate: string, enabled: boolean = true) {
+  const user = authService.getUser();
+  const tenantId = user?.tenantId || '';
+  
   return useQuery({
-    queryKey: ['slots-range', startDate, endDate],
-    queryFn: () => slotsApi.getSlotsRange(startDate, endDate),
-    enabled: enabled && !!startDate && !!endDate,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 30, // 30 seconds for real-time updates
+    queryKey: ['slots', 'range', tenantId, startDate, endDate],
+    queryFn: async () => {
+      const slots = await api.getSlotsRange(startDate, endDate);
+      return Array.isArray(slots) ? slots.map(normalizeSlot) : [];
+    },
+    enabled: enabled && !!startDate && !!endDate && !!tenantId,
+    staleTime: 0, // No stale time for admin views - always fresh data
+    refetchOnWindowFocus: true, // Aggressive refetching for admin
   });
 }
 
 export function useSlotsSingle(date: string, enabled: boolean = true) {
-  return useQuery({
-    queryKey: ['slots', date],
-    queryFn: () => slotsApi.getSlots(date),
-    enabled: enabled && !!date,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 30, // 30 seconds
+  const user = authService.getUser();
+  const tenantId = user?.tenantId || '';
+  
+  return useQuery<SlotWithUsage[]>({
+    queryKey: ['slots', tenantId, date],
+    queryFn: async () => {
+      const slots = await api.getSlots(date);
+      return Array.isArray(slots) ? slots.map(normalizeSlot) : [];
+    },
+    enabled: enabled && !!date && !!tenantId,
+    staleTime: 0, // No stale time for admin views
+    refetchOnWindowFocus: true,
   });
 }
 
 // Helper to group slots by date for calendar grid
-export function groupSlotsByDate(slots: SlotResponse[]): Record<string, SlotResponse[]> {
+export function groupSlotsByDate(slots: SlotWithUsage[]): Record<string, SlotWithUsage[]> {
   return slots.reduce((acc, slot) => {
     const dateKey = slot.date.toString();
     if (!acc[dateKey]) {
@@ -33,7 +60,7 @@ export function groupSlotsByDate(slots: SlotResponse[]): Record<string, SlotResp
     }
     acc[dateKey].push(slot);
     return acc;
-  }, {} as Record<string, SlotResponse[]>);
+  }, {} as Record<string, SlotWithUsage[]>);
 }
 
 // Helper to get time segments for grid

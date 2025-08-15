@@ -1,0 +1,158 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Goal
+
+Refine the continuous DayTimeline + Day Detail so that:
+
+Scrolling does not open a day; day detail opens only on explicit click/tap.
+
+Clicking Today or selecting a date via Jump to date recenters the scroller on that day and opens that day.
+
+Initial selection defaults to today (tenant timezone) unless ?date= is present and valid.
+
+Fix any date/index mapping bugs causing wrong dates.
+
+Scope & files
+
+/app/frontend/src/features/booking/CalendarPage.tsx
+
+/app/frontend/src/features/booking/components/DayTimeline.tsx
+
+/app/frontend/src/features/booking/components/DayPill.tsx
+
+/app/frontend/src/features/booking/components/MiniMonthPopover.tsx
+
+Changes to implement
+1) Split focused vs selected state
+
+Add two distinct states at the page level:
+
+const [selectedDate, setSelectedDate] = useState<Dayjs>(...); // drives DayView + URL
+const [focusedDate, setFocusedDate] = useState<Dayjs>(...);   // purely visual highlight in the scroller
+
+
+Scrolling updates focusedDate only.
+
+Clicking a DayPill sets selectedDate (and updates URL) and then centers that pill.
+
+2) Remove “auto-select on scroll end”
+
+In DayTimeline.tsx, remove logic that sets selectedDate during scrollend/debounced scroll.
+
+Keep “nearest pill” logic, but use it to update focusedDate only:
+
+// onScrollEnd:
+const nearest = getNearestDateToCenter();
+setFocusedDate(nearest); // DO NOT setSelectedDate here
+
+3) Pill interactions
+
+In DayPill.tsx:
+
+onClick → props.onSelect(date); parent sets selectedDate + URL + centers.
+
+onFocus/hover may set focusedDate (optional), but never selectedDate.
+
+4) Today & Jump-to-date behavior
+
+Today button:
+
+const today = dayjs().tz(tenantTz);
+setSelectedDate(today);
+setFocusedDate(today);
+replaceUrlParam('date', today.format('YYYY-MM-DD'));
+timelineRef.current?.centerOnDate(today); // smooth scroll to center
+
+
+MiniMonthPopover onPick(date):
+
+setSelectedDate(picked);
+setFocusedDate(picked);
+replaceUrlParam('date', picked.format('YYYY-MM-DD'));
+timelineRef.current?.centerOnDate(picked);
+
+
+Ensure DayTimeline exposes centerOnDate(date: Dayjs) via forwardRef.
+
+5) Fix date↔index mapping & default hydration
+
+In DayTimeline.tsx, centralize mapping helpers and ensure day-level math (no time component):
+
+const EPOCH = dayjs().tz(tenantTz).startOf('day'); // or a stable epoch like '2024-01-01' if preferred
+const dateFromIndex = (i:number) => EPOCH.add(i, 'day'); 
+const indexFromDate = (d:Dayjs) => d.startOf('day').diff(EPOCH, 'day');
+
+
+Use tenant timezone from settings (fallback: app default). Always call .startOf('day').
+
+On mount:
+
+Parse ?date=. If invalid or out of supported range, fallback to today.
+
+Initialize both selectedDate and focusedDate to that value.
+
+Call centerOnDate(initialDate) once after first paint.
+
+6) Centering logic (virtualized list)
+
+Implement a robust centering method that works with @tanstack/react-virtual:
+
+const centerOnDate = (date: Dayjs) => {
+  const idx = indexFromDate(date);
+  const offset = virtualizer.getOffsetForIndex(idx);
+  const target = offset - (container.clientWidth - itemWidth)/2;
+  container.scrollTo({ left: Math.max(target, 0), behavior: 'smooth' });
+};
+
+
+Export this through useImperativeHandle(ref, () => ({ centerOnDate })).
+
+7) Visual cues
+
+Focused pill = subtle highlight (e.g., soft ring).
+
+Selected pill = stronger accent (filled or thicker ring).
+
+Ensure styles clearly differentiate the two.
+
+Tests
+
+Unit
+
+indexFromDate / dateFromIndex round-trip for multiple months and DST boundaries.
+
+URL hydrate: invalid/missing date → today in tenant TZ.
+
+Integration
+
+Scroll the timeline → focused changes, selected does not.
+
+Click a pill → selected updates; DayView re-renders; URL updates.
+
+Click Today → DayView shows today; timeline centers today.
+
+Jump to date → timeline centers picked date; DayView opens that date.
+
+E2E (mobile)
+
+Fast flick does not trigger booking/day-open; only tap/click does.
+
+After using Today/Jump, the correct pill is centered and visually selected.
+
+Documentation
+
+BLUEPRINT.md (Section 7): note the split focused vs selected model; explicit open on click; Today/Jump recentering; date/index mapping & tenant TZ handling. Add changelog.
+
+FEATURES.md: mark “Continuous DayTimeline – interaction refinements (explicit open)” as implemented/verified.
+
+ISSUES.md: if any lingering timeline edge cases remain, add short notes (e.g., extremely long ranges, DST quirks).
+
+Acceptance Criteria
+
+Scrolling never opens a day; only a click/tap does.
+
+Today and Jump to date both (a) open that day below and (b) center the corresponding pill above.
+
+Initial load highlights today (unless ?date= provided) and centers correctly.
+
+No incorrect historical dates; mapping verified across months.

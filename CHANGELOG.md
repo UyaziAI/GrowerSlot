@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **2025-08-15**: Structured Logging & Diagnostics — Comprehensive logging infrastructure with frontend JSON logger, request correlation, React Error Boundary, debug overlay (flag-gated), backend request logging with X-Request-ID headers, and tripwire tests for auth validation. Includes PII redaction and production-safe sampling.
-- **2025-08-15**: Repository cleanup to production-minimal core — Removed non-essential content: attached_assets/, docs/, e2e/, playwright-report/, test-results/, reports/, legacy/, tools/, migrations/ and non-canonical documentation. Preserved only 4 canonical docs plus runtime-required files. Achieved 32% reduction in repo bloat (~1.1GB removed, -178 files).
 
 ### Fixed  
 - **2025-08-15**: Admin authentication errors (comprehensive) — Request IDs wwd0c4nt4medd4rjm, w4k3xb5h5medd4vym, conh6w30qmedd4yij, 9d6rvi3upmedd4zba traced to Admin component auth gaps: CalendarPage.tsx useSlots hooks, BulkBar.tsx mutations, DayEditorSheet.tsx queries. Fixed with isAuthReady gating + auth validation. Added admin-specific tripwire test.

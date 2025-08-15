@@ -1,75 +1,44 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, Plus, MapPin, Clock, Truck, Calendar } from "lucide-react";
+import { Link } from "wouter";
 import TopNavigation from "@/components/top-navigation";
-import SlotCard from "@/components/slot-card";
-import BookingModal from "@/components/booking-modal";
 import { api } from "@/lib/api";
 import { authService } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { SlotWithUsage, BookingWithDetails } from "@shared/schema";
+import { BookingWithDetails } from "@shared/schema";
 
 export default function GrowerDashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
 
-  // Enhanced authentication gating for all queries
-  const isAuthReady = authService.isAuthenticated() && !!authService.getToken();
-
-  const { data: slots = [], isLoading: slotsLoading } = useQuery<SlotWithUsage[]>({
-    queryKey: ["/v1/slots", selectedDate],
-    queryFn: () => api.getSlots(selectedDate),
-    enabled: isAuthReady && !!selectedDate,
-  });
-
-  const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
-    queryKey: ["/v1/bookings"],
+  // Fetch user's bookings
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+    queryKey: ['bookings', user?.tenantId],
     queryFn: () => api.getBookings(),
-    enabled: isAuthReady,
   });
 
+  // Cancel booking mutation
   const cancelBookingMutation = useMutation({
-    mutationFn: (id: string) => api.cancelBooking(id),
+    mutationFn: (bookingId: string) => api.cancelBooking(bookingId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been cancelled successfully.",
+        title: "Booking cancelled",
+        description: "Your booking has been successfully cancelled.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/v1/bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["/v1/slots"] });
     },
     onError: (error: any) => {
       toast({
-        title: "Cancellation Failed",
+        title: "Error",
         description: error.message || "Failed to cancel booking",
         variant: "destructive",
       });
     },
   });
-
-  const handleDateChange = (direction: 'prev' | 'next') => {
-    const currentDate = new Date(selectedDate);
-    const newDate = new Date(currentDate);
-    
-    if (direction === 'prev') {
-      newDate.setDate(currentDate.getDate() - 1);
-    } else {
-      newDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    setSelectedDate(newDate.toISOString().split('T')[0]);
-  };
-
-  const handleBookSlot = (slot: SlotWithUsage) => {
-    setSelectedSlot(slot);
-    setIsBookingModalOpen(true);
-  };
 
   const handleCancelBooking = (bookingId: string) => {
     if (window.confirm('Are you sure you want to cancel this booking?')) {
@@ -77,20 +46,15 @@ export default function GrowerDashboard() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return {
-      formatted: date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
-    };
-  };
-
-  const selectedDateFormatted = formatDate(selectedDate);
+  // Get stats from bookings
+  const totalBookings = bookings.length;
+  const upcomingBookings = bookings.filter((booking: BookingWithDetails) => 
+    new Date(booking.slotDate) >= new Date()
+  ).length;
+  const completedBookings = totalBookings - upcomingBookings;
+  const totalQuantity = bookings.reduce((sum: number, booking: BookingWithDetails) => 
+    sum + parseFloat(booking.quantity), 0
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -98,71 +62,98 @@ export default function GrowerDashboard() {
 
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Dashboard Header */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Delivery Slots</h2>
-          <p className="text-gray-600">Book your delivery slots and manage existing bookings</p>
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
+              <p className="text-gray-600">
+                View your bookings and manage deliveries
+              </p>
+            </div>
+            
+            {/* Quick Action */}
+            <Link href="/calendar">
+              <Button className="flex items-center space-x-2" data-testid="book-slot-button">
+                <Calendar className="h-4 w-4" />
+                <span>Book New Slot</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Date Selector */}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Total Bookings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold">{totalBookings}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <Clock className="h-4 w-4 mr-2" />
+                Upcoming
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-blue-600">{upcomingBookings}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <Truck className="h-4 w-4 mr-2" />
+                Completed
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-green-600">{completedBookings}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
+                <MapPin className="h-4 w-4 mr-2" />
+                Total Quantity
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold">{totalQuantity.toFixed(1)} tons</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
         <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDateChange('prev')}
-                  data-testid="button-prev-date"
-                >
-                  <ChevronLeft className="h-4 w-4" />
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/calendar">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>View Calendar</span>
                 </Button>
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900" data-testid="text-selected-date">
-                    {selectedDateFormatted.formatted}
-                  </h3>
-                  <p className="text-sm text-gray-500">{selectedDateFormatted.weekday}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDateChange('next')}
-                  data-testid="button-next-date"
-                >
-                  <ChevronRight className="h-4 w-4" />
+              </Link>
+              <Link href="/calendar">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Book Delivery Slot</span>
                 </Button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button variant="default" size="sm">
-                  Day View
-                </Button>
-                <Button variant="outline" size="sm">
-                  Week View
-                </Button>
-              </div>
+              </Link>
             </div>
           </CardContent>
         </Card>
-
-        {/* Slot Grid */}
-        <div className="grid gap-4 mb-8">
-          {slotsLoading ? (
-            <div className="text-center py-8">
-              <div className="text-gray-500">Loading slots...</div>
-            </div>
-          ) : slots.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-gray-500">No slots available for this date</div>
-            </div>
-          ) : (
-            slots.map((slot) => (
-              <SlotCard
-                key={slot.id}
-                slot={slot}
-                onBook={handleBookSlot}
-              />
-            ))
-          )}
-        </div>
 
         {/* My Bookings Section */}
         <Card>
@@ -170,67 +161,83 @@ export default function GrowerDashboard() {
             <CardTitle>My Bookings</CardTitle>
           </CardHeader>
           <CardContent>
-            {bookings.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
-                No bookings found
+            {bookingsLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading bookings...</p>
+              </div>
+            ) : bookings.length === 0 ? (
+              <div className="text-center py-12">
+                <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings yet</h3>
+                <p className="text-gray-600 mb-4">Start by booking your first delivery slot</p>
+                <Link href="/calendar">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Book Your First Slot
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="space-y-4">
-                {bookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0"
-                    data-testid={`booking-${booking.id}`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {new Date(booking.slotDate).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}, {booking.slotStartTime.slice(0, 5)}-{booking.slotEndTime.slice(0, 5)}
+                {bookings.map((booking: BookingWithDetails) => {
+                  const isUpcoming = new Date(booking.slotDate) >= new Date();
+                  const slotDate = new Date(booking.slotDate);
+                  
+                  return (
+                    <div
+                      key={booking.id}
+                      className="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50"
+                      data-testid={`booking-${booking.id}`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <div className="font-medium">
+                              {slotDate.toLocaleDateString('en', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {booking.slotStartTime} - {booking.slotEndTime}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-medium">{booking.quantity} tons</div>
+                            <div className="text-sm text-gray-600">
+                              {booking.cultivarName || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <Badge variant={isUpcoming ? "default" : "secondary"}>
+                              {isUpcoming ? "Upcoming" : "Completed"}
+                            </Badge>
+                          </div>
                         </div>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {booking.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
-                        </span>
+                        {/* Notes would be part of slot details if needed */}
                       </div>
-                      <div className="mt-1 text-sm text-gray-600">
-                        {booking.quantity} tons
-                        {booking.cultivarName && ` • ${booking.cultivarName}`}
-                      </div>
+                      {isUpcoming && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelBooking(booking.id)}
+                          disabled={cancelBookingMutation.isPending}
+                          data-testid={`cancel-booking-${booking.id}`}
+                        >
+                          {cancelBookingMutation.isPending ? "Cancelling..." : "Cancel"}
+                        </Button>
+                      )}
                     </div>
-                    {booking.status === 'confirmed' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCancelBooking(booking.id)}
-                        disabled={cancelBookingMutation.isPending}
-                        className="text-red-600 hover:text-red-800"
-                        data-testid="button-cancel-booking"
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      <BookingModal
-        slot={selectedSlot}
-        isOpen={isBookingModalOpen}
-        onClose={() => {
-          setIsBookingModalOpen(false);
-          setSelectedSlot(null);
-        }}
-      />
     </div>
   );
 }

@@ -1,0 +1,127 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+Objective
+Perform a full repository audit and fix pass to ensure the app functions end‑to‑end exactly as defined in Blueprint.md (MVP + Admin calendar + logistics add‑ons). Resolve all TypeScript/Python errors and remove legacy behaviors so that the UI renders only backend data, API contracts match v1, booking concurrency is enforced (409), and domain events/outbox are emitted as designed.
+
+1) Repository‑wide scan & report (no code changes yet)
+
+Enumerate all frontend pages/components and backend routers/schemas. Map them to the contracts in Blueprint §6 and data model §4. Flag any missing/extra endpoints, mismatched payloads, or unused code paths.
+
+List legacy endpoints still using /api/ or Node handlers (should be /v1 FastAPI). Cross‑reference the “Frontend API Integration” issue.
+
+Collect all LSP diagnostics (TS/py) and categorize by file, severity, and fix strategy.
+
+Identify any placeholder/fabrication logic in the UI that creates phantom slots or bookings (e.g., placeholderData, initialData, keepPreviousData, generateSlots, buildDayGrid, etc.).
+
+Verify query keys include tenantId + startISO + endISO (+filters) for slots/bookings.
+
+Check timezone assumptions align to Africa/Johannesburg as default in schema.
+
+Confirm booking concurrency is enforced per §5 (SELECT … FOR UPDATE pattern) and that 403/409 error codes are handled by UI toasts.
+
+Confirm all GET endpoints are side‑effect free (no seeding/ensuring ranges on read).
+
+Verify domain events and outbox rows on booking create/cancel (and update if PATCH is implemented).
+
+Produce a short markdown report (/SCAN_REPORT.md) summarizing findings with file paths and proposed fixes.
+
+2) Apply fixes (in place)
+
+Keep existing structure; do not introduce a parallel admin module. Fix where code currently lives.
+
+2.1 Frontend (React/Vite)
+
+Replace legacy /api/ calls with /v1 endpoints defined in Blueprint §6:
+
+Slots: GET /v1/slots?start=&end=, POST /v1/slots/bulk, PATCH /v1/slots/{id}, GET /v1/slots/{id}/usage.
+
+Bookings: GET /v1/bookings?start=&end=&grower_id=, POST /v1/bookings, DELETE /v1/bookings/{id}; use PATCH /v1/bookings/{id} if available for move/update.
+
+Restrictions: POST /v1/restrictions/apply.
+
+Eliminate UI fabrication: remove placeholder generation or default grid filling. When APIs return [], render a neutral empty state (no interactive cells).
+
+Standardize React Query keys (slots/bookings) to include tenant & range; remove keepPreviousData for admin views unless accompanied by explicit loading states.
+
+Normalize range math to Africa/Johannesburg.
+
+Enforce RBAC: admin‑only controls on admin routes.
+
+Admin calendar: ensure Month/Week/Day views exist and are wired only to backend data with bulk‑create/edit slot dialogs, booking create/move/cancel, and restriction application—per Frontend Plan §7.
+
+2.2 Backend (FastAPI)
+
+Ensure endpoints match Blueprint §6 contracts and are idempotent where required; no GET side effects.
+
+Validate booking creation/move uses the concurrency pattern; return 409 on capacity exceed and 403 on restriction violation.
+
+Ensure domain events + outbox are written on create/cancel/update as applicable.
+
+2.3 Data model & migrations
+
+Confirm DB schema matches Blueprint §4 for core + extensibility tables and that all migrations exist and run cleanly.
+
+If any schema drift exists, add/adjust migrations in /app/infra and document changes in Blueprint.md. (Respect existing data.)
+
+3) Verification: tests & manual checks
+3.1 Automated tests (add/repair)
+
+Integration:
+
+Two concurrent booking attempts on the same slot → one 201, one 409.
+
+GET /v1/slots on empty range → returns [], no writes.
+
+E2E (happy paths):
+
+Admin login → Month/Week/Day calendar loads; bulk create slots → see in grid; edit slot (capacity/blackout); create/move/cancel booking; apply restrictions; grower sees correct availability.
+
+E2E (edge cases):
+
+Booking into full/forbidden slot surfaces 409/403 with no UI write.
+
+Navigating Aug↔Sep shows no phantom slots; empty ranges render empty state.
+
+3.2 Manual smoke checklist (document in /VERIFY.md)
+
+Admin and grower flows work with real DB; no errors in console/network.
+
+All admin actions hit /v1/* only; no requests to legacy /api/*.
+
+Domain events/outbox rows present after booking actions.
+
+4) Documentation & tracking (governance)
+
+BLUEPRINT.md:
+
+Update §6 if PATCH /v1/bookings/{id} usage is formalized; update §7 and §11 with the “no UI fabrication” rule and new tests.
+
+FEATURES.md:
+
+Move Week view calendar from gaps to implemented once passing; record verification status.
+
+ISSUES.md:
+
+Close “LSP Diagnostics” items you’ve fixed and “Frontend API Integration” once all routes call /v1. Add any new defects found during scan.
+
+5) Deliverables
+
+/SCAN_REPORT.md (what was found + how it was fixed/why skipped).
+
+Code fixes applied (frontend/backend/migrations) with passing tests.
+
+/VERIFY.md manual checklist results (screenshots optional).
+
+Updated BLUEPRINT.md, FEATURES.md, ISSUES.md with a dated changelog entry.
+
+Acceptance Criteria
+
+All features defined in Blueprint MVP + Admin Calendar are functional: slot management, grower booking, capacity/restrictions enforcement, concurrency safety, events/outbox, and logistics read‑only UI.
+
+No phantom slots; UI renders only backend data.
+
+No legacy /api calls remain; all hit /v1.
+
+LSP/TypeScript/Python diagnostics are cleared.
+
+Tests (unit/integration/E2E) pass locally; docs updated per rules.md.

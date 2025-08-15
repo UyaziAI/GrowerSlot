@@ -6,13 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { authService } from "./lib/auth";
 import LoginPage from "@/pages/login";
 import GrowerDashboard from "@/pages/grower-dashboard";
-import AdminPage from "./pages/AdminPage";
+import AdminPage from "@/pages/AdminPage";
+import CalendarPage from "@/pages/calendar-page";
+import BookingRedirect from "@/pages/booking-redirect";
 import NotFound from "@/pages/not-found";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { DebugOverlay } from "./components/DebugOverlay";
-import { setupReactQueryErrorHandler } from "./lib/global-error-handlers";
-import { logger } from "./lib/logger";
-import { useState, useEffect } from "react";
 
 function Router() {
   const isAuthenticated = authService.isAuthenticated();
@@ -24,8 +21,12 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={isAdmin ? AdminPage : GrowerDashboard} />
+      <Route path="/" component={isAdmin ? AdminPage : CalendarPage} />
+      <Route path="/calendar" component={CalendarPage} />
+      <Route path="/booking" component={BookingRedirect} />
+      <Route path="/slots" component={BookingRedirect} />
       <Route path="/dashboard" component={isAdmin ? AdminPage : GrowerDashboard} />
+      <Route path="/grower-dashboard" component={GrowerDashboard} />
       <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
@@ -33,43 +34,13 @@ function Router() {
 }
 
 function App() {
-  const [debugOverlayOpen, setDebugOverlayOpen] = useState(false);
-
-  // Setup React Query error handling
-  useEffect(() => {
-    const errorHandler = setupReactQueryErrorHandler();
-    queryClient.setQueryDefaults([''], errorHandler);
-  }, []);
-
-  // Debug overlay toggle (Ctrl+Shift+L in dev)
-  useEffect(() => {
-    if (!logger.isDebugEnabled()) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.shiftKey && event.key === 'L') {
-        event.preventDefault();
-        setDebugOverlayOpen(prev => !prev);
-        logger.debug('debug_overlay', `Debug overlay ${debugOverlayOpen ? 'closed' : 'opened'}`);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [debugOverlayOpen]);
-
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-          <DebugOverlay 
-            isOpen={debugOverlayOpen} 
-            onClose={() => setDebugOverlayOpen(false)} 
-          />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

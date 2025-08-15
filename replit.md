@@ -1,87 +1,77 @@
-# Grower Slot SaaS Platform
+# Grower Slot SaaS
 
 ## Overview
-
-A multi-tenant agricultural delivery slot booking platform designed for packhouses to manage inbound grower deliveries. The system provides a mobile-first web application that eliminates manual coordination chaos by offering structured time slot booking with capacity controls, real-time availability, and comprehensive admin management tools.
-
-The platform serves two primary user types: packhouse administrators who create and manage delivery slots, and growers who book available time slots for their deliveries. Built with extensibility in mind, the architecture supports future expansion into logistics tracking, quality management, and compliance workflows.
+Grower Slot SaaS is a multi-tenant delivery slot booking platform for agricultural packhouses, specifically macadamia farms, to manage inbound deliveries from growers. It allows growers to book delivery slots with specified quantities, while packhouse administrators can manage capacity, set restrictions, and define blackout periods. The application is designed as a mobile-first Progressive Web App (PWA) to ensure accessibility for growers in the field. The business vision is to streamline the logistics of produce delivery, reducing administrative overhead and improving coordination between growers and packhouses.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
 ### Frontend Architecture
-- **React + TypeScript SPA** with mobile-first PWA design using Vite as the build tool
-- **UI Components** built on shadcn/ui with Radix UI primitives for accessibility
-- **State Management** via TanStack Query for server state and React hooks for local state
-- **Routing** handled by Wouter for lightweight client-side navigation
-- **Styling** using Tailwind CSS with CSS custom properties for theming
-- **Authentication** JWT-based with role-based access control (Admin/Grower)
+- **Framework**: React with TypeScript, using Vite for development.
+- **State Management**: TanStack Query for server state.
+- **UI Framework**: Tailwind CSS with shadcn/ui component library.
+- **Routing**: Wouter for client-side routing.
+- **Authentication**: JWT-based with localStorage persistence.
 
 ### Backend Architecture
-- **Node.js/Express** primary backend with TypeScript
-- **FastAPI Python** secondary backend for advanced features (templates, exports, logistics)
-- **RESTful API** design with structured JSON responses
-- **Domain Events + Outbox Pattern** for reliable event delivery and audit trails
-- **Transactional Safety** using database-level locking for capacity management
-- **Multi-tenant** architecture with tenant isolation at the database level
+- **Primary**: Express.js (Node.js) with Drizzle ORM for PostgreSQL.
+- **API Design**: RESTful API with versioned endpoints (`/v1/`) and JWT middleware.
+- **Database Interaction**: Drizzle ORM with direct SQL for complex operations and transactional safety.
+- **Validation**: Zod schemas for request/response validation.
+- **Concurrency**: `SELECT FOR UPDATE` for atomic booking operations.
+- **Events**: Domain events and outbox pattern for reliable webhook delivery.
 
 ### Database Design
-- **PostgreSQL** as primary database with Drizzle ORM for type-safe queries
-- **Core Tables**: tenants, users, growers, cultivars, slots, bookings, slot_restrictions
-- **Extensibility Tables**: parties, products, consignments, checkpoints for future logistics
-- **Event Sourcing**: domain_events, outbox, audit_log tables for comprehensive tracking
-- **Indexing Strategy** optimized for tenant_id + date queries on time-sensitive data
+- **Database**: PostgreSQL with an extensible architecture.
+- **Core Entities**: Tenants, Growers (with roles), Cultivars, Slots (with capacity/blackout), Bookings (with atomic checks), Slot Restrictions.
+- **Extensibility Entities**: Parties, Products and variants, Consignments (linked to bookings), Checkpoints (tracking events), Domain Events, Outbox, Rules (JSON-based workflow).
+- **Multi-tenancy**: Single database with tenant isolation via foreign keys; all data operations are scoped to the authenticated user's tenant.
 
 ### Authentication & Authorization
-- **JWT Tokens** with 24-hour expiration and automatic refresh
-- **Role-Based Access Control** with admin and grower permissions
-- **Tenant Scoping** ensures data isolation between packhouses
-- **Password Security** using bcrypt hashing with salt rounds
+- **Strategy**: JWT tokens with role-based access control.
+- **Roles**: Admin users (packhouse staff) and Grower users.
+- **Security**: Password hashing with bcrypt, token-based session management.
 
-### Data Flow Patterns
-- **Slot Management**: Admin creates slots → Growers view availability → Transactional booking with capacity checks
-- **Event Driven**: Domain events capture all admin actions for audit trails and webhook delivery
-- **Optimistic UI**: Frontend shows immediate feedback while backend processes requests
-- **Error Handling**: Structured logging with request correlation IDs for debugging
+### Development Environment
+- **Build System**: Vite with hot module replacement.
+- **Type Safety**: Full TypeScript coverage.
+- **Code Quality**: Consistent linting and formatting.
 
-### Mobile-First Design
-- **Responsive Breakpoints** with mobile (390px), tablet (768px), and desktop (1024px+) optimizations
-- **Touch-Friendly Interactions** with 44px minimum touch targets
-- **Progressive Enhancement** supporting offline capability and app-like experience
-- **Performance Optimized** with code splitting and lazy loading for mobile networks
+### UI/UX Decisions
+- Mobile-first Progressive Web App (PWA) for field accessibility.
+- Calendar-style booking interface (Playtomic-inspired Day/Week views).
+- Responsive layouts for week overview (desktop, tablet, mobile).
+- Color-coded availability badges for slots (Green, Amber, Red, Grey).
+- Sticky month header and clean pill design for navigation.
+- Continuous day timeline with virtualized horizontal scrolling for performance.
+
+### Feature Specifications
+- **Slot Management**: Admins can manage slot capacity, set restrictions, and define blackout periods.
+- **Booking Management**: Growers can view availability and book delivery slots with quantities.
+- **Admin Calendar**: Comprehensive CRUD interface for slots and bookings (Month/Week/Day views) - V1 partial implementation with core UI structure complete.
+- **Role-Based Access Control (RBAC)**: Differentiates between admin and grower functionalities.
+- **Logistics Tracking**: Support for consignments and checkpoints for delivery tracking.
+- **Feature Flag System**: Staged rollout capabilities with environment-based configuration - requires integration with admin components.
+- **CI/CD Pipeline**: Automated testing with GitHub Actions, PostgreSQL services, and artifact collection.
+- **Audit Trail**: Comprehensive logging system for compliance and administrative tracking - admin event emission pending.
+- **Split Creation UI**: Separate dialogs for single-day ("Create Slots") vs bulk range ("Bulk Create") slot creation with proper past date validation.
+- **Admin Status Audit**: Comprehensive evaluation completed (August 15, 2025) identifying API compliance gaps and feature flag integration needs.
 
 ## External Dependencies
 
-### Core Infrastructure
-- **Supabase/Neon Database** - PostgreSQL hosting with connection pooling
-- **Vercel/Replit** - Application hosting and deployment platform
-- **SendGrid** - Email service for notifications and confirmations
+### Database & Hosting
+- **Neon Database**: Serverless PostgreSQL hosting.
+- **Replit**: Development and potential production hosting.
 
-### Frontend Libraries
-- **React 18** with concurrent features and suspense
-- **TanStack Query v5** for server state management and caching
-- **shadcn/ui + Radix UI** for accessible component primitives
-- **Tailwind CSS** for utility-first styling
-- **date-fns** with timezone support for date/time handling
-- **React Hook Form + Zod** for form validation
+### UI & Component Libraries
+- **Radix UI**: Accessible headless UI components.
+- **shadcn/ui**: Component library built on Radix UI and Tailwind CSS.
+- **Lucide React**: Icon library.
 
-### Backend Dependencies
-- **Express.js** with TypeScript for Node.js runtime
-- **FastAPI** with Pydantic for Python microservices
-- **Drizzle ORM** for type-safe database operations
-- **bcrypt** for password hashing
-- **jsonwebtoken** for JWT token generation and validation
+### Email Services
+- **SendGrid**: Email delivery for notifications and authentication.
 
-### Development & Testing
-- **Vite** for fast development server and building
-- **Vitest** for unit and integration testing
-- **Playwright** for end-to-end testing across browsers
-- **TypeScript** for static type checking across the entire stack
-
-### Feature Flags & Configuration
-- **Environment Variables** for feature toggling (VITE_FEATURE_* prefix)
-- **Runtime Configuration** for tenant-specific settings and customization
-- **Debug Tools** including structured logging and debug overlay for development
+### Development Tools
+- **Drizzle Kit**: Database migration and schema management.

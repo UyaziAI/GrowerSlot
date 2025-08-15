@@ -1,0 +1,79 @@
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md) as required by the rules. Maintain changelog entries in BLUEPRINT.md for every change.
+
+The app still shows the legacy vertical slot list for Admin, and Grower gets a runtime error:
+[plugin:runtime-error-plugin] booked.toFixed is not a function
+CalendarGrid.tsx:100:35
+Objectives
+Make the calendar grid (Day/Week) the only slot view for both Admin and Grower.
+
+Fix the toFixed crash by normalizing numeric fields (booked, capacity, remaining) to numbers before formatting.
+
+Exact changes
+A) Frontend – routing & flags
+
+Ensure the booking route used by Admin and Grower renders the calendar view (not the legacy list).
+
+Remove/disable imports/usages of the legacy vertical list components.
+
+Add a redirect from any old slot routes to the calendar route.
+
+Confirm .env has VITE_FEATURE_WEEKVIEW=true. Day view must always work; Week view toggled by the flag.
+
+B) Frontend – fix number formatting (CalendarGrid.tsx)
+
+In client/src/features/booking/components/CalendarGrid.tsx (or app/frontend/... if that’s where the calendar lives), update the SlotCard (around the failing line) to coerce values to numbers and guard against NaN:
+
+// helpers near top of file
+const toNum = (v: unknown, fallback = 0): number => {
+  const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
+  return Number.isFinite(n) ? n : fallback;
+};
+
+// inside SlotCard props/locals, before rendering
+const capacityNum = toNum(capacity, 0);
+const bookedNum   = toNum(booked, 0);
+const remainingNum = toNum(remaining ?? (capacityNum - bookedNum), 0);
+const unit = resource_unit ?? 'tons';
+const safeCap = Math.max(capacityNum, 0);
+
+// avoid divide-by-zero for bars
+const pct = safeCap > 0 ? Math.min(100, Math.max(0, (bookedNum / safeCap) * 100)) : 0;
+
+// in JSX where values are displayed
+<div className="flex justify-between text-xs text-gray-600">
+  <span>{bookedNum.toFixed(1)}/{capacityNum.toFixed(1)} {unit}</span>
+  <span className={`font-medium ${remainingNum <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+    {remainingNum.toFixed(1)} remaining
+  </span>
+</div>
+Wherever the grid computes remaining, compute from numbers:
+
+const remainingNum = toNum(capacity) - toNum(booked);
+C) Frontend – data normalization (hook)
+
+In the slots data hook (useSlotsRange or equivalent), normalize incoming API fields to numbers when mapping the response so UI always gets numeric types:
+const normalizeSlot = (s: any) => ({
+  ...s,
+  capacity: toNum(s.capacity, 0),
+  booked: toNum(s.booked, 0),
+  remaining: toNum(s.remaining ?? (toNum(s.capacity,0) - toNum(s.booked,0)), 0),
+});
+D) Backend – response consistency (idempotent check)
+
+Ensure the slots endpoints return JSON numbers for capacity and computed booked (not strings). If using SQL casts, prefer ::numeric → serialize as number (no quotes). If strings are unavoidable, document the FE normalization in BLUEPRINT.md.
+
+Tests
+FE: add a test that renders a SlotCard with string inputs ("20.0", "7.5") and confirms the text shows 7.5/20.0 and no crash.
+
+FE: verify Admin route renders calendar (no legacy list present).
+
+BE (optional): contract test asserts numeric JSON types for capacity/booked.
+
+Acceptance
+Admin and Grower both see the calendar grid (no vertical list anywhere).
+
+No runtime error when fields arrive as strings or nulls.
+
+Capacity bar and counts render correctly; Week toggle works when flag is on.
+
+Docs updated per rules (note FE normalization or numeric API guarantee; add changelog entry).
