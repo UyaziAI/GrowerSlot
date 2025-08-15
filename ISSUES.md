@@ -87,12 +87,6 @@
 - [x] Select mode toggle for bulk operations
 - [x] Past date validation
 
-### UI Shell Follow-ups
-- [ ] Replace AppShell with brand header component if/when provided
-- [ ] Responsive hamburger menu for small screens
-- [ ] Tenant switcher (if required)
-- [ ] Hook real auth in place of localStorage stub
-
 ### V2 Enhancements (Future)
 - [ ] Week ribbon with slot count badges
 - [ ] Inspector panel with detailed slot info
