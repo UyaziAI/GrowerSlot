@@ -105,7 +105,7 @@ describe('Admin Route Wire Test', () => {
     // Test 2: Verify no legacy admin component remnants
     const bodyText = document.body.textContent || '';
     const suspiciousPatterns = [
-      'admin-dashboard', 
+      'admin-page', 
       'legacy-admin',
       'old-admin'
     ];
