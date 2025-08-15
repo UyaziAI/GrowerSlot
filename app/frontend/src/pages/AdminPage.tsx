@@ -5,18 +5,73 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, ChevronDown, MoreHorizontal, ChevronLeft, ChevronRight, Calendar, Download } from 'lucide-react';
-// Component imports removed for testing - will be re-added when components exist
-// import DayPeekSheet, { DayPeekSummary } from './DayPeekSheet';
-// import FilterDrawer from './FilterDrawer';
-// import CreateSlotsDialog from './CreateSlotsDialog';
-// import BulkCreateDialog from './BulkCreateDialog';
+import DayPeekSheet, { DayPeekSummary } from './DayPeekSheet';
+import FilterDrawer from './FilterDrawer';
+import CreateSlotsDialog from './CreateSlotsDialog';
+import BulkCreateDialog from './BulkCreateDialog';
 
-interface DayPeekSummary {
-  remaining: number;
-  booked: number;
-  blackout: boolean;
-  restricted: boolean;
+// Stub components for DayEditorSheet and BulkBar
+interface DayEditorSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  dateISO: string;
 }
+
+const DayEditorSheet = ({ isOpen, onClose, dateISO }: DayEditorSheetProps) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <h2 className="text-lg font-semibold mb-4">Edit Day: {dateISO}</h2>
+        <p className="text-gray-600 mb-4">Day editor functionality coming soon...</p>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
+
+interface BulkBarProps {
+  selectedDates: string[];
+  onClearSelection: () => void;
+  onBulkAction: (action: string) => void;
+}
+
+const BulkBar = ({ selectedDates, onClearSelection, onBulkAction }: BulkBarProps) => {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-40">
+      <div className="flex items-center justify-between max-w-6xl mx-auto">
+        <div className="flex items-center gap-3">
+          <span className="font-medium">{selectedDates.length} days selected</span>
+          <button
+            onClick={onClearSelection}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            Clear
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onBulkAction('create')}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Bulk Create
+          </button>
+          <button
+            onClick={() => onBulkAction('blackout')}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Bulk Blackout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 type ViewMode = 'month' | 'week' | 'day';
 
@@ -41,6 +96,9 @@ export default function AdminPage() {
   const [bulkCreateDialogOpen, setBulkCreateDialogOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [dayPeek, setDayPeek] = useState<{ dateISO: string; summary: DayPeekSummary } | null>(null);
+  const [dayEditorOpen, setDayEditorOpen] = useState(false);
+  const [dayEditorDate, setDayEditorDate] = useState<string>('');
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
 
   const queryClient = useQueryClient();
 
@@ -92,6 +150,26 @@ export default function AdminPage() {
       restricted: false
     };
     setDayPeek({ dateISO, summary });
+  };
+
+  const handleEditDay = (dateISO: string) => {
+    setDayEditorDate(dateISO);
+    setDayEditorOpen(true);
+    setDayPeek(null); // Close peek when opening editor
+  };
+
+  const handleDaySelection = (dateISO: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedDates(prev => [...prev, dateISO]);
+    } else {
+      setSelectedDates(prev => prev.filter(date => date !== dateISO));
+    }
+  };
+
+  const handleBulkAction = (action: string) => {
+    console.log('Bulk action:', action, 'on dates:', selectedDates);
+    // Handle bulk actions like create, blackout, etc.
+    setSelectedDates([]); // Clear selection after action
   };
 
   return (
@@ -206,16 +284,33 @@ export default function AdminPage() {
             {/* Mock calendar for M1 testing - replace with CalendarMonth when implemented */}
             <div className="h-full p-4" data-testid="mock-calendar-month">
               <div className="grid grid-cols-7 gap-2">
-                {Array.from({ length: 35 }, (_, i) => (
-                  <button
-                    key={i}
-                    className="p-2 border rounded hover:bg-gray-100"
-                    onClick={() => handleDayClick(`2025-08-${String(i + 1).padStart(2, '0')}`)}
-                    data-testid={`mock-day-cell-${i}`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                {Array.from({ length: 35 }, (_, i) => {
+                  const dateISO = `2025-08-${String(i + 1).padStart(2, '0')}`;
+                  const isSelected = selectedDates.includes(dateISO);
+                  return (
+                    <button
+                      key={i}
+                      className={`p-2 border rounded hover:bg-gray-100 relative ${
+                        isSelected ? 'bg-blue-100 border-blue-500' : ''
+                      }`}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          // Multi-select mode
+                          handleDaySelection(dateISO, !isSelected);
+                        } else {
+                          // Single tap - open day peek
+                          handleDayClick(dateISO);
+                        }
+                      }}
+                      data-testid={`mock-day-cell-${i}`}
+                    >
+                      {i + 1}
+                      {isSelected && (
+                        <div className="absolute top-1 right-1 w-2 h-2 bg-blue-600 rounded-full"></div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
@@ -251,7 +346,72 @@ export default function AdminPage() {
         </Tabs>
       </div>
 
-      {/* Dialogs and sheets removed for testing - will be re-added when components exist */}
+      {/* Bulk Bar */}
+      {selectedDates.length > 0 && (
+        <BulkBar
+          selectedDates={selectedDates}
+          onClearSelection={() => setSelectedDates([])}
+          onBulkAction={handleBulkAction}
+        />
+      )}
+
+      {/* Create Slots Dialog */}
+      <CreateSlotsDialog
+        isOpen={createSlotsDialogOpen}
+        onClose={() => setCreateSlotsDialogOpen(false)}
+        focusedDate={selectedDate}
+        tenantId="mock-tenant-id"
+      />
+
+      {/* Bulk Create Dialog */}
+      <BulkCreateDialog
+        isOpen={bulkCreateDialogOpen}
+        onClose={() => setBulkCreateDialogOpen(false)}
+        tenantId="mock-tenant-id"
+      />
+
+      {/* Filter Drawer */}
+      <FilterDrawer
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+      />
+
+      {/* Day Peek Sheet */}
+      {dayPeek && (
+        <DayPeekSheet
+          dateISO={dayPeek.dateISO}
+          summary={dayPeek.summary}
+          onCreateDay={() => {
+            setSelectedDate(dayPeek.dateISO);
+            setCreateSlotsDialogOpen(true);
+            setDayPeek(null);
+          }}
+          onBlackoutDay={() => {
+            console.log('Blackout day:', dayPeek.dateISO);
+            setDayPeek(null);
+          }}
+          onRestrictDay={() => {
+            console.log('Restrict day:', dayPeek.dateISO);
+            setDayPeek(null);
+          }}
+          onOpenEditor={() => {
+            handleEditDay(dayPeek.dateISO);
+          }}
+          onOpenDayView={() => {
+            setViewMode('day');
+            setSelectedDate(dayPeek.dateISO);
+            setDayPeek(null);
+          }}
+          onClose={() => setDayPeek(null)}
+        />
+      )}
+
+      {/* Day Editor Sheet */}
+      <DayEditorSheet
+        isOpen={dayEditorOpen}
+        onClose={() => setDayEditorOpen(false)}
+        dateISO={dayEditorDate}
+      />
     </div>
   );
 }

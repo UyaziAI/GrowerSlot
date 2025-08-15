@@ -1,13 +1,13 @@
-import React from 'react';
+import { Button } from '@/components/ui/button';
 
-export interface DayPeekSummary { 
-  remaining: number; 
-  booked: number; 
-  blackout: boolean; 
-  restricted: boolean; 
+export interface DayPeekSummary {
+  remaining: number;
+  booked: number;
+  blackout: boolean;
+  restricted: boolean;
 }
 
-export interface DayPeekSheetProps {
+interface DayPeekSheetProps {
   dateISO: string;
   summary: DayPeekSummary;
   onCreateDay: () => void;
@@ -15,104 +15,78 @@ export interface DayPeekSheetProps {
   onRestrictDay: () => void;
   onOpenEditor: () => void;
   onOpenDayView: () => void;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
-const DayPeekSheet: React.FC<DayPeekSheetProps> = ({
-  dateISO, 
-  summary, 
-  onCreateDay, 
-  onBlackoutDay, 
-  onRestrictDay, 
-  onOpenEditor, 
-  onOpenDayView, 
-  onClose
-}) => {
-  const d = new Date(dateISO);
-  const fmt = d.toLocaleDateString(undefined, {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-
+export default function DayPeekSheet({
+  dateISO,
+  summary,
+  onCreateDay,
+  onBlackoutDay,
+  onRestrictDay,
+  onOpenEditor,
+  onOpenDayView,
+  onClose,
+}: DayPeekSheetProps) {
   return (
-    <div 
-      role="dialog" 
-      aria-label={`Day ${fmt}`} 
-      className="fixed inset-x-0 bottom-0 max-h-[80vh] bg-white shadow-2xl rounded-t-2xl p-4 overflow-auto"
-      data-testid="day-peek-sheet"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold" data-testid="day-peek-title">{fmt}</h3>
-        <button 
-          onClick={onClose} 
-          aria-label="Close" 
-          className="px-2 py-1 rounded hover:bg-gray-100"
-          data-testid="button-close-day-peek"
-        >
-          Close
-        </button>
-      </div>
-      
-      <div className="flex gap-2 mb-3 text-sm">
-        <span className="px-2 py-1 rounded bg-gray-100" data-testid="summary-remaining">
-          Remaining: {summary.remaining}
-        </span>
-        <span className="px-2 py-1 rounded bg-gray-100" data-testid="summary-booked">
-          Booked: {summary.booked}
-        </span>
-        {summary.blackout && (
-          <span className="px-2 py-1 rounded bg-red-100" data-testid="summary-blackout">
-            ⛔ Blackout
-          </span>
-        )}
-        {summary.restricted && (
-          <span className="px-2 py-1 rounded bg-amber-100" data-testid="summary-restricted">
-            🔒 Restricted
-          </span>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <button 
-          onClick={onCreateDay} 
-          className="px-3 py-2 rounded bg-black text-white"
-          data-testid="button-create-slots-day"
-        >
-          Create Slots — Day
-        </button>
-        <button 
-          onClick={onBlackoutDay} 
-          className="px-3 py-2 rounded bg-gray-200"
-          data-testid="button-blackout-day"
-        >
-          Blackout Day
-        </button>
-        <button 
-          onClick={onRestrictDay} 
-          className="px-3 py-2 rounded bg-gray-200"
-          data-testid="button-restrict-day"
-        >
-          Restrict Day
-        </button>
-        <button 
-          onClick={onOpenDayView} 
-          className="px-3 py-2 rounded bg-gray-50 text-left underline"
-          data-testid="button-open-day-view"
-        >
-          Open Day view
-        </button>
-        <button 
-          onClick={onOpenEditor} 
-          className="px-3 py-2 rounded bg-gray-50 text-left underline"
-          data-testid="button-edit-day"
-        >
-          Edit Day
-        </button>
+    <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 sm:items-center">
+      <div className="bg-white rounded-t-xl sm:rounded-xl w-full max-w-md mx-4 sm:mb-4">
+        {/* Header */}
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{new Date(dateISO).toLocaleDateString()}</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="p-4 border-b">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Remaining</span>
+              <div className="font-medium">{summary.remaining}</div>
+            </div>
+            <div>
+              <span className="text-gray-500">Booked</span>
+              <div className="font-medium">{summary.booked}</div>
+            </div>
+          </div>
+          {summary.blackout && (
+            <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+              Blackout period
+            </div>
+          )}
+          {summary.restricted && (
+            <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+              Restricted access
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="p-4 space-y-2">
+          <Button onClick={onCreateDay} className="w-full justify-start">
+            Create Slots
+          </Button>
+          <Button onClick={onBlackoutDay} variant="outline" className="w-full justify-start">
+            {summary.blackout ? 'Remove Blackout' : 'Set Blackout'}
+          </Button>
+          <Button onClick={onRestrictDay} variant="outline" className="w-full justify-start">
+            {summary.restricted ? 'Remove Restrictions' : 'Add Restrictions'}
+          </Button>
+          <Button onClick={onOpenEditor} variant="outline" className="w-full justify-start">
+            Edit Day
+          </Button>
+          <Button onClick={onOpenDayView} variant="outline" className="w-full justify-start">
+            Open Day View
+          </Button>
+        </div>
       </div>
     </div>
   );
-};
-
-export default DayPeekSheet;
+}
