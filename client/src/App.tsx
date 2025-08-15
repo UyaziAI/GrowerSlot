@@ -8,9 +8,7 @@ import LoginPage from "@/pages/login";
 import GrowerDashboard from "@/pages/grower-dashboard";
 import CalendarPage from "@/pages/calendar-page";
 import BookingRedirect from "@/pages/booking-redirect";
-import AdminDashboard from "@/pages/admin-dashboard";
-import AdminSlotsPage from "@/pages/admin-slots";
-import AdminCalendarPage from "@/features/admin/AdminCalendarPage";
+// Legacy admin imports removed - using new AdminPage structure
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,15 +21,13 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={isAdmin ? AdminDashboard : CalendarPage} />
+      <Route path="/" component={CalendarPage} />
       <Route path="/calendar" component={CalendarPage} />
       <Route path="/booking" component={BookingRedirect} />
       <Route path="/slots" component={BookingRedirect} />
-      <Route path="/dashboard" component={isAdmin ? AdminDashboard : GrowerDashboard} />
+      <Route path="/dashboard" component={GrowerDashboard} />
       <Route path="/grower-dashboard" component={GrowerDashboard} />
-      {isAdmin && <Route path="/admin" component={AdminDashboard} />}
-      {isAdmin && <Route path="/admin/slots" component={AdminSlotsPage} />}
-      {isAdmin && <Route path="/admin/calendar" component={AdminCalendarPage} />}
+      {/* /admin routes removed - handled by app/frontend structure */}
       <Route component={NotFound} />
     </Switch>
   );
