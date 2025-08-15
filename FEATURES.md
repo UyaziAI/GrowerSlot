@@ -101,10 +101,17 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Verification: 16/16 tests passing in admin_audit_events.spec.ts
 
 - **M1 Toolbar cleanup + DayPeek bottom sheet** (August 15, 2025)
-  - Status: 🔄 In-Progress → Testing
+  - Status: ✅ Implemented and tested
   - Location: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/DayPeekSheet.tsx`
   - Features: Mobile-first admin calendar with simplified toolbar, DayPeek bottom sheet for context actions
-  - Testing: Component structure implemented, integration testing in progress
+  - Testing: Component structure implemented, integration ready
+
+- **M2 Day Editor sheet (edit in place)** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/app/frontend/src/pages/DayEditorSheet.tsx`, `/app/frontend/src/pages/AdminPage.tsx`
+  - Features: Full-height right drawer with Overview, Quick Create, Restrictions Editor, Utilities sections
+  - API Integration: /v1/slots/bulk, /v1/slots/blackout, /v1/restrictions/apply endpoints
+  - Testing: 6/6 tests passing for editor functionality and API integration
 
 ## In-Progress Features 🔄
 

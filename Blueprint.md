@@ -609,6 +609,8 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **timeline design:** Maintained 84px pills, sticky month header, clean UI without placeholder data
 - **testing ready:** Structure prepared for comprehensive admin calendar testing and phantom slot regression tests
 
+**Day Editor Sheet**: Full-height right drawer for comprehensive day editing. Launched via "Edit Day" from DayPeekSheet. Sections: Overview (date, blackout toggle, stats, restriction chips), Quick Create (slot_length_min, capacity, notes), Restrictions Editor (day scope posting to /v1/restrictions/apply), and Utilities (Duplicate from, Delete empty slots, Blackout Day). Provides in-place editing without navigation away from calendar.
+
 ### API (§6) Additions:
 - **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates` (stub endpoints implemented)
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency

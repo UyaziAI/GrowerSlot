@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, ChevronDown, Calendar,
 import CalendarMonth from '@/features/booking/components/CalendarMonth';
 import { DayPeekSheet } from './DayPeekSheet';
 import { FilterDrawer } from './FilterDrawer';
+import { DayEditorSheet } from './DayEditorSheet';
 import { format, addDays, subDays } from 'date-fns';
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -26,6 +27,8 @@ export default function AdminPage() {
     dateISO: string;
     summary: DayPeekSummary;
   } | null>(null);
+  const [dayEditorOpen, setDayEditorOpen] = useState(false);
+  const [dayEditorDate, setDayEditorDate] = useState<string>('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     grower: '',
@@ -260,7 +263,9 @@ export default function AdminPage() {
           }}
           onOpenEditor={() => {
             console.log('Open editor');
+            setDayEditorDate(dayPeekData.dateISO);
             setDayPeekOpen(false);
+            setDayEditorOpen(true);
           }}
           onOpenDayView={() => {
             console.log('Open day view');
@@ -269,6 +274,16 @@ export default function AdminPage() {
           }}
         />
       )}
+
+      {/* Day Editor Sheet */}
+      <DayEditorSheet
+        dateISO={dayEditorDate}
+        isOpen={dayEditorOpen}
+        onClose={() => {
+          setDayEditorOpen(false);
+          setDayEditorDate('');
+        }}
+      />
     </div>
   );
 }
