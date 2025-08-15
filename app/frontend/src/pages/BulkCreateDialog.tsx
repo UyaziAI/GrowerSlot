@@ -41,6 +41,7 @@ export function BulkCreateDialog({ isOpen, onClose, tenantId }: BulkCreateDialog
   });
   
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -77,24 +78,25 @@ export function BulkCreateDialog({ isOpen, onClose, tenantId }: BulkCreateDialog
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          startDate: formData.start_date,
-          endDate: formData.end_date,
-          startTime: '08:00',
-          endTime: '17:00',
-          slotDuration: formData.slot_length_min / 60, // Convert minutes to hours
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          weekdays: formData.weekdays.map((selected, index) => selected ? index + 1 : null).filter(Boolean),
+          slot_length_min: formData.slot_length_min,
           capacity: formData.capacity,
-          notes: formData.notes,
-          weekdays: formData.weekdays
+          notes: formData.notes
         })
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create slots');
+        // Surface backend error message verbatim
+        const backendError = errorData.error || errorData.detail?.error || 'Failed to create slots';
+        throw new Error(backendError);
       }
       return response.json();
     },
     onSuccess: () => {
+      setErrorMessage(''); // Clear any previous errors
       toast({
         title: 'Slots created',
         description: `Successfully created slots from ${form.start_date} to ${form.end_date}`
@@ -111,16 +113,14 @@ export function BulkCreateDialog({ isOpen, onClose, tenantId }: BulkCreateDialog
       onClose();
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create slots',
-        variant: 'destructive'
-      });
+      // Display backend error message inline, not in toast
+      setErrorMessage(error.message);
     }
   });
   
   const handleSubmit = () => {
     if (!validateForm()) return;
+    setErrorMessage(''); // Clear previous errors
     bulkCreateMutation.mutate(form);
   };
   
@@ -135,6 +135,15 @@ export function BulkCreateDialog({ isOpen, onClose, tenantId }: BulkCreateDialog
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          {/* Backend Error Message */}
+          {errorMessage && (
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive" data-testid="backend-error-message">
+                {errorMessage}
+              </p>
+            </div>
+          )}
+
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

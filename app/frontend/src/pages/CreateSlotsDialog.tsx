@@ -31,6 +31,7 @@ export function CreateSlotsDialog({ isOpen, onClose, focusedDate, tenantId }: Cr
     notes: ''
   });
   
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -52,24 +53,25 @@ export function CreateSlotsDialog({ isOpen, onClose, focusedDate, tenantId }: Cr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          startDate: focusedDate,
-          endDate: focusedDate,
-          startTime: '08:00',
-          endTime: '17:00',
-          slotDuration: formData.slot_length_min / 60, // Convert minutes to hours
+          start_date: focusedDate,
+          end_date: focusedDate,
+          weekdays: weekdayMask.map((selected, index) => selected ? index + 1 : null).filter(Boolean),
+          slot_length_min: formData.slot_length_min,
           capacity: formData.capacity,
-          notes: formData.notes,
-          weekdays: weekdayMask
+          notes: formData.notes
         })
       });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create slots');
+        // Surface backend error message verbatim
+        const backendError = errorData.error || errorData.detail?.error || 'Failed to create slots';
+        throw new Error(backendError);
       }
       return response.json();
     },
     onSuccess: () => {
+      setErrorMessage(''); // Clear any previous errors
       toast({
         title: 'Slots created',
         description: `Successfully created slots for ${formattedDate}`
@@ -86,16 +88,14 @@ export function CreateSlotsDialog({ isOpen, onClose, focusedDate, tenantId }: Cr
       onClose();
     },
     onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create slots',
-        variant: 'destructive'
-      });
+      // Display backend error message inline, not in toast
+      setErrorMessage(error.message);
     }
   });
   
   const handleSubmit = () => {
     if (isPastDate) return;
+    setErrorMessage(''); // Clear previous errors
     createSlotsMutation.mutate(form);
   };
   
@@ -109,6 +109,15 @@ export function CreateSlotsDialog({ isOpen, onClose, focusedDate, tenantId }: Cr
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          {/* Backend Error Message */}
+          {errorMessage && (
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive" data-testid="backend-error-message">
+                {errorMessage}
+              </p>
+            </div>
+          )}
+
           {/* Date Display */}
           <div className="text-center p-3 bg-muted rounded-lg">
             <p className="text-sm font-medium" data-testid="focused-date-display">

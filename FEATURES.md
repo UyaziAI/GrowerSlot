@@ -217,6 +217,16 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 - **Error Handling**: 422 for business logic violations, 400 for ValueError conversion, never 500 responses
 - **Testing**: 15/15 tests passing for validation rules, error codes, Pydantic constraints, and edge cases
 
+## C3 - Surface Backend Error Messages in Dialogs (August 15, 2025)
+
+- **Status**: ✅ Implemented and tested
+- **Location**: `/app/frontend/src/pages/CreateSlotsDialog.tsx`, `/app/frontend/src/pages/BulkCreateDialog.tsx`, `/app/frontend/src/__tests__/admin_bulk_error_messages.spec.tsx`
+- **Features**: Display backend validation errors verbatim in dialog interfaces without generic fallbacks
+- **Error Display**: Inline error messages at top of dialogs with destructive styling and proper test IDs
+- **Message Handling**: Extract json.error or json.detail.error from API responses and surface exactly as returned
+- **State Management**: Clear error messages on retry attempts and successful submissions
+- **Testing**: 12/12 tests passing for error message surfacing, styling, state clearing, and no generic toasts
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)
