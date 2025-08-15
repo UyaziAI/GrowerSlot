@@ -15,6 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
+// Feature flags
+const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
+
 interface BulkBarProps {
   selectedDates: string[];
   onClearSelection: () => void;
@@ -411,50 +414,52 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
                 </AlertDialogContent>
               </AlertDialog>
 
-              {/* Duplicate From */}
-              <Sheet open={duplicateSheetOpen} onOpenChange={setDuplicateSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button size="sm" variant="outline" data-testid="button-bulk-duplicate">
-                    <Copy className="h-4 w-4 mr-1" />
-                    Duplicate From…
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-96">
-                  <SheetHeader>
-                    <SheetTitle>Duplicate Slots to {selectedDates.length} Days</SheetTitle>
-                  </SheetHeader>
-                  <div className="space-y-4 mt-6">
-                    <div>
-                      <Label htmlFor="source-date">Source Date</Label>
-                      <Input
-                        id="source-date"
-                        type="date"
-                        min={todayISO}
-                        value={sourceDate}
-                        onChange={(e) => setSourceDate(e.target.value)}
-                        data-testid="input-source-date"
-                      />
-                    </div>
-                    <Button
-                      onClick={() => duplicateMutation.mutate()}
-                      disabled={duplicateMutation.isPending || !sourceDate || hasPastDates}
-                      className="w-full"
-                      data-testid="button-confirm-duplicate"
-                    >
-                      {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate Slots'}
+              {/* Duplicate From - Templates Feature */}
+              {FEATURE_ADMIN_TEMPLATES && (
+                <Sheet open={duplicateSheetOpen} onOpenChange={setDuplicateSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button size="sm" variant="outline" data-testid="button-bulk-duplicate">
+                      <Copy className="h-4 w-4 mr-1" />
+                      Duplicate From…
                     </Button>
-
-                    {/* API Error Display */}
-                    {apiError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-4">
-                        <p className="text-sm text-red-800" data-testid="bulk-api-error-message">
-                          {apiError}
-                        </p>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-96">
+                    <SheetHeader>
+                      <SheetTitle>Duplicate Slots to {selectedDates.length} Days</SheetTitle>
+                    </SheetHeader>
+                    <div className="space-y-4 mt-6">
+                      <div>
+                        <Label htmlFor="source-date">Source Date</Label>
+                        <Input
+                          id="source-date"
+                          type="date"
+                          min={todayISO}
+                          value={sourceDate}
+                          onChange={(e) => setSourceDate(e.target.value)}
+                          data-testid="input-source-date"
+                        />
                       </div>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
+                      <Button
+                        onClick={() => duplicateMutation.mutate()}
+                        disabled={duplicateMutation.isPending || !sourceDate || hasPastDates}
+                        className="w-full"
+                        data-testid="button-confirm-duplicate"
+                      >
+                        {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate Slots'}
+                      </Button>
+
+                      {/* API Error Display */}
+                      {apiError && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-4">
+                          <p className="text-sm text-red-800" data-testid="bulk-api-error-message">
+                            {apiError}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
 
               {/* Clear & Done buttons */}
               <Button

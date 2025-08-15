@@ -16,6 +16,10 @@ import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { useToast } from '@/hooks/use-toast';
 
+// Feature flags
+const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
+const FEATURE_NEXT_AVAILABLE = import.meta.env.VITE_FEATURE_NEXT_AVAILABLE === 'true';
+
 interface DayEditorSheetProps {
   dateISO: string;
   onClose: () => void;
@@ -409,15 +413,17 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
               <CardTitle className="text-lg">Utilities</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={handleDuplicateFrom}
-                data-testid="button-duplicate-from"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate from...
-              </Button>
+              {FEATURE_ADMIN_TEMPLATES && (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleDuplicateFrom}
+                  data-testid="button-duplicate-from"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate from...
+                </Button>
+              )}
 
               <Button
                 variant="outline"

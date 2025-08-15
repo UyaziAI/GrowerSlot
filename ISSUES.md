@@ -95,9 +95,9 @@
 - [x] **Error message passthrough**: Created lib/http.ts utility, updated AdminPage:52, BulkBar for verbatim `json.error` display
 
 #### Feature Flag Integration Required  
-- [ ] **Template functionality gating**: Implement `VITE_FEATURE_ADMIN_TEMPLATES=false` checks
+- [x] **Template functionality gating**: Implemented `VITE_FEATURE_ADMIN_TEMPLATES=false` checks in DayEditorSheet:419, BulkBar:421
 - [ ] **Next Available integration**: Add `VITE_FEATURE_NEXT_AVAILABLE=false` conditional rendering
-- [ ] **Environment file compliance**: Ensure .env.example includes required admin feature flags
+- [x] **Environment file compliance**: .env.example:23-24 includes required admin feature flags with defaults false
 
 #### Visual Indicator Gaps
 - [ ] **Month view badges**: Add slot count/remaining capacity indicators per cell
