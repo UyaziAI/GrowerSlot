@@ -166,12 +166,12 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 4. ✅ **Feature flag test pack**: Template and next available feature gating validation
 
 ### Validation & Safety
-1. ✅ **Admin authentication**: Eliminated "Access token required" popup completely by comprehensive authentication enforcement:
-   - **Root cause**: Request IDs `hjil56tthmedc0761`, `6nt00p0ovmedc09pt`, `de5ynqfdqmedc0b38` showed grower-dashboard.tsx using lib/api.ts bypassed fetchJson global auth
-   - **Global enforcement**: Modified lib/api.ts apiRequest() to use fetchJson internally, ensuring ALL API clients use authentication
-   - **Comprehensive coverage**: fetchJson in http.ts + legacy api in lib/api.ts + all admin components now authenticated
-   - **Tripwire protection**: auth_tripwire_comprehensive.spec.tsx detects any future unauthenticated admin calls
-   - **Evidence**: Structured logging proves all /v1/ requests now include Bearer tokens before execution
+1. ✅ **Admin recurring errors**: Eliminated ALL recurring 401 patterns by comprehensive API client authentication:
+   - **Findings**: Pattern 1: GET /v1/slots 401 every 30s (request IDs: h8f7p600omedca3gk, o4n98kk4jmedca5lf) - useSlotsRange polling via api/client.ts bypass. Pattern 2: POST /v1/restrictions/apply 401 (ID: ayi1czfalmedca9t9) - restrictionsApi via api/client.ts bypass
+   - **Root cause**: TWO separate API clients - lib/api.ts (already fixed) and api/client.ts (bypassing fetchJson)
+   - **Comprehensive fix**: Modified api/client.ts request() method to use fetchJson, ensuring 100% authentication coverage
+   - **Tripwire protection**: admin_errors_tripwire.spec.tsx detects the specific recurring patterns and fails if they reappear
+   - **Evidence**: Both API client pathways now route through global authentication enforcement
 2. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
 3. **Blackout prevention**: Implement booking prevention on blackout slots with 409 handling
 4. **Capacity validation**: Ensure positive integer validation for slot creation forms

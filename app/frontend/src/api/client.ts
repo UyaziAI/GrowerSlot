@@ -1,8 +1,11 @@
 /**
  * API client with authentication header support
  * Configured for the unified blueprint structure
+ * UPDATED: Now uses fetchJson for global authentication enforcement
  */
 import { authService } from '../core/auth';
+import { fetchJson } from '../lib/http';
+import { logger } from '../lib/logger';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -22,26 +25,21 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-    const token = authService.getToken();
+    // Convert /api endpoints to /v1 endpoints and use global authentication
+    const v1Endpoint = endpoint.startsWith('/') ? `/v1${endpoint}` : `/v1/${endpoint}`;
     
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
+    logger.debug('api_client_legacy', `Legacy ApiClient redirecting to ${v1Endpoint}`, {
+      original_endpoint: endpoint,
+      v1_endpoint: v1Endpoint,
+      base_url: this.baseUrl
+    });
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(response.status, errorData.detail || response.statusText);
+    try {
+      return await fetchJson<T>(v1Endpoint, options);
+    } catch (error: any) {
+      // Convert to ApiError for compatibility with existing error handling
+      throw new ApiError(error.status || 500, error.message);
     }
-
-    return response.json();
   }
 
   // Auth endpoints

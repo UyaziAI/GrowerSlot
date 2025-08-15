@@ -1,0 +1,42 @@
+Scan logs → identify & fix recurring Admin errors
+
+Issue
+The Admin page is throwing constant errors. We’ve enabled structured logging (frontend ring buffer + backend JSON). Use these logs to pinpoint and eliminate the causes—no guesswork.
+
+Intended outcomes
+
+Inspect recent frontend logs (ring buffer / console) and backend logs (structured JSON) and produce a short Findings note that lists the top recurring errors with counts, example request_ids, and the triggering actions/endpoints.
+
+Implement the smallest fixes needed so normal Admin flows (initial load, switching Month/Week/Day, opening drawers/sheets, bulk actions, exports) run without warn/error logs and without error popups.
+
+Preserve existing UX rules: on missing/expired auth, redirect cleanly (no noisy popup); show 422/403/409 server messages verbatim where intended.
+
+Add tripwire checks that fail if the same errors reappear (e.g., unauthenticated Admin calls, repeated 409/422 due to client bugs, crash in a sheet).
+
+Constraints & guardrails
+
+Smallest safe diff; no UI redesign; no new endpoints.
+
+Use /v1 APIs; respect feature flags (defaults).
+
+No fabricated data; keep server 4xx/409 messages verbatim in UI.
+
+Do not add a refresh-token flow unless one already exists.
+
+Keep the new logging system as configured (dev-friendly, prod-safe); do not remove it.
+
+Definition of Done
+
+Provide a Findings summary: top 3–5 error patterns with counts, example request_ids, affected routes/actions, and one-line root cause for each.
+
+After fixes, repeat the same Admin flows:
+
+Frontend: no warn/error/fatal logs for those flows; only expected infos/debugs.
+
+Backend: no unexpected 4xx/5xx on Admin routes (validation 422/business 409 allowed and shown verbatim to the user when intentionally triggered).
+
+Tripwire checks added and passing; deliberately re-triggering a fixed issue causes the tripwire to fail with a clear message.
+
+Documentation to truth: update ADMIN_STATUS_REPORT.md (add the Findings + mark each fixed item ✅ with evidence), add a brief Delta note in BLUEPRINT.md (Logging & resolved Admin errors), and add an Unreleased entry in CHANGELOG.md. Open/close items in FEATURES.md/ISSUES.md as appropriate.
+
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md, CHANGELOG.md) as required by the rules. Maintain changelog entries in CHANGELOG.md (and Blueprint’s Delta) for every change.

@@ -712,7 +712,7 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Structured Logging & Diagnostics — Implemented comprehensive logging infrastructure: frontend JSON logger with ring buffer and debug overlay (flag-gated), backend request logging with correlation IDs, global error capture, PII redaction, and tripwire tests for auth validation.
 
-### August 15, 2025 - Admin auth fix (comprehensive) — Root cause: grower-dashboard.tsx using lib/api.ts bypassed fetchJson global auth (request IDs: hjil56tthmedc0761, 6nt00p0ovmedc09pt). Fixed by routing all apiRequest() calls through fetchJson, ensuring 100% admin request authentication. Added comprehensive tripwire test.
+### August 15, 2025 - Admin recurring errors resolved — Structured logging identified 2 patterns: Pattern 1: GET /v1/slots 401 every 30s (useSlotsRange polling via api/client.ts), Pattern 2: POST /v1/restrictions/apply 401 (restrictionsApi via api/client.ts). Root cause: TWO API clients, only lib/api.ts was fixed. Solved by routing api/client.ts through fetchJson. Added pattern-specific tripwire tests.
 
 ### August 15, 2025 - Test coverage pack P3.1 — Implemented comprehensive test suite for API compliance, error handling, accessibility, and feature flags.
 
