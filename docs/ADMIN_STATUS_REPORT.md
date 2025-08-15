@@ -134,15 +134,16 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 - Evidence: Bulk create test structure at lines 45-73
 - Gaps: Blackout flows, restriction workflows, error scenarios
 
-### Missing test coverage
-- ✅ 42-cell month view guarantee: `admin_month_view.spec.tsx`
-- ✅ API endpoint compliance verification: `admin_api_compliance.spec.tsx`
-- ✅ Verbatim error message display: `admin_error_handling.spec.tsx`
-- ✅ Feature flag behavior validation: `admin_feature_flags.spec.tsx`
-- ✅ Blackout visual indicator tests: `admin_month_view.spec.tsx`
-- ✅ Toolbar dropdown menu functionality: `admin_toolbar_menus.spec.tsx`
-- ✅ Week view slot ribbon rendering: `admin_week_view.spec.tsx`
-- ✅ Day view timeline and mobile FAB: `admin_day_view.spec.tsx`
+### Test Coverage Pack Complete
+- ✅ API compliance verification: `admin_api_compliance.spec.tsx` - validates /v1/ endpoints, query params, legacy rejection
+- ✅ Verbatim error message display: `admin_error_handling.spec.tsx` - validates 422/403/409 exact server message passthrough  
+- ✅ Accessibility compliance: `admin_accessibility.spec.tsx` - validates ARIA labels, 44px touch targets, keyboard navigation
+- ✅ Feature flag behavior validation: `admin_feature_flags.spec.tsx` - validates template/next available gating by flags
+- ✅ 42-cell month view guarantee: `admin_month_view.spec.tsx` - validates calendar grid consistency
+- ✅ Blackout visual indicator tests: `admin_month_view.spec.tsx` - validates ⛔ and 🔒 icon rendering
+- ✅ Toolbar dropdown menu functionality: `admin_toolbar_menus.spec.tsx` - validates Create ▾ and More ▾ menus
+- ✅ Week view slot ribbon rendering: `admin_week_view.spec.tsx` - validates capacity ribbons and color coding
+- ✅ Day view timeline and mobile FAB: `admin_day_view.spec.tsx` - validates drag-to-create and mobile forms
 
 ## 8) What's Left To Do (actionable backlog)
 
@@ -157,6 +158,12 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 3. ✅ **Create/More dropdowns**: Wired functional dropdown menus with Create ▾ (day slots, bulk, templates) and More ▾ (CSV, filters, help)
 4. ✅ **Week view ribbons**: Implemented slot time ribbons with capacity/time data, color coding, and status indicators
 5. ✅ **Day view timeline**: Added desktop timeline draw-to-create and mobile FAB for slot creation
+
+### Testing & Quality Assurance
+1. ✅ **API compliance test pack**: Comprehensive validation of /v1/ endpoint usage, parameter formats
+2. ✅ **Error handling test pack**: Verbatim 422/403/409 server message display verification
+3. ✅ **Accessibility test pack**: ARIA labels, 44px touch targets, keyboard navigation validation
+4. ✅ **Feature flag test pack**: Template and next available feature gating validation
 
 ### Validation & Safety
 1. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs

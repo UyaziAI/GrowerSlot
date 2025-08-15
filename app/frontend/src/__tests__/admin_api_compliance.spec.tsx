@@ -1,11 +1,13 @@
 /**
- * Test to verify AdminPage uses correct /v1/slots endpoint per blueprint spec
+ * Test API compliance for admin interface
+ * Ensures all admin calls use correct /v1/ endpoints and proper formats
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminPage from '../pages/AdminPage';
 
-// Mock fetch
+// Mock fetch to track API calls
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -13,6 +15,22 @@ global.fetch = mockFetch;
 vi.mock('../hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() })
 }));
+
+// Test wrapper with query client
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false }
+    }
+  });
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
 
 describe('Admin API Compliance', () => {
   beforeEach(() => {
@@ -23,33 +41,90 @@ describe('Admin API Compliance', () => {
     });
   });
 
-  it('uses correct /v1/slots endpoint without /range suffix', async () => {
-    render(<AdminPage />);
-    
+  it('uses /v1/slots endpoint with start and end query parameters', async () => {
+    render(
+      <TestWrapper>
+        <AdminPage />
+      </TestWrapper>
+    );
+
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
     });
 
-    // Verify the correct endpoint format is used
-    const fetchCall = mockFetch.mock.calls[0];
-    const url = fetchCall[0];
-    
+    // Verify API call format
+    const [url] = mockFetch.mock.calls[0];
     expect(url).toMatch(/^\/v1\/slots\?start=\d{4}-\d{2}-\d{2}&end=\d{4}-\d{2}-\d{2}$/);
-    expect(url).not.toContain('/v1/slots/range');
+    expect(url).not.toContain('/v1/slots/range'); // Should not use old format
   });
 
-  it('fetches month view data with proper date range', async () => {
-    render(<AdminPage />);
-    
+  it('maintains /v1/ prefix across different view modes', async () => {
+    render(
+      <TestWrapper>
+        <AdminPage />
+      </TestWrapper>
+    );
+
+    // Test Month view (default)
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    let lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+    expect(lastCall[0]).toMatch(/^\/v1\/slots/);
+
+    // Switch to Week view
+    mockFetch.mockClear();
+    const weekButton = screen.getByText('Week');
+    fireEvent.click(weekButton);
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+    expect(lastCall[0]).toMatch(/^\/v1\/slots/);
+
+    // Switch to Day view
+    mockFetch.mockClear();
+    const dayButton = screen.getByText('Day');
+    fireEvent.click(dayButton);
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+    expect(lastCall[0]).toMatch(/^\/v1\/slots/);
+  });
+
+  it('uses standard query parameter format for date ranges', async () => {
+    render(
+      <TestWrapper>
+        <AdminPage />
+      </TestWrapper>
+    );
+
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
     });
 
-    const fetchCall = mockFetch.mock.calls[0];
-    const url = fetchCall[0];
+    // Check query parameters match YYYY-MM-DD format
+    const [url] = mockFetch.mock.calls[0];
+    const urlObj = new URL(url, 'http://localhost');
     
-    // Should include start and end parameters for month view
-    expect(url).toContain('start=');
-    expect(url).toContain('end=');
+    expect(urlObj.searchParams.get('start')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(urlObj.searchParams.get('end')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('rejects legacy endpoint patterns', async () => {
+    render(
+      <TestWrapper>
+        <AdminPage />
+      </TestWrapper>
+    );
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalled();
+    });
+
+    // Ensure no calls use legacy patterns
+    mockFetch.mock.calls.forEach(call => {
+      const url = call[0];
+      expect(url).not.toContain('/slots/range');
+      expect(url).not.toContain('/api/slots');
+      expect(url).toMatch(/^\/v1\//); // Must start with /v1/
+    });
   });
 });
