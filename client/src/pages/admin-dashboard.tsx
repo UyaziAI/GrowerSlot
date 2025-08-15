@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield } from "lucide-react";
 import { useLocation } from "wouter";
 import TopNavigation from "@/components/top-navigation";
 import CalendarGrid from "@/features/booking/components/CalendarGrid";
@@ -32,10 +33,16 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [showBulkCreateDialog, setShowBulkCreateDialog] = useState(false);
   const [showEditSlotDialog, setShowEditSlotDialog] = useState(false);
+  const [showApplyTemplateDialog, setShowApplyTemplateDialog] = useState(false);
+  const [showTemplatesDrawer, setShowTemplatesDrawer] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<SlotWithUsage | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
+
+  // Read feature flags from environment variables
+  const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
+  const FEATURE_NEXT_AVAILABLE = import.meta.env.VITE_FEATURE_NEXT_AVAILABLE === 'true';
 
   // RBAC enforcement - redirect non-admin users
   useEffect(() => {
@@ -92,6 +99,14 @@ export default function AdminDashboard() {
     staleTime: 0 // Always fresh for admin
   });
 
+  // Templates query - only enabled when feature flag is active
+  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+    queryKey: ['admin', 'templates', user?.tenantId],
+    queryFn: () => api.getTemplates(),
+    enabled: !!user?.tenantId && FEATURE_ADMIN_TEMPLATES,
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
+  });
+
   // Navigation handlers with timezone awareness
   const navigatePrevious = () => {
     const prev = dayjs(selectedDate).subtract(1, viewMode);
@@ -140,6 +155,25 @@ export default function AdminDashboard() {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to update slot",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const applyTemplateMutation = useMutation({
+    mutationFn: (data: any) => api.applyTemplate(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['slots'] });
+      toast({ 
+        title: "Template Applied", 
+        description: `Created: ${result.created}, Updated: ${result.updated}, Skipped: ${result.skipped}` 
+      });
+      setShowApplyTemplateDialog(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to apply template",
         variant: "destructive" 
       });
     }
@@ -237,7 +271,86 @@ export default function AdminDashboard() {
               </Button>
               
               {/* CRUD Actions */}
-              <div className="border-l border-gray-300 ml-2 pl-2">
+              <div className="border-l border-gray-300 ml-2 pl-2 flex items-center space-x-2">
+                {/* Templates Drawer - only visible when feature flag is enabled */}
+                {FEATURE_ADMIN_TEMPLATES && (
+                  <Sheet open={showTemplatesDrawer} onOpenChange={setShowTemplatesDrawer}>
+                    <SheetTrigger asChild>
+                      <Button size="sm" variant="outline" data-testid="templates-drawer-button">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Templates
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                      <SheetHeader>
+                        <SheetTitle>Templates</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-6">
+                        {templatesLoading ? (
+                          <div className="text-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="text-sm text-gray-600 mt-2">Loading templates...</p>
+                          </div>
+                        ) : templates.length === 0 ? (
+                          <div className="text-center py-8">
+                            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600">No templates yet</p>
+                            <Button className="mt-4" size="sm">
+                              <Plus className="h-4 w-4 mr-2" />
+                              Create Template
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {templates.map((template: any) => (
+                              <div key={template.id} className="border rounded-lg p-3">
+                                <h3 className="font-medium">{template.name}</h3>
+                                <p className="text-sm text-gray-600">{template.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                )}
+
+                {/* Apply Template Dialog */}
+                <Dialog open={showApplyTemplateDialog} onOpenChange={setShowApplyTemplateDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" data-testid="apply-template-button">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Apply Template
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Apply Template</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                      <p className="text-sm text-gray-600 mb-4">
+                        Apply a template to create or modify slots for the selected date range.
+                      </p>
+                      <Button 
+                        onClick={() => {
+                          applyTemplateMutation.mutate({ mode: 'preview' });
+                        }}
+                        disabled={applyTemplateMutation.isPending}
+                        data-testid="preview-template"
+                      >
+                        {applyTemplateMutation.isPending ? 'Previewing...' : 'Preview Changes'}
+                      </Button>
+                      <Button 
+                        className="ml-2"
+                        disabled={true}
+                        data-testid="publish-template"
+                      >
+                        Publish (Disabled)
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 <Dialog open={showBulkCreateDialog} onOpenChange={setShowBulkCreateDialog}>
                   <DialogTrigger asChild>
                     <Button size="sm" data-testid="bulk-create-button">
@@ -271,6 +384,32 @@ export default function AdminDashboard() {
                     </div>
                   </DialogContent>
                 </Dialog>
+
+                {/* Blackout Button */}
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    toast({ title: "Blackout", description: "Blackout functionality not yet implemented" });
+                  }}
+                  data-testid="blackout-button"
+                >
+                  <Ban className="h-4 w-4 mr-2" />
+                  Blackout
+                </Button>
+
+                {/* Restrictions Button */}
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    toast({ title: "Restrictions", description: "Restrictions functionality not yet implemented" });
+                  }}
+                  data-testid="restrictions-button"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Restrictions
+                </Button>
               </div>
             </div>
           </div>

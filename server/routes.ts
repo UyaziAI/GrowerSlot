@@ -330,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const usage = {
         slotId: id,
         bookings: bookings.length,
-        totalBooked: bookings.reduce((sum, b) => sum + (b.quantity || 0), 0)
+        totalBooked: bookings.reduce((sum, b) => sum + Number(b.quantity || 0), 0)
       };
       res.json(usage);
     } catch (error) {
@@ -373,6 +373,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: "Restrictions applied successfully" });
     } catch (error) {
       console.error("Apply restrictions error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Template management stub endpoints
+  app.get("/v1/admin/templates", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Stub endpoint - returns empty list
+      res.json([]);
+    } catch (error) {
+      console.error("Get templates error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/v1/admin/templates", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Stub endpoint - returns placeholder template
+      const { name, description } = req.body;
+      res.json({
+        id: "TEMPLATE_PLACEHOLDER",
+        tenantId: req.user!.tenantId,
+        name: name || "Untitled Template",
+        description: description || "",
+        config: {}
+      });
+    } catch (error) {
+      console.error("Create template error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/v1/admin/templates/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Stub endpoint - returns updated template
+      const { id } = req.params;
+      const { name, description } = req.body;
+      res.json({
+        id,
+        tenantId: req.user!.tenantId,
+        name: name || "Updated Template",
+        description: description || "",
+        config: {}
+      });
+    } catch (error) {
+      console.error("Update template error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/v1/admin/templates/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Stub endpoint - returns success
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Delete template error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Apply template stub endpoint
+  app.post("/v1/slots/apply-template", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Stub endpoint - returns zero counts
+      const { mode } = req.body;
+      res.json({
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        preview: mode === 'preview'
+      });
+    } catch (error) {
+      console.error("Apply template error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

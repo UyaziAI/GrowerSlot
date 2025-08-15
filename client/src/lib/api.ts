@@ -93,4 +93,31 @@ export const api = {
   // Admin
   getDashboardStats: (date: string) =>
     apiRequest(`/admin/stats?date=${date}`),
+
+  // Templates
+  getTemplates: () =>
+    apiRequest('/admin/templates'),
+
+  createTemplate: (data: any) =>
+    apiRequest('/admin/templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTemplate: (id: string, data: any) =>
+    apiRequest(`/admin/templates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTemplate: (id: string) =>
+    apiRequest(`/admin/templates/${id}`, {
+      method: 'DELETE',
+    }),
+
+  applyTemplate: (data: any) =>
+    apiRequest('/slots/apply-template', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
