@@ -587,6 +587,16 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - No-Fabrication Guard & Month Boundary Test (B6 Complete)
+- **testing:** Created comprehensive regression test suite in /client/src/__tests__/admin_nofab_boundary.spec.tsx
+- **guard:** Verifies UI never invents slots when API returns empty responses for future date ranges
+- **boundary:** Tests month navigation (Aug 27 → Sep 7) confirms no phantom availability appears
+- **integrity:** Ensures no unauthorized POST requests fire during navigation or view mode changes
+- **cases:** Covers empty API responses, null/undefined data, navigation, view mode switching
+- **fetch-spy:** Uses fetch spy to verify only authorized GET requests during normal operation
+- **prevention:** Prevents regression by locking in rule that UI only renders backend-provided data
+- **validation:** Tests neutral empty states, disabled interactions, and consistent behavior across view modes
+
 ### August 15, 2025 - Admin UI Apply Template Dialog Implementation (B5 Complete)
 - **dialog:** Enhanced Apply Template dialog with real preview/publish flow behind VITE_FEATURE_ADMIN_TEMPLATES flag
 - **flow:** Template selection → Preview generation → Publish with real backend integration
