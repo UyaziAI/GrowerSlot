@@ -1,0 +1,47 @@
+const fs = require('fs'), path = require('path');
+const FRONT = path.join(process.cwd(), 'app', 'frontend', 'src');
+function read(p){ try{return fs.readFileSync(p,'utf8')}catch{return''} }
+function findFiles(dir, acc=[]) { for (const f of fs.readdirSync(dir)) {
+  const p = path.join(dir,f), s = fs.statSync(p); if (s.isDirectory()) findFiles(p, acc); else acc.push(p);
+} return acc; }
+const files = findFiles(FRONT, []);
+const routeFiles = files.filter(f => /\.tsx?$/.test(f) && read(f).includes("path=\"/admin\""));
+const routeFile = routeFiles[0] || null;
+const src = routeFile ? read(routeFile) : '';
+const usingWouter = /from ['"]wouter['"]/.test(src);
+const isComponentProp = /<Route[^>]*path=["']\/admin["'][^>]*component=/.test(src);
+const isElementProp = /<Route[^>]*path=["']\/admin["'][^>]*element=/.test(src);
+// Try to find the imported component name
+const mName = src.match(/<Route[^>]*path=["']\/admin["'][^>]*?(?:component=\{|\<)([A-Z][A-Za-z0-9_]*)/);
+const compName = mName && mName[1] || null;
+const importLine = compName ? (src.match(new RegExp(`import\\s+${compName}.*from\\s+['"](.*)['"]`))||[])[0] || '' : '';
+const adminPagePath = compName ? (src.match(new RegExp(`import\\s+${compName}.*from\\s+['"](.*)['"]`))||[])[1] : null;
+// Check AdminPage for header markers
+let adminAbs = null, adminSrc = '';
+if (adminPagePath) {
+  const guess = [adminPagePath, adminPagePath+'.tsx', adminPagePath+'.ts', adminPagePath+'.jsx']
+    .map(p => path.resolve(path.dirname(routeFile), p)).find(fs.existsSync);
+  adminAbs = guess || null; adminSrc = adminAbs ? read(adminAbs) : '';
+}
+const hasCreate = /data-testid=["']admin-header-create["']/.test(adminSrc);
+const hasMore   = /data-testid=["']admin-header-more["']/.test(adminSrc);
+const looksLikeGrower = /GrowerTimeline|features\/booking|Next available/i.test(adminSrc);
+const md =
+`# Admin Runtime Probe
+Route file: ${routeFile || 'NOT FOUND'}
+Using wouter: ${usingWouter}
+Route uses component prop: ${isComponentProp}
+Route uses element prop: ${isElementProp}
+Component name: ${compName || 'UNKNOWN'}
+Component import: ${importLine || 'UNKNOWN'}
+Component path resolved: ${adminAbs || 'NOT FOUND'}
+
+Admin header markers:
+- admin-header-create: ${hasCreate}
+- admin-header-more:   ${hasMore}
+
+Grower leakage detected in AdminPage: ${looksLikeGrower}
+`;
+fs.mkdirSync(path.join(process.cwd(), 'reports'), { recursive: true });
+fs.writeFileSync(path.join(process.cwd(), 'reports', 'admin_runtime_probe.md'), md);
+console.log(md);
