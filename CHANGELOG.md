@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - C1 Create Slots split into single-day vs range creation with past date UI blocking
 - C2 Backend validation for /v1/slots/bulk with 422/400 error codes and comprehensive testing
 - C3 Surface backend error messages verbatim in create dialogs, eliminating generic error toasts
+- C4 Renamed buttons and dialog titles for clarity: "Create Slots (Day)" button, "Create Slots — Day" and "Bulk Create Slots" dialog titles
 - B21 Feature flag rollout checklist and deployment strategy
 - Comprehensive release procedures with staging and production phases
 - Risk assessment and monitoring guidelines for feature rollouts

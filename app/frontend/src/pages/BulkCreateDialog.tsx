@@ -131,7 +131,7 @@ export function BulkCreateDialog({ isOpen, onClose, tenantId }: BulkCreateDialog
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg" data-testid="bulk-create-dialog">
         <DialogHeader>
-          <DialogTitle>Bulk Create Slots (Range)</DialogTitle>
+          <DialogTitle>Bulk Create Slots</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">

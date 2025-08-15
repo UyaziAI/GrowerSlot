@@ -227,6 +227,15 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 - **State Management**: Clear error messages on retry attempts and successful submissions
 - **Testing**: 12/12 tests passing for error message surfacing, styling, state clearing, and no generic toasts
 
+## C4 - Rename Buttons/Titles for Clarity (August 15, 2025)
+
+- **Status**: ✅ Implemented and documented
+- **Location**: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/CreateSlotsDialog.tsx`, `/app/frontend/src/pages/BulkCreateDialog.tsx`
+- **Features**: Clarified labeling for slot creation workflows to eliminate user confusion
+- **Button Text**: Top-bar dropdown item remains "Create Slots (Day)" for single-day context identification
+- **Dialog Titles**: Day dialog updated to "Create Slots — Day", range dialog simplified to "Bulk Create Slots"
+- **User Experience**: Clear distinction between single-day focused creation vs multi-day range creation workflows
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

@@ -684,6 +684,13 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
 
+### August 15, 2025 - C4 Rename Buttons/Titles for Clarity
+- **ui:** Updated labels for unambiguous slot creation flow identification
+- **buttons:** Top-bar button remains "Create Slots (Day)" for single-day creation context
+- **dialogs:** Day dialog title updated to "Create Slots — Day", range dialog title simplified to "Bulk Create Slots"
+- **consistency:** Maintained clear distinction between single-day vs range creation workflows
+- **documentation:** Updated changelog to reflect label improvements for user clarity
+
 ### August 15, 2025 - C3 Surface Backend Error Messages in Dialogs
 - **frontend:** Display backend json.error messages verbatim in CreateSlotsDialog and BulkCreateDialog
 - **error handling:** Inline error display replacing generic toast notifications for better UX

@@ -105,7 +105,7 @@ export function CreateSlotsDialog({ isOpen, onClose, focusedDate, tenantId }: Cr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md" data-testid="create-slots-dialog">
         <DialogHeader>
-          <DialogTitle>Create Slots (Day)</DialogTitle>
+          <DialogTitle>Create Slots — Day</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
