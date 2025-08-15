@@ -9,7 +9,7 @@ import uuid
 
 from ..db import execute_query, execute_one, execute_transaction
 from ..security import get_current_user, require_role
-from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest
+from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult
 
 router = APIRouter()
 
@@ -290,3 +290,8 @@ async def get_slot_usage(
         "booked": booked,
         "remaining": capacity - booked
     }
+
+@router.post("/apply-template", response_model=ApplyTemplateResult)
+def apply_template_stub(body: ApplyTemplateRequest):
+    # scaffold only: no generation, no writes
+    return ApplyTemplateResult()

@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **August 15, 2025**: Apply-Template Endpoint Stub Complete - Zero-Count Response Ready
+  - **Endpoint**: Added POST /v1/slots/apply-template to slots router with ApplyTemplateResult response
+  - **Stub Response**: Returns {created:0, updated:0, skipped:0, samples:{create:[],update:[],skip:[]}}
+  - **Integration**: Wired into existing slots.router with proper imports and schema validation
+  - **Blueprint Updated**: API stubs section reflects implemented apply-template endpoint
+
 - **August 15, 2025**: Templates Router CRUD Stubs Complete - API Endpoints Scaffolded
   - **Router**: Added /app/backend/routers/templates.py with CRUD stub endpoints  
   - **API Stubs**: GET returns [], POST/PATCH return placeholder data, DELETE returns {ok:true}

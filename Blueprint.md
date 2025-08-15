@@ -515,7 +515,7 @@ GET    /v1/admin/templates                 -> [] (empty list)
 POST   /v1/admin/templates                 -> { id, tenant_id, name, config, ... }
 PATCH  /v1/admin/templates/{id}            -> { id, tenant_id, name, config, ... } 
 DELETE /v1/admin/templates/{id}            -> { ok: true }
-POST   /v1/slots/apply-template            -> { created, updated, skipped, samples } [NOT YET IMPLEMENTED]
+POST   /v1/slots/apply-template            -> { created: 0, updated: 0, skipped: 0, samples: {...} }
 ```
 
 ### Data Model (§4) Additions:
@@ -572,6 +572,9 @@ POST   /v1/slots/apply-template            -> { created, updated, skipped, sampl
 - **gaps:** Minor API versioning discrepancy (/api/ vs /v1/) and missing CSV export endpoint
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
+
+### August 15, 2025 - Apply-Template Endpoint Stub
+- **endpoint:** Add POST /v1/slots/apply-template returning zero counts
 
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
