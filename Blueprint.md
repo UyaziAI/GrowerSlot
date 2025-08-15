@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Diagnostics scan generated.
+
 ### August 15, 2025 - Admin UI Audit & Verification Report Generated
 - **audit:** generated Admin UI verification & legacy scan — no product code changes.
 - **reports:** Created reports/admin_ui_audit.md and reports/admin_ui_audit.json with comprehensive UI compliance analysis
