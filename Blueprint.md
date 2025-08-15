@@ -251,6 +251,16 @@ CREATE TABLE outbox (
   created_at timestamptz DEFAULT now(),
   sent_at timestamptz
 );
+
+-- Audit log (human-readable admin actions)
+CREATE TABLE audit_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  actor_id uuid NOT NULL,
+  action text NOT NULL,
+  payload_summary jsonb DEFAULT '{}',
+  created_at timestamptz DEFAULT now()
+);
 ```
 
 Compatibility: you may create a view growers_v from parties where type='grower' later to unify UI without breaking MVP code.
@@ -291,6 +301,7 @@ POST  /v1/slots/bulk                 # create slots for date/time window
 PATCH /v1/slots/{id}                 # blackout/capacity/notes
 PATCH /v1/slots/{id}/blackout        # set blackout=true with optional note
 POST  /v1/slots/blackout             # bulk blackout by day/week scope
+POST  /v1/slots/apply-template       # apply template (publish mode)
 GET   /v1/slots/{id}/usage           # { capacity, booked, remaining }
 ```
 
@@ -316,6 +327,7 @@ Slot (response)
 
 ```
 POST   /v1/bookings
+PATCH  /v1/bookings/{id}             # update booking details
 DELETE /v1/bookings/{id}
 GET    /v1/bookings?date=&grower_id=
 ```
@@ -404,6 +416,13 @@ GET   /v1/exports/bookings.csv?start=YYYY-MM-DD&end=YYYY-MM-DD&grower_id=&cultiv
 - Date range validation (start <= end)
 - Streaming response for large datasets without pagination
 - Proper CSV escaping for special characters and commas in data
+
+**Audit Trail**: The following admin endpoints emit domain events and audit log entries for compliance tracking:
+- `POST /v1/slots/bulk` - SLOTS_BULK_CREATED events
+- `PATCH /v1/slots/{id}` - SLOT_UPDATED/SLOTS_BLACKED_OUT events  
+- `POST /v1/slots/blackout` - SLOTS_BLACKED_OUT events
+- `POST /v1/slots/apply-template` - TEMPLATE_APPLIED events (publish mode)
+- `PATCH /v1/bookings/{id}` - BOOKING_UPDATED events
 
 ## 7) Frontend Plan
 
@@ -837,6 +856,13 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Admin Addendum Adoption
 - **docs:** Admin Addendum adopted (docs-only); code rollout in next PR behind flags
+
+### August 15, 2025 — Docs consistency pass #4: replaced legacy paths, documented audit_log, confirmed /v1 standard.
+- **docs:** Updated B16/B17 location paths to FastAPI/React structure (/app/frontend/src/pages/AdminPage.tsx, /app/backend/services/audit.py)
+- **docs:** Resolved API versioning strategy gap - standardized on /v1 per Blueprint §6
+- **schema:** Added audit_log table documentation in §4 Data Model (id, tenant_id, actor_id, action, payload_summary jsonb, created_at)
+- **api:** Documented audit trail endpoints in §6 API contracts with event emission details
+- **compliance:** All documentation now reflects proper FastAPI/React monorepo structure
 
 ### August 13, 2025 - Calendar Grid Implementation
 - **feat:** Added GET /v1/slots/range endpoint for multi-day slot fetching (max 14 days)

@@ -68,13 +68,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 - **CSV Export (B16)** (August 15, 2025)
   - Status: ✅ Implemented and tested
-  - Location: `/client/src/pages/admin-dashboard.tsx`
+  - Location: `/app/frontend/src/pages/AdminPage.tsx`
   - Features: Export CSV button in admin top bar, date range filtering, blob download
   - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
 
 - **Audit Trail & Events System (B17)** (August 15, 2025)
   - Status: ✅ Implemented and tested
-  - Location: `/server/services/audit.ts`, `/shared/schema.ts` (domain events, outbox, audit log tables)
+  - Location: `/app/backend/services/audit.py` (domain events, outbox, audit log tables)
   - Features: Domain events + outbox pattern, audit logging for all admin actions
   - Events: SLOTS_BULK_CREATED, SLOT_UPDATED, SLOTS_BLACKED_OUT, TEMPLATE_APPLIED, BOOKING_UPDATED
   - Verification: 16/16 tests passing in admin_audit_events.spec.ts
@@ -214,10 +214,7 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Priority: Medium (Phase 2)
   - Scope: Reliable webhook delivery from outbox table
 
-- **API versioning strategy** - Needs decision
-  - Priority: Medium (Phase 1)
-  - Scope: Blueprint specifies /v1/ prefix, current implementation uses /api/
-  - Decision needed: migrate to /v1/ or update blueprint
+- **API versioning strategy** - Resolved — standardized on /v1 per Blueprint §6
 
 ### Testing Coverage
 - **E2E tests** - ✅ Implemented
