@@ -4,6 +4,26 @@ Single, consolidated blueprint that merges the original slot‑booking MVP with 
 
 **See also**: [Admin_Addendum.md](./Admin_Addendum.md)
 
+## Logging & Diagnostics
+
+### Structured Logging Infrastructure  
+- **Frontend Logger**: JSON-structured logs with levels (debug/info/warn/error/fatal) in `app/frontend/src/lib/logger.ts`
+- **Ring Buffer**: 200-entry circular buffer for debug overlay and log export functionality
+- **Request Correlation**: Unique request IDs propagated between frontend and backend for trace correlation
+- **Global Error Capture**: React Error Boundary, window.onerror, unhandledrejection, and React Query errors all route to structured logger
+
+### Network & API Logging
+- **Request/Response Logging**: All API calls logged with method, path, status, duration, and request ID
+- **Authentication Events**: Missing auth and token validation failures logged with auth_reason context
+- **Network Failures**: Compact single-line logs per failure with no secrets exposed
+- **Backend Structured JSON**: Each request logged as single JSON line with request_id, method, path, status, duration_ms
+
+### Debug & Development Tools
+- **Debug Overlay**: Flag-gated (VITE_FEATURE_DEBUG_LOGS=true) interactive log viewer with filtering and export
+- **Keyboard Toggle**: Ctrl+Shift+L to open/close debug overlay during development
+- **Production Safety**: Debug logs disabled by default, only warn/error levels in production builds
+- **Security & Redaction**: Automatic redaction of tokens, passwords, cookies, and sensitive headers
+
 ## 1) Product Overview
 
 ### 1.1 Problem
@@ -689,6 +709,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **legacy removal:** Renamed admin-dashboard.tsx to .bak to prevent accidental re-import
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
+
+### August 15, 2025 - Structured Logging & Diagnostics — Implemented comprehensive logging infrastructure: frontend JSON logger with ring buffer and debug overlay (flag-gated), backend request logging with correlation IDs, global error capture, PII redaction, and tripwire tests for auth validation.
 
 ### August 15, 2025 - Admin auth enforcement (global) — Eliminated "Access token required" popup by implementing global authentication enforcement in fetchJson utility. All admin API calls now validated for auth before execution with automatic redirect on auth failure.
 

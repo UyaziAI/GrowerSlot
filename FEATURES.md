@@ -93,6 +93,17 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Features: Export CSV button in admin top bar, date range filtering, blob download
   - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
 
+## Logging & Diagnostics (August 15, 2025)
+- ✅ **Structured Frontend Logging**: JSON-formatted logs with levels (debug/info/warn/error/fatal) and request correlation
+- ✅ **Global Error Capture**: React Error Boundary, window.onerror, unhandledrejection, and React Query errors
+- ✅ **Debug Overlay**: Flag-gated interactive log viewer with filtering, search, and export (Ctrl+Shift+L)
+- ✅ **Backend Request Logging**: Structured JSON logs with request_id, method, path, status, duration_ms, auth_reason
+- ✅ **Request Correlation**: X-Request-ID headers propagated between frontend and backend for tracing
+- ✅ **Security & Redaction**: Automatic redaction of tokens, passwords, and PII in logs
+- ✅ **Production Safety**: Debug logs disabled by default, only warn/error in production
+- ✅ **Tripwire Tests**: Automated verification of auth compliance and logging integrity
+- ✅ **Global Authentication Enforcement**: All admin API calls validated before execution with structured logging
+
 - **Admin calendar core UX** (August 15, 2025)
   - Status: ⚠️ V1 Partial Implementation - Core structure complete, compliance gaps identified
   - Features: Month/Week/Day views with 42-cell calendar, day click interactions, component integration

@@ -2,7 +2,10 @@
  * HTTP utilities for admin interface with verbatim error handling
  * Ensures 4xx server errors are displayed exactly as received
  * Enforces global authentication for all requests
+ * Includes structured logging and request correlation
  */
+
+import { logger, generateRequestId } from './logger';
 
 export interface ApiError {
   status: number;
@@ -46,54 +49,108 @@ function enforceAuthentication(): string | null {
 /**
  * Fetches data with verbatim error handling for 4xx responses
  * Enforces authentication globally before any request
+ * Includes structured logging and request correlation
  * Returns exact server error message from json.error field
  */
 export async function fetchWithVerbatimErrors(
   url: string, 
   options: RequestInit = {}
 ): Promise<Response> {
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+  const method = options.method || 'GET';
+
   // Enforce authentication globally for all admin requests
   const token = enforceAuthentication();
   if (!token) {
     // Authentication failed, redirect already handled
+    logger.warn('auth_enforcement', 'Authentication required for request', {
+      url,
+      method,
+      auth_reason: 'missing_token'
+    }, requestId);
     throw new Error('Authentication required');
   }
-  
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-    ...options,
-  });
 
-  if (!response.ok) {
-    let errorMessage = `HTTP ${response.status}`;
+  // Log the request
+  logger.debug('api_request', `${method} ${url}`, {
+    url,
+    method,
+    has_token: !!token
+  }, requestId);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'X-Request-ID': requestId,
+        ...options.headers,
+      },
+      ...options,
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        // Use exact server error message if available
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        // Fallback to status text if JSON parsing fails
+        errorMessage = response.statusText || errorMessage;
+      }
+
+      // Log network failure
+      logger.logNetworkFailure(method, url, response.status, duration, requestId);
+
+      // Handle 401 errors by clearing auth and redirecting
+      if (response.status === 401) {
+        logger.warn('auth_failure', 'Token expired or invalid', {
+          url,
+          method,
+          status: response.status,
+          auth_reason: 'token_invalid'
+        }, requestId);
+        
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return response; // Return to avoid popup
+      }
+
+      const error = new Error(errorMessage) as Error & { status: number };
+      error.status = response.status;
+      throw error;
+    }
+
+    // Log successful request
+    logger.debug('api_response', `${method} ${url} succeeded`, {
+      url,
+      method,
+      status: response.status,
+      duration
+    }, requestId);
+
+    return response;
+  } catch (error) {
+    const duration = Date.now() - startTime;
     
-    try {
-      const errorData = await response.json();
-      // Use exact server error message if available
-      errorMessage = errorData.error || errorData.message || errorMessage;
-    } catch {
-      // Fallback to status text if JSON parsing fails
-      errorMessage = response.statusText || errorMessage;
+    if (error instanceof Error && !('status' in error)) {
+      // Network error (not HTTP error)
+      logger.error('network_error', `${method} ${url} network failure`, {
+        url,
+        method,
+        duration,
+        error_message: error.message
+      }, requestId);
     }
-
-    // Handle 401 errors by clearing auth and redirecting
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      return response; // Return to avoid popup
-    }
-
-    const error = new Error(errorMessage) as Error & { status: number };
-    error.status = response.status;
+    
     throw error;
   }
-
-  return response;
 }
 
 /**

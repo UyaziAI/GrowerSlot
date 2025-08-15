@@ -7,6 +7,56 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { insertBookingSchema, insertSlotSchema } from "@shared/schema";
 
+// Structured logging utilities
+function generateRequestId(): string {
+  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+}
+
+function logRequest(req: Request, res: Response, startTime: number, requestId: string): void {
+  const duration = Date.now() - startTime;
+  const logLevel = res.statusCode >= 400 ? 'warn' : 'info';
+  
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    level: logLevel,
+    event: 'http_request',
+    message: `${req.method} ${req.path} ${res.statusCode}`,
+    request_id: requestId,
+    method: req.method,
+    path: req.path,
+    status: res.statusCode,
+    duration_ms: duration,
+    user_id: (req as any).user?.id,
+    tenant_id: (req as any).user?.tenantId,
+    ...(res.statusCode === 401 && { auth_reason: 'missing_or_invalid_token' }),
+    ...(res.statusCode >= 400 && { error_class: 'http_error' })
+  };
+
+  // Only log warn/error in production, all in development
+  if (process.env.NODE_ENV === 'production' && logLevel === 'info') {
+    return; // Skip info logs in production
+  }
+
+  console.log(JSON.stringify(logEntry));
+}
+
+// Request logging middleware
+const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+  
+  // Add request ID to request and response
+  (req as any).requestId = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  
+  // Log on response finish
+  res.on('finish', () => {
+    logRequest(req, res, startTime, requestId);
+  });
+  
+  next();
+};
+
 // JWT middleware
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
 
@@ -58,6 +108,8 @@ const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add request logging middleware
+  app.use(requestLogger);
   // Auth routes - both /api and /v1 for compatibility
   const loginHandler = async (req: Request, res: Response) => {
     try {
