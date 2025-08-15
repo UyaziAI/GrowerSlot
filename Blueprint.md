@@ -444,6 +444,34 @@ Integration: two concurrent booking requests on same slot → one must fail with
 
 E2E: login → view day → book → cancel → admin blackout → verify UI.
 
+## Section 11 Testing Extensions
+
+### E2E Testing Implementation (B14)
+Comprehensive Playwright-based end-to-end testing suite covering critical admin calendar flows:
+
+**Core Scenarios:**
+- Bulk Create → slots appear in calendar grid
+- Blackout Day → all slots show blackout state  
+- Drag-drop booking moves: success path & 409 revert handling
+- Apply Template: preview shows delta; publish + re-publish shows idempotency (0/0)
+- Next Available (flag ON): returns list + jump focuses calendar
+- Restrictions UI: scope selection, multi-select, POST /v1/restrictions/apply
+
+**Additional Coverage:**
+- Inspector Panel integration and slot details display
+- View mode toggles (Month/Week/Day) and date navigation
+- Error handling for network failures and empty states
+- Responsive design validation (mobile/tablet viewports)
+- Feature flag gating verification
+
+**CI Integration:**
+- GitHub Actions workflow (.github/workflows/e2e.yml)
+- Cross-browser testing (Chromium, Firefox, WebKit, Mobile)
+- Artifact collection for test reports and screenshots
+- Environment variable configuration for feature flags
+
+**Location:** `/e2e/admin_core.spec.ts` with Playwright configuration at `/playwright.config.ts`
+
 **Drag-Drop Testing**: Booking chips can be dragged between slots, calling PATCH /v1/bookings/{id} with {slot_id:newSlotId}. On 403/409 errors, toast shows server message and data refetch ensures chip returns to original position (revert effect).
 
 ## 12) Rollout

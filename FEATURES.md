@@ -93,6 +93,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Implementation: RestrictionsDialog component with scope selection, multi-select growers/cultivars, POST /v1/restrictions/apply integration
   - Features: Slot/day/week scope selection, error handling for 403/409, grid refresh after success
 
+- **E2E Testing Suite** (August 15, 2025)
+  - Status: ✅ Implemented - B14 E2E smoke tests complete
+  - Scope: Critical admin calendar flows across all new features
+  - Implementation: Playwright-based testing with GitHub Actions CI integration
+  - Coverage: Bulk create, blackout operations, drag-drop booking moves, template apply idempotency, next available search + jump, restrictions UI
+  - Features: Cross-browser testing (Chrome/Firefox/Safari), mobile viewport validation, error handling verification, feature flag testing
+
 - **Week view calendar** (August 14, 2025)
   - Status: 🔄 Week Overview implementation complete - kept in In-Progress per task requirements
   - Location: `/app/frontend/src/features/booking/components/WeekOverviewGrid.tsx`
@@ -185,14 +192,16 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Scope: Blueprint specifies /v1/ prefix, current implementation uses /api/
   - Decision needed: migrate to /v1/ or update blueprint
 
-### Testing Gaps
-- **Integration tests** - Limited coverage
-  - Priority: High
-  - Scope: Concurrent booking tests, API contract tests
+### Testing Coverage
+- **E2E tests** - ✅ Implemented
+  - Status: Comprehensive Playwright suite covering admin calendar core flows
+  - Scope: Bulk create, blackout, drag-drop, templates, next available, restrictions
+  - Location: `/e2e/admin_core.spec.ts` with CI integration
 
-- **E2E tests** - Not implemented
+- **Integration tests** - Limited coverage remaining
   - Priority: Medium
-  - Scope: Full user flows, cross-role scenarios
+  - Scope: Concurrent booking tests, API contract tests
+  - Status: Basic coverage exists, extended testing needed for edge cases
 
 ## Feature Verification Status
 
