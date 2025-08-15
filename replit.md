@@ -10,14 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **August 15, 2025**: Admin Addendum Documentation Integration Complete - Blueprint Delta Added
-  - **Documentation Update**: Incorporated Admin_Addendum.md into canonical blueprint via Delta section
-  - **Blueprint.md**: Added cross-link reference and comprehensive Delta section with all addendum additions
-  - **FEATURES.md**: Updated In-Progress features with Admin calendar extensions, Templates, Next Available finder
-  - **ISSUES.md**: Created implementation tracking issues for Templates system and enhanced Admin calendar
-  - **Governance Compliance**: Followed rules.md documentation update requirements with proper changelog entry
-  - **Implementation Ready**: Documentation phase complete, code implementation ready for feature-flagged rollout
-  - **Scope**: Templates with preview/publish, Inspector panel, drag-drop booking management, no UI fabrication
+- **August 15, 2025**: Documentation Consistency Pass Complete - Admin Addendum Integration Finalized
+  - **Consistency Updates**: Made docs truthful and consistent after Admin Addendum adoption
+  - **Blueprint.md**: Moved implementation details to Delta section, updated changelog to reflect docs-only status
+  - **API Endpoints**: Updated remaining /api/ references to /v1/ per Section 6 compliance
+  - **File Paths**: Corrected all paths from Node structure (/server, /client) to FastAPI/React (/app/backend, /app/frontend)
+  - **FEATURES.md**: Updated file locations, kept Week view in In-Progress per task requirements
+  - **ISSUES.md**: Added comprehensive feature-flagged Admin implementation issue with acceptance criteria
+  - **Truthful Documentation**: All docs now accurately reflect current state vs. planned features
+  - **Implementation Ready**: Clear separation between completed work and planned feature-flagged rollout
 
 - **August 14, 2025**: Admin Calendar System Implementation Complete - Comprehensive CRUD Interface
   - **Full Calendar Views**: Implemented Month/Week/Day admin calendar views for complete slot and booking management

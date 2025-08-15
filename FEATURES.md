@@ -18,20 +18,20 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 - **JWT Authentication & RBAC** (August 13, 2025)
   - Status: ✅ Fully implemented
-  - Location: `/server/auth.ts`, `/client/src/core/auth.ts`
+  - Location: `/app/backend/security.py`, `/app/frontend/src/core/auth.ts`
   - Roles: Admin, Grower users with proper access controls
   - Verification: Login/logout working, role-based UI rendering
 
 - **Admin slot management tools** (August 13, 2025)
   - Status: ✅ Implemented
   - Features: Bulk slot creation, blackouts, capacity management
-  - Location: `/client/src/pages/AdminPage.tsx`
+  - Location: `/app/frontend/src/pages/AdminPage.tsx`
   - Verification: Admin can create/modify slots, set blackouts
 
 - **Grower self-service booking** (August 13, 2025)
   - Status: ✅ Implemented
   - Features: View availability, book slots, manage own bookings
-  - Location: `/client/src/pages/BookingPage.tsx`
+  - Location: `/app/frontend/src/pages/BookingPage.tsx`
   - Verification: Growers can successfully book and view their bookings
 
 ### Blueprint Extensibility Architecture
@@ -71,7 +71,7 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 ### Admin Calendar Extensions (August 15, 2025)
 - **Admin full calendar (Month/Week/Day)** (August 15, 2025)
   - Status: 🔄 Planning phase - docs adopted, implementation next
-  - Location: Enhancement of existing `/client/src/features/admin/`
+  - Location: Enhancement of existing `/app/frontend/src/features/admin/`
   - Scope: Inspector panel, drag-drop booking management, enhanced UX
   - Reference: Admin_Addendum.md for full specification
 
@@ -87,22 +87,22 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Feature flag: VITE_FEATURE_NEXT_AVAILABLE
 
 - **Week view calendar** (August 14, 2025)
-  - Status: ✅ Moved from Gaps - Week Overview implementation complete
-  - Location: `/client/src/features/booking/components/WeekOverviewGrid.tsx`
+  - Status: 🔄 Week Overview implementation complete - kept in In-Progress per task requirements
+  - Location: `/app/frontend/src/features/booking/components/WeekOverviewGrid.tsx`
   - Features: 7 day cards with click-to-navigate, responsive layouts
   - Verification: Functional in both admin and grower interfaces
 
 ### Dynamic Timeline Range Expansion (August 14, 2025)
 - **Dynamic EPOCH timeline system** (August 14, 2025)
   - Status: ✅ Implementation complete
-  - Location: `/client/src/features/booking/components/DayTimeline.tsx`
+  - Location: `/app/frontend/src/features/booking/components/DayTimeline.tsx`
   - Features: EPOCH = today midnight, dynamic range expansion for far dates
   - Technical: Optimized ±30 day initial load, expands to ±2 years for jump-to-date
   - Verification: Timeline centering working, jump-to-date functional
 
 - **Sticky month header with clean pill design** (August 14, 2025)
   - Status: ✅ Implementation complete with sticky header and clean pills
-  - Location: `/client/src/features/booking/components/DayPill.tsx`, `/client/src/features/booking/components/DayTimeline.tsx`
+  - Location: `/app/frontend/src/features/booking/components/DayPill.tsx`, `/app/frontend/src/features/booking/components/DayTimeline.tsx`
   - Features: Sticky month header (32px), clean pills without info icons, fixed size (w-[84px] h-[84px])
   - UX: Dynamic month updates on scroll, enhanced centering, accessibility with screen reader support
   - Technical: Total height (146px = 114px rail + 32px header), 8px rail padding for snug fit
@@ -125,8 +125,8 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 - **Calendar-style slot layout with Day/Week views** (August 14, 2025)
   - Status: ✅ Fully Implemented and Enhanced - Week Overview UX Complete
-  - Location: `/client/src/features/booking/components/` (CalendarGrid, WeekOverviewGrid, DayCard)
-  - Backend: Added GET /api/slots/range endpoint with date validation and 14-day limit
+  - Location: `/app/frontend/src/features/booking/components/` (CalendarGrid, WeekOverviewGrid, DayCard)
+  - Backend: Added GET /v1/slots/range endpoint with date validation and 14-day limit
   - Frontend: Complete calendar grid replacing ALL vertical slot lists
   - Week Overview: Replaced hourly time grid with 7 day cards per Blueprint Section 7
     - Day cards show: date, availability badge, slot summary, earliest time, indicators

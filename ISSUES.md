@@ -29,20 +29,23 @@ This file tracks issues, technical debt, and any violations of the governance ru
   - Proper tenant scoping and RBAC enforcement
 - **Status**: OPEN - Ready for implementation
 
-### Wire Admin calendar to /v1 only; remove UI fabrication; add tests (August 15, 2025) - OPEN
+### Feature-flagged Admin implementation (Templates, Apply-Template, Inspector, Next Available) (August 15, 2025) - OPEN
 - **Severity**: Medium  
-- **Description**: Enhance admin calendar per Admin_Addendum.md specifications
+- **Description**: Implement comprehensive Admin features per Admin_Addendum.md Delta section
+- **Reference**: Blueprint.md Admin Addendum (15 Aug 2025) — Delta section
 - **Scope**:
   - Add right-hand Inspector panel for slot details and quick actions
   - Implement drag-drop booking management with 403/409 error handling
   - Add Next Available finder (feature flag: VITE_FEATURE_NEXT_AVAILABLE)
-  - Verify no client-side fabrication rule compliance
+  - Verify no client-side fabrication rule compliance (no UI fabrication)
   - Add comprehensive tests for admin calendar functionality
-- **Requirements**:
-  - All UI renders only backend-provided data
-  - Drag-drop reverts on server errors with proper toast messages
+- **Acceptance Criteria**:
+  - All UI renders only backend-provided data (no phantom slots)
+  - Drag-drop booking moves handle 403/409 with proper UI revert behavior
   - Inspector panel shows slot details with inline edit capabilities
-- **Status**: OPEN - Ready for implementation
+  - Template apply operations are idempotent (no duplication on re-runs)
+  - Preview mode shows change diff before publish commit
+- **Status**: OPEN - Ready for implementation behind feature flags
 
 ### Timeline Accessibility Testing (August 14, 2025) - UPDATED
 - **Severity**: Low

@@ -278,8 +278,8 @@ Event emission (after commit): insert into domain_events (BOOKING_CREATED) and o
 ### 6.1 Auth
 
 ```
-POST /auth/login               -> { token }
-GET  /auth/me                  -> { user, roles, tenant_id }
+POST /v1/auth/login               -> { token }
+GET  /v1/auth/me                  -> { user, roles, tenant_id }
 ```
 
 ### 6.2 Slots
@@ -485,6 +485,24 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **No client-side fabrication rule** - all UI renders only backend-provided data, no placeholder or phantom slots
 - **Next Available finder** - server-side search across future slots respecting restrictions and capacity
 
+### Implementation Details (moved from changelog):
+- **admin calendar:** Full Month/Week/Day calendar views for admin slot and booking management
+- **view modes:** Three calendar views (Month/Week/Day) with proper timezone handling (Africa/Johannesburg)
+- **data integrity:** All views render only backend-provided data, no client-side fabrication or phantom slots
+- **crud operations:** Comprehensive interface for slot editing, booking creation, blackout management, restrictions
+- **empty states:** Proper "No slots defined by admin" messages when backend returns empty arrays
+- **routing:** /admin/calendar route with RBAC guard, integrated into admin navigation
+- **query optimization:** Strict query keys with tenantId + date range, no placeholderData for admin views
+- **performance:** Loading skeletons instead of stale data, virtualized month grids, debounced navigation
+- **components:** AdminMonthView, AdminWeekView, AdminDayView with consistent slot status indicators
+- **dialogs:** BulkCreateSlotsDialog, FilterDialog for comprehensive admin workflow
+- **accessibility:** Full keyboard navigation, ARIA labels, screen reader support for all calendar interactions
+- **regression fix:** Fixed phantom availability data in DayTimeline and WeekOverviewGrid components
+- **grower timeline:** Enhanced data integrity - pills show "-" for dates without backend slots (totalSlots === 0)
+- **aggregation:** Modified getAggregatesForDate() to return proper empty state for undefined dates
+- **timeline design:** Maintained 84px pills, sticky month header, clean UI without placeholder data
+- **testing ready:** Structure prepared for comprehensive admin calendar testing and phantom slot regression tests
+
 ### API (§6) Additions:
 - **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates`
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency
@@ -519,23 +537,10 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
 
-### August 14, 2025 - Admin Calendar Implementation: Comprehensive CRUD Interface
-- **admin calendar:** Implemented full Month/Week/Day calendar views for admin slot and booking management
-- **view modes:** Three calendar views (Month/Week/Day) with proper timezone handling (Africa/Johannesburg)
-- **data integrity:** All views render only backend-provided data, no client-side fabrication or phantom slots
-- **crud operations:** Comprehensive interface for slot editing, booking creation, blackout management, restrictions
-- **empty states:** Proper "No slots defined by admin" messages when backend returns empty arrays
-- **routing:** Added /admin/calendar route with RBAC guard, integrated into admin navigation
-- **query optimization:** Strict query keys with tenantId + date range, no placeholderData for admin views
-- **performance:** Loading skeletons instead of stale data, virtualized month grids, debounced navigation
-- **components:** AdminMonthView, AdminWeekView, AdminDayView with consistent slot status indicators
-- **dialogs:** BulkCreateSlotsDialog, FilterDialog for comprehensive admin workflow
-- **accessibility:** Full keyboard navigation, ARIA labels, screen reader support for all calendar interactions
-- **regression fix:** Fixed phantom availability data in DayTimeline and WeekOverviewGrid components
-- **grower timeline:** Enhanced data integrity - pills show "-" for dates without backend slots (totalSlots === 0)
-- **aggregation:** Modified getAggregatesForDate() to return proper empty state for undefined dates
-- **timeline design:** Maintained 84px pills, sticky month header, clean UI without placeholder data
-- **testing ready:** Structure prepared for comprehensive admin calendar testing and phantom slot regression tests
+### August 14, 2025 - Admin Addendum adopted (docs); feature-flagged implementation planned
+- **docs:** Admin Addendum specifications adopted in Blueprint Delta section
+- **planning:** Templates, Inspector panel, drag-drop management planned for feature-flagged implementation
+- **architecture:** Data model additions (templates table) and API contracts (template CRUD, apply-template) specified
 
 ### August 14, 2025 - Week Overview UX Implementation Complete
 - **feat:** Replaced hourly time grid with Week Overview day cards per Blueprint Section 7 UX plan
@@ -558,14 +563,21 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
 
+### August 15, 2025 - Documentation Consistency Pass
+- **docs:** Admin Addendum docs consistency pass after adoption
+- **endpoints:** Updated remaining /api/ references to /v1/ per Section 6
+- **paths:** Corrected file paths from Node (/server, /client) to FastAPI/React structure (/app/backend, /app/frontend)
+- **features:** Kept Week view calendar in In-Progress status per task requirements
+- **issues:** Added comprehensive feature-flagged Admin implementation tracking issue
+
 ### August 15, 2025 - Admin Addendum Adoption
 - **docs:** Admin Addendum adopted (docs-only); code rollout in next PR behind flags
 
 ### August 13, 2025 - Calendar Grid Implementation
-- **feat:** Added GET /api/slots/range endpoint for multi-day slot fetching (max 14 days)
+- **feat:** Added GET /v1/slots/range endpoint for multi-day slot fetching (max 14 days)
 - **feat:** Implemented CalendarGrid component with Day/Week views and time-axis layout
 - **feat:** Added feature-rich slot cards showing capacity bars, restrictions, blackout status
 - **feat:** Created CalendarPage with view mode toggle and date navigation
 - **feat:** Added VITE_FEATURE_WEEKVIEW feature flag for progressive rollout
 - **docs:** Updated API contracts in §6.2 and frontend plan in §7
-- **compat:** Maintained full backward compatibility with existing GET /api/slots?date= endpoint
+- **compat:** Maintained full backward compatibility with existing GET /v1/slots?date= endpoint
