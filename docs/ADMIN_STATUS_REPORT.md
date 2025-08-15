@@ -29,9 +29,11 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 - **Data Integrity**: All slot ribbons reflect backend data (time, capacity, booked, restrictions, notes)
 
 ### Day view (timeline / draw-to-create desktop; FAB on mobile)
-⚠️ **Partial**: Basic day slot list implemented but missing advanced features
-- Evidence: `renderDayView()` at line 123 shows slot list
-- Missing: Draw-to-create functionality, mobile FAB, timeline visualization
+✅ **Working**: Complete day view with timeline draw-to-create and mobile FAB
+- Evidence: AdminPage:295-480 implements timeline (desktop) and FAB dialog (mobile)
+- Implementation: Desktop timeline with drag-to-create (6 AM-8 PM), mobile FAB with form inputs
+- Test coverage: `admin_day_view.spec.tsx` validates timeline interaction, FAB functionality, viewport detection
+- **Data Integrity**: Both creation paths use real form data and open existing slot sheet for backend submission
 
 ### Day Peek (actions + links)
 ✅ **Working**: Component exists with proper action handlers
@@ -140,6 +142,7 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 - ✅ Blackout visual indicator tests: `admin_month_view.spec.tsx`
 - ✅ Toolbar dropdown menu functionality: `admin_toolbar_menus.spec.tsx`
 - ✅ Week view slot ribbon rendering: `admin_week_view.spec.tsx`
+- ✅ Day view timeline and mobile FAB: `admin_day_view.spec.tsx`
 
 ## 8) What's Left To Do (actionable backlog)
 
@@ -153,6 +156,7 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 2. ✅ **Visual indicators**: Implemented ⛔ blackout and 🔒 restriction icons from slot.blackout, slot.restrictions
 3. ✅ **Create/More dropdowns**: Wired functional dropdown menus with Create ▾ (day slots, bulk, templates) and More ▾ (CSV, filters, help)
 4. ✅ **Week view ribbons**: Implemented slot time ribbons with capacity/time data, color coding, and status indicators
+5. ✅ **Day view timeline**: Added desktop timeline draw-to-create and mobile FAB for slot creation
 
 ### Validation & Safety
 1. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
