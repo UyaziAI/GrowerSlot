@@ -690,6 +690,13 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Admin UI Audit & Verification Report Generated
+- **audit:** generated Admin UI verification & legacy scan — no product code changes.
+- **reports:** Created reports/admin_ui_audit.md and reports/admin_ui_audit.json with comprehensive UI compliance analysis
+- **test:** Added admin_route_wire.spec.tsx test confirming AdminPage renders with Create ▾ and More ▾ dropdowns (PASS)
+- **verification:** Confirmed /admin route uses AdminPage.tsx, legacy admin-dashboard.tsx renamed to .bak
+- **documentation:** Verified header implementation, day interactions, create flows, and legacy cleanup status
+
 ### August 15, 2025 - UI-M1 Admin Calendar Toolbar Cleanup + Day Peek
 - **header simplified:** Replaced legacy buttons (Blackout, Apply Restrictions, etc.) with streamlined Create ▾ and More ▾ dropdowns
 - **create menu:** "Create Slots (Day)", "Bulk Create Slots", and "Apply Template" consolidated under Create ▾
