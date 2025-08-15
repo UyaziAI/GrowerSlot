@@ -587,6 +587,12 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - Docs consistency pass #3 (removed legacy client paths; set export to /v1/)
+- **cleanup:** Updated FEATURES.md and ISSUES.md to remove legacy /client/ path references
+- **export:** Changed CSV export endpoint from /api/export/bookings.csv to GET /v1/exports/bookings.csv
+- **paths:** Updated backend location from server/routes.ts to /app/backend/routers/exports.py
+- **status:** Marked export endpoint as Backlog priority in ISSUES.md
+
 ### August 15, 2025 - No-Fabrication Guard & Month Boundary Test (B6 Complete)
 - **testing:** Created comprehensive regression test suite in /client/src/__tests__/admin_nofab_boundary.spec.tsx
 - **guard:** Verifies UI never invents slots when API returns empty responses for future date ranges

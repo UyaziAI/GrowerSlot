@@ -73,7 +73,7 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - **Details**: GET /v1/exports/bookings.csv endpoint missing from FastAPI backend
 - **Path**: `/app/backend/routers/exports.py`
 - **Route**: GET /v1/exports/bookings.csv
-- **Status**: Open (Backlog)
+- **Status**: Backlog
 - **Impact**: Admin data export functionality unavailable
 
 ### Timeline Navigation and Clean Pill Design (August 14, 2025) - RESOLVED

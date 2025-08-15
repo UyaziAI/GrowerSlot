@@ -163,8 +163,8 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 ### Blueprint Extensions (Future Phases)
 - **CSV Export endpoint** - Backend stub exists, needs implementation
   - Priority: Medium (Phase 1)
-  - Scope: GET /api/export/bookings.csv for data export
-  - Location: Missing from server/routes.ts, mentioned in blueprint §6
+  - Scope: GET /v1/exports/bookings.csv for data export
+  - Location: Missing from /app/backend/routers/exports.py, mentioned in blueprint §6
 
 - **Quality inspections module** - Not started
   - Priority: Low (Phase 3)
