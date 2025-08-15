@@ -804,6 +804,7 @@ export default function AdminPage() {
       {editDay && (
         <DayEditorSheet
           dateISO={editDay}
+          isOpen={!!editDay}
           onClose={() => setEditDay(null)}
           onToggleBlackout={async () => {
             try {

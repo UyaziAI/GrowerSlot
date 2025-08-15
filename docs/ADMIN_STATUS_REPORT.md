@@ -172,7 +172,12 @@ The Admin calendar interface has been **partially implemented** with core UI arc
    - **Comprehensive fix**: Modified api/client.ts request() method to use fetchJson, ensuring 100% authentication coverage
    - **Tripwire protection**: admin_errors_tripwire.spec.tsx detects the specific recurring patterns and fails if they reappear
    - **Evidence**: Both API client pathways now route through global authentication enforcement
-2. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
+2. ✅ **DayEditor runtime errors**: Eliminated "isOpen is not defined" runtime error and associated auth issues:
+   - **Root cause**: AdminPage.tsx DayEditorSheet call missing isOpen prop, causing undefined variable in useQuery enabled condition
+   - **Fix**: Added isOpen={!!editDay} prop and enhanced query gating with both isOpen && !!dateISO
+   - **Safety**: Enhanced authentication gating prevents unauthenticated calls when sheet is closed
+   - **Evidence**: Build runs cleanly, no runtime errors on sheet open/close, all queries properly gated
+3. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
 3. **Blackout prevention**: Implement booking prevention on blackout slots with 409 handling
 4. **Capacity validation**: Ensure positive integer validation for slot creation forms
 
