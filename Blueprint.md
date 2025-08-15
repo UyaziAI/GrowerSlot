@@ -615,6 +615,12 @@ This addendum introduces enhancements to the Admin experience with templates, pr
 
 **Copy & Safeguards (Client Validation)**: Enforces usability rules across all admin interfaces. Past dates (determined by Africa/Johannesburg timezone) automatically disable form actions with warning messages. All destructive operations (blackout, restrictions) show scoped confirmation dialogs ("Blackout Fri 2025-08-15?" or "Blackout 3 selected days?"). HTTP errors (422/403/409) display server json.error messages verbatim, never generic fallbacks. Date inputs have min attributes set to today, preventing past date selection entirely.
 
+### §11 Mobile Parity & Testing Strategy
+
+**Mobile Viewport Testing**: Complete mobile test coverage at iPhone 12 mini (390×844) and Galaxy S20 (412×915) viewports. Tests cover DayPeekSheet swipe dismissal, DayEditorSheet full-height display, BulkBar bottom positioning, FAB thumb-zone accessibility, and cross-viewport layout adaptation. Playwright E2E tests validate real mobile interactions including touch targets, sheet animations, and responsive breakpoints.
+
+**Accessibility Compliance**: ARIA labels for day cells include slot counts and status ("Thursday 15, Slots: 3, Remaining: 12, Blackout"). Form elements have proper label associations, confirmation dialogs follow accessibility best practices with role="dialog" and descriptive headings. Touch targets meet 44px minimum size requirements with adequate spacing for mobile interactions.
+
 ### API (§6) Additions:
 - **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates` (stub endpoints implemented)
 - **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency

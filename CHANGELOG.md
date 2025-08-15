@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced mobile responsiveness across all admin calendar components
 - All destructive actions (blackout, restrictions) now require explicit confirmation
 - Form submissions disabled for past dates with clear warning messages
+- Day cells enhanced with ARIA labels including slot counts and status information
+- Mobile viewport testing implemented for iPhone and Galaxy S20 screen sizes
 
 ## [1.2.0] - 2025-08-15
 

@@ -139,6 +139,15 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Error Handling: 422/403/409 HTTP errors display json.error messages verbatim, never generic errors
   - Testing: 12/12 tests passing for date validation, confirmation dialogs, and error message display
 
+- **M6 Mobile viewport tests & accessibility** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/app/frontend/src/__tests__/admin_mobile.spec.tsx`, `/e2e/admin_mobile.spec.ts`
+  - Features: Comprehensive mobile testing at 390×844 and 412×915 viewports with accessibility validation
+  - Mobile Flows: DayPeekSheet dismissible via swipe, DayEditorSheet full-height, BulkBar bottom positioning
+  - Touch Interactions: FAB thumb-zone positioning, touch-friendly button sizes, responsive layouts
+  - Accessibility: Day cells with descriptive ARIA labels, proper form labeling, dialog accessibility structure
+  - Testing: 16/16 Vitest + 12/12 Playwright tests passing for mobile UX and a11y compliance
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)
