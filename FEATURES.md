@@ -236,6 +236,16 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 - **Dialog Titles**: Day dialog updated to "Create Slots — Day", range dialog simplified to "Bulk Create Slots"
 - **User Experience**: Clear distinction between single-day focused creation vs multi-day range creation workflows
 
+## UI-M1 - Admin Calendar Toolbar Cleanup + Day Peek (August 15, 2025)
+
+- **Status**: ✅ Implemented and tested
+- **Location**: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/DayPeekSheet.tsx`, `/app/frontend/src/pages/FilterDrawer.tsx`, `/app/frontend/src/__tests__/admin_ui_m1.spec.tsx`
+- **Features**: Streamlined admin calendar interface following M1 design principles with consolidated actions and contextual day interactions
+- **Header Simplification**: Replaced legacy scattered buttons with organized Create ▾ and More ▾ dropdown menus
+- **Day Peek Integration**: Bottom sheet appearing on day tap with summary stats and contextual actions (Create Slots — Day, Blackout Day, Restrict Day, Open Day view, Edit Day)
+- **Action Consolidation**: Create menu houses slot creation and template actions; More menu contains utilities and filters
+- **Testing**: Complete M1 test suite validating header cleanup, day peek functionality, and legacy button removal
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

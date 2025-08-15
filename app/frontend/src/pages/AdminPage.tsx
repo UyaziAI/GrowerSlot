@@ -10,9 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import CalendarMonth from '@/features/booking/components/CalendarMonth';
-import { DayPeekSheet } from './DayPeekSheet';
-import { FilterDrawer } from './FilterDrawer';
+// import CalendarMonth from '@/features/booking/components/CalendarMonth'; // Component not implemented yet
+import DayPeekSheet, { DayPeekSummary } from './DayPeekSheet';
+import FilterDrawer from './FilterDrawer';
 import { DayEditorSheet } from './DayEditorSheet';
 import { BulkBar } from './BulkBar';
 import { SlotSheet } from './SlotSheet';
@@ -32,8 +32,7 @@ interface DayPeekSummary {
 export default function AdminPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [dayPeekOpen, setDayPeekOpen] = useState(false);
-  const [dayPeekData, setDayPeekData] = useState<{
+  const [dayPeek, setDayPeek] = useState<{
     dateISO: string;
     summary: DayPeekSummary;
   } | null>(null);
@@ -53,13 +52,6 @@ export default function AdminPage() {
     notes: ''
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    grower: '',
-    cultivar: '',
-    status: '',
-    showBlackout: true,
-    showRestricted: true
-  });
 
   // Mock data - in real implementation, this would come from API
   const growers = [
@@ -109,8 +101,7 @@ export default function AdminPage() {
         restricted: false
       };
 
-      setDayPeekData({ dateISO, summary });
-      setDayPeekOpen(true);
+      setDayPeek({ dateISO, summary });
     }
   };
 
@@ -215,14 +206,14 @@ export default function AdminPage() {
     }
   });
 
-  const handleCreateSlots = () => {
-    // TODO: Open create slots dialog
-    console.log('Create slots clicked');
-  };
-
   const handleExportCSV = () => {
     // TODO: Export CSV functionality
     console.log('Export CSV clicked');
+  };
+
+  const handleApplyTemplate = () => {
+    // TODO: Apply template functionality
+    console.log('Apply template clicked');
   };
 
   return (
@@ -280,40 +271,8 @@ export default function AdminPage() {
             </Button>
           </div>
 
-          {/* Right: Actions + Filter */}
+          {/* Right: Only Create ▾ and More ▾ */}
           <div className="flex items-center gap-2">
-            <FilterDrawer
-              isOpen={filtersOpen}
-              onOpenChange={setFiltersOpen}
-              filters={filters}
-              onFiltersChange={setFilters}
-              growers={growers}
-              cultivars={cultivars}
-            />
-
-            {/* Selection Mode Toggle */}
-            <Button
-              variant={selectionMode ? "default" : "outline"}
-              size="sm"
-              onClick={handleToggleSelectionMode}
-              data-testid="button-selection-mode"
-            >
-              {selectionMode ? <CheckSquare className="h-4 w-4 mr-2" /> : <Square className="h-4 w-4 mr-2" />}
-              {selectionMode ? 'Exit Select' : 'Select'}
-            </Button>
-
-            {/* Week Selection (only show in week view) */}
-            {viewMode === 'week' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSelectWeek}
-                data-testid="button-select-week"
-              >
-                Bulk actions (week)
-              </Button>
-            )}
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" data-testid="button-create-dropdown">
@@ -329,7 +288,11 @@ export default function AdminPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleBulkCreate} data-testid="menuitem-bulk-create">
                   <CalendarPlus className="h-4 w-4 mr-2" />
-                  Bulk Create (Range)
+                  Bulk Create Slots
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleApplyTemplate} data-testid="menuitem-apply-template">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Apply Template
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -347,8 +310,11 @@ export default function AdminPage() {
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem data-testid="menuitem-settings">
-                  Settings
+                <DropdownMenuItem onClick={() => setFiltersOpen(true)} data-testid="menuitem-open-filters">
+                  Open Filters...
+                </DropdownMenuItem>
+                <DropdownMenuItem data-testid="menuitem-help">
+                  Help
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -360,7 +326,22 @@ export default function AdminPage() {
       <div className="flex-1 overflow-hidden">
         <Tabs value={viewMode} className="h-full">
           <TabsContent value="month" className="h-full mt-0">
-            <CalendarMonth
+            {/* Mock calendar for M1 testing - replace with CalendarMonth when implemented */}
+            <div className="h-full p-4" data-testid="mock-calendar-month">
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: 35 }, (_, i) => (
+                  <button
+                    key={i}
+                    className="p-2 border rounded hover:bg-gray-100"
+                    onClick={() => handleDayClick(`2025-08-${String(i + 1).padStart(2, '0')}`)}
+                    data-testid={`mock-day-cell-${i}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* <CalendarMonth
               slots={slots.map(slot => ({
                 id: slot.id,
                 date: slot.date || selectedDate,
@@ -607,6 +588,46 @@ export default function AdminPage() {
         onClose={() => setBulkCreateDialogOpen(false)}
         tenantId="mock-tenant-id"
       />
+
+      {/* Filter Drawer */}
+      <FilterDrawer
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+      />
+
+      {/* Day Peek Sheet */}
+      {dayPeek && (
+        <DayPeekSheet
+          dateISO={dayPeek.dateISO}
+          summary={dayPeek.summary}
+          onCreateDay={() => {
+            setSelectedDate(dayPeek.dateISO);
+            setCreateSlotsDialogOpen(true);
+            setDayPeek(null);
+          }}
+          onBlackoutDay={() => {
+            // TODO: Implement blackout day functionality
+            console.log('Blackout day:', dayPeek.dateISO);
+            setDayPeek(null);
+          }}
+          onRestrictDay={() => {
+            // TODO: Implement restrict day functionality
+            console.log('Restrict day:', dayPeek.dateISO);
+            setDayPeek(null);
+          }}
+          onOpenEditor={() => {
+            setDayEditorDate(dayPeek.dateISO);
+            setDayEditorOpen(true);
+            setDayPeek(null);
+          }}
+          onOpenDayView={() => {
+            setViewMode('day');
+            setSelectedDate(dayPeek.dateISO);
+            setDayPeek(null);
+          }}
+          onClose={() => setDayPeek(null)}
+        />
+      )}
     </div>
   );
 }

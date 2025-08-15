@@ -1,215 +1,118 @@
 import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { CalendarDays, Plus, Ban, Lock, Eye, Edit } from 'lucide-react';
-import { format, isBefore, startOfDay } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 
-interface DayPeekSummary {
-  remaining: number;
-  booked: number;
-  blackout: boolean;
-  restricted: boolean;
+export interface DayPeekSummary { 
+  remaining: number; 
+  booked: number; 
+  blackout: boolean; 
+  restricted: boolean; 
 }
 
-interface DayPeekSheetProps {
+export interface DayPeekSheetProps {
   dateISO: string;
   summary: DayPeekSummary;
-  isOpen: boolean;
-  onClose: () => void;
   onCreateDay: () => void;
   onBlackoutDay: () => void;
   onRestrictDay: () => void;
   onOpenEditor: () => void;
   onOpenDayView: () => void;
+  onClose?: () => void;
 }
 
-export function DayPeekSheet({
-  dateISO,
-  summary,
-  isOpen,
-  onClose,
-  onCreateDay,
-  onBlackoutDay,
-  onRestrictDay,
-  onOpenEditor,
-  onOpenDayView
-}: DayPeekSheetProps) {
-  const date = new Date(dateISO);
-  const formattedDate = format(date, 'EEEE, MMM d, yyyy');
-  const dayName = format(date, 'EEE'); // For confirmation dialogs
-  
-  // Check if date is in the past (using Africa/Johannesburg timezone)
-  const today = startOfDay(toZonedTime(new Date(), 'Africa/Johannesburg'));
-  const targetDate = startOfDay(date);
-  const isPastDate = isBefore(targetDate, today);
+const DayPeekSheet: React.FC<DayPeekSheetProps> = ({
+  dateISO, 
+  summary, 
+  onCreateDay, 
+  onBlackoutDay, 
+  onRestrictDay, 
+  onOpenEditor, 
+  onOpenDayView, 
+  onClose
+}) => {
+  const d = new Date(dateISO);
+  const fmt = d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent 
-        side="bottom" 
-        className="h-auto max-h-[80vh] rounded-t-lg"
-        data-testid="day-peek-sheet"
-      >
-        <SheetHeader className="pb-4">
-          <SheetTitle className="flex items-center gap-2 text-lg">
-            <CalendarDays className="h-5 w-5" />
-            {formattedDate}
-          </SheetTitle>
-        </SheetHeader>
-
-        {/* Summary Chips */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Badge 
-            variant={summary.remaining > 0 ? "default" : "secondary"}
-            className="text-sm"
-            data-testid="badge-remaining"
-          >
-            {summary.remaining} Remaining
-          </Badge>
-          <Badge 
-            variant={summary.booked > 0 ? "default" : "outline"}
-            className="text-sm"
-            data-testid="badge-booked"
-          >
-            {summary.booked} Booked
-          </Badge>
-          {summary.blackout && (
-            <Badge 
-              variant="destructive" 
-              className="text-sm"
-              data-testid="badge-blackout"
-            >
-              ⛔ Blackout
-            </Badge>
-          )}
-          {summary.restricted && (
-            <Badge 
-              variant="secondary" 
-              className="text-sm"
-              data-testid="badge-restricted"
-            >
-              🔒 Restricted
-            </Badge>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          {/* Primary Actions */}
-          <div className="grid grid-cols-1 gap-2">
-            <Button
-              onClick={onCreateDay}
-              className="w-full justify-start"
-              disabled={isPastDate}
-              data-testid="button-create-day"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Slots — Day
-            </Button>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="justify-start"
-                    disabled={isPastDate}
-                    data-testid="button-blackout-day"
-                  >
-                    <Ban className="h-4 w-4 mr-2" />
-                    Blackout Day
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Blackout Day</AlertDialogTitle>
-                    <AlertDialogDescription data-testid="blackout-confirmation-text">
-                      Blackout {dayName} {dateISO}? This will prevent all new bookings for this day.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={onBlackoutDay}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      data-testid="confirm-blackout-day"
-                    >
-                      Blackout Day
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="justify-start"
-                    disabled={isPastDate}
-                    data-testid="button-restrict-day"
-                  >
-                    <Lock className="h-4 w-4 mr-2" />
-                    Restrict Day
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Restrict Day</AlertDialogTitle>
-                    <AlertDialogDescription data-testid="restrict-confirmation-text">
-                      Apply restrictions to {dayName} {dateISO}? This will limit access to specific growers or cultivars.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={onRestrictDay}
-                      data-testid="confirm-restrict-day"
-                    >
-                      Apply Restrictions
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-
-          {/* Past Date Warning */}
-          {isPastDate && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800" data-testid="past-date-warning">
-                Actions disabled for past dates. Select today or a future date to make changes.
-              </p>
-            </div>
-          )}
-
-          {/* Navigation Links */}
-          <div className="pt-4 border-t">
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={onOpenDayView}
-                variant="ghost"
-                className="justify-start"
-                data-testid="link-open-day-view"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Open Day View
-              </Button>
-              <Button
-                onClick={onOpenEditor}
-                variant="ghost"
-                className="justify-start"
-                data-testid="link-edit-day"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Day
-              </Button>
-            </div>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+    <div 
+      role="dialog" 
+      aria-label={`Day ${fmt}`} 
+      className="fixed inset-x-0 bottom-0 max-h-[80vh] bg-white shadow-2xl rounded-t-2xl p-4 overflow-auto"
+      data-testid="day-peek-sheet"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-lg font-semibold" data-testid="day-peek-title">{fmt}</h3>
+        <button 
+          onClick={onClose} 
+          aria-label="Close" 
+          className="px-2 py-1 rounded hover:bg-gray-100"
+          data-testid="button-close-day-peek"
+        >
+          Close
+        </button>
+      </div>
+      
+      <div className="flex gap-2 mb-3 text-sm">
+        <span className="px-2 py-1 rounded bg-gray-100" data-testid="summary-remaining">
+          Remaining: {summary.remaining}
+        </span>
+        <span className="px-2 py-1 rounded bg-gray-100" data-testid="summary-booked">
+          Booked: {summary.booked}
+        </span>
+        {summary.blackout && (
+          <span className="px-2 py-1 rounded bg-red-100" data-testid="summary-blackout">
+            ⛔ Blackout
+          </span>
+        )}
+        {summary.restricted && (
+          <span className="px-2 py-1 rounded bg-amber-100" data-testid="summary-restricted">
+            🔒 Restricted
+          </span>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button 
+          onClick={onCreateDay} 
+          className="px-3 py-2 rounded bg-black text-white"
+          data-testid="button-create-slots-day"
+        >
+          Create Slots — Day
+        </button>
+        <button 
+          onClick={onBlackoutDay} 
+          className="px-3 py-2 rounded bg-gray-200"
+          data-testid="button-blackout-day"
+        >
+          Blackout Day
+        </button>
+        <button 
+          onClick={onRestrictDay} 
+          className="px-3 py-2 rounded bg-gray-200"
+          data-testid="button-restrict-day"
+        >
+          Restrict Day
+        </button>
+        <button 
+          onClick={onOpenDayView} 
+          className="px-3 py-2 rounded bg-gray-50 text-left underline"
+          data-testid="button-open-day-view"
+        >
+          Open Day view
+        </button>
+        <button 
+          onClick={onOpenEditor} 
+          className="px-3 py-2 rounded bg-gray-50 text-left underline"
+          data-testid="button-edit-day"
+        >
+          Edit Day
+        </button>
+      </div>
+    </div>
   );
-}
+};
+
+export default DayPeekSheet;

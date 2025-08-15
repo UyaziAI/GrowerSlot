@@ -44,6 +44,12 @@
 ### Documentation Updates
 - ✅ Blueprint.md Section 6.6: Complete endpoint specification added
 
+## UI Updates (August 15, 2025)
+- Legacy header replaced on AdminPage; Day Peek wired
+- Old scattered action buttons (Blackout, Apply Restrictions) removed from global header
+- Day Peek sheet provides contextual actions when day cells are tapped
+- FilterDrawer component created as skeleton for future filter functionality
+
 ## Calendar Export & Sync (Future Features)
 
 ### Issue: P1 - ICS Feed Implementation

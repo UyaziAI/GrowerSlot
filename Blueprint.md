@@ -684,6 +684,14 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
 
+### August 15, 2025 - UI-M1 Admin Calendar Toolbar Cleanup + Day Peek
+- **header simplified:** Replaced legacy buttons (Blackout, Apply Restrictions, etc.) with streamlined Create ▾ and More ▾ dropdowns
+- **create menu:** "Create Slots (Day)", "Bulk Create Slots", and "Apply Template" consolidated under Create ▾
+- **more menu:** Export CSV, Open Filters, and Help moved to More ▾ dropdown for cleaner interface
+- **day peek:** Added DayPeekSheet component opening on day cell tap with contextual actions (Create, Blackout, Restrict, Edit, Day View)
+- **filter drawer:** Skeleton FilterDrawer component accessible from More ▾ → Open Filters menu item
+- **testing:** Comprehensive M1 UI tests covering header simplification, day peek functionality, and action consolidation
+
 ### August 15, 2025 - C4 Rename Buttons/Titles for Clarity
 - **ui:** Updated labels for unambiguous slot creation flow identification
 - **buttons:** Top-bar button remains "Create Slots (Day)" for single-day creation context
