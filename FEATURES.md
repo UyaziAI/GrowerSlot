@@ -66,6 +66,12 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Location: Repository-wide updates documented in SCAN_REPORT.md
   - Verification: All TypeScript/LSP diagnostics cleared, API contracts match
 
+- **CSV Export (B16)** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/client/src/pages/admin-dashboard.tsx`
+  - Features: Export CSV button in admin top bar, date range filtering, blob download
+  - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

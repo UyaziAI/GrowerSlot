@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield, Move } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield, Move, Download } from "lucide-react";
 import InspectorPanel from "./InspectorPanel";
 import NextAvailableDialog from "@/components/NextAvailableDialog";
 import RestrictionsDialog from "@/components/RestrictionsDialog";
@@ -249,6 +249,7 @@ export default function AdminDashboard() {
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [showInspector, setShowInspector] = useState(false);
   const [draggedBooking, setDraggedBooking] = useState<any>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = authService.getUser();
@@ -256,6 +257,65 @@ export default function AdminDashboard() {
   // Read feature flags from environment variables
   const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
   const FEATURE_NEXT_AVAILABLE = import.meta.env.VITE_FEATURE_NEXT_AVAILABLE === 'true';
+
+  // CSV Export functionality
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    
+    try {
+      // Build query parameters from current view and filters
+      const params = new URLSearchParams({
+        start_date: startDate,
+        end_date: endDate
+      });
+      
+      // Add optional filters if they exist (these would come from filter state)
+      // For now, using empty filters as the interface doesn't have them implemented
+      
+      // Make fetch request with Accept: text/csv header
+      const response = await fetch(`/v1/exports/bookings.csv?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/csv',
+          'Authorization': `Bearer ${authService.getToken()}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+      
+      // Create blob from response
+      const csvText = await response.text();
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+      
+      // Trigger download
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `bookings_${startDate}_${endDate}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export Successful",
+        description: `Downloaded bookings for ${startDate} to ${endDate}`,
+      });
+      
+    } catch (error: any) {
+      console.error('CSV Export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export CSV file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   // RBAC enforcement - redirect non-admin users
   useEffect(() => {
@@ -621,6 +681,18 @@ export default function AdminDashboard() {
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Day
+              </Button>
+              
+              {/* Export CSV Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={isExporting}
+                data-testid="export-csv-button"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {isExporting ? 'Exporting...' : 'Export CSV'}
               </Button>
               
               {/* CRUD Actions */}
