@@ -10,7 +10,7 @@ import uuid
 from ..db import execute_query, execute_one, execute_transaction, get_db_pool
 from ..security import get_current_user, require_role
 from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult
-from ..services.templates import plan_slots, diff_against_db
+from ..services.templates import plan_slots, diff_against_db, publish_plan
 
 router = APIRouter()
 
@@ -363,6 +363,16 @@ async def apply_template_preview(
     if body.mode == 'preview':
         return result
     
-    # TODO: Implement publish mode with actual database writes
-    # For now, preview mode only
+    # Publish mode: persist plan idempotently in transaction
+    if body.mode == 'publish':
+        publish_result = await publish_plan(tenant_id, desired_slots, db_pool)
+        
+        # Return actual publish counts instead of preview diff
+        return ApplyTemplateResult(
+            created=publish_result['created'],
+            updated=publish_result['updated'],
+            skipped=publish_result['skipped']
+        )
+    
+    # Default fallback (should not reach here)
     return result

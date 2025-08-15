@@ -587,7 +587,17 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
-### August 15, 2025 - Apply-Template Preview Implementation (B1 Complete)
+### August 15, 2025 - Apply-Template Publish Implementation (B2 Complete)
+- **publish:** Added publish_plan function with idempotent update-then-insert pattern
+- **transaction:** Single transaction wraps all slot operations with automatic rollback on failure  
+- **upsert:** UPDATE first by (tenant_id, date, start_time, end_time), INSERT if no rows affected
+- **counts:** Returns accurate created/updated/skipped counts based on actual database operations
+- **endpoint:** Enhanced POST /v1/slots/apply-template with publish mode using publish_plan
+- **idempotent:** Second publish of same template/range updates existing slots without duplication
+- **tests:** Created comprehensive test suite in /app/backend/tests/test_apply_template_publish.py
+- **verification:** Update-then-insert pattern working, transaction safety, count accuracy validated
+
+### August 15, 2025 - Apply-Template Preview Implementation (B1 Complete)  
 - **services:** Created /app/backend/services/templates.py with plan_slots and diff_against_db functions
 - **planner:** Implements weekday schedules, slot_length_min, blackout/override exceptions, timezone support
 - **differ:** Classifies desired slots as create/update/skip by comparing against database slots
