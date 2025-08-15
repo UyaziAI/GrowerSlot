@@ -4,6 +4,46 @@ This file tracks issues, technical debt, and any violations of the governance ru
 
 ## Active Issues 🔴
 
+### Adopt Admin Addendum (docs phase) (August 15, 2025) - COMPLETED
+- **Severity**: Medium
+- **Description**: Incorporate Admin_Addendum.md into canonical blueprint documentation
+- **Acceptance Criteria**:
+  - ✅ Blueprint.md Delta section added with cross-links
+  - ✅ FEATURES.md updated with new In-Progress items  
+  - ✅ ISSUES.md updated with follow-up implementation issues
+  - ✅ Changelog entry appended to Blueprint.md
+- **Status**: COMPLETED - All documentation updates applied
+- **Follow-up**: Implementation issues created below
+
+### Implement Templates & Apply-Template endpoints + UI (feature-flagged) (August 15, 2025) - OPEN
+- **Severity**: Medium
+- **Description**: Implement the templates system as specified in Admin_Addendum.md
+- **Scope**: 
+  - Database: Add templates table migration (104_templates.sql)
+  - API: Template CRUD endpoints (/v1/admin/templates, /v1/slots/apply-template)
+  - Frontend: Template management UI with preview/publish workflow
+  - Feature flag: VITE_FEATURE_ADMIN_TEMPLATES
+- **Requirements**: 
+  - Idempotent template application (no duplication on re-runs)
+  - Preview mode shows change diff before publish
+  - Proper tenant scoping and RBAC enforcement
+- **Status**: OPEN - Ready for implementation
+
+### Wire Admin calendar to /v1 only; remove UI fabrication; add tests (August 15, 2025) - OPEN
+- **Severity**: Medium  
+- **Description**: Enhance admin calendar per Admin_Addendum.md specifications
+- **Scope**:
+  - Add right-hand Inspector panel for slot details and quick actions
+  - Implement drag-drop booking management with 403/409 error handling
+  - Add Next Available finder (feature flag: VITE_FEATURE_NEXT_AVAILABLE)
+  - Verify no client-side fabrication rule compliance
+  - Add comprehensive tests for admin calendar functionality
+- **Requirements**:
+  - All UI renders only backend-provided data
+  - Drag-drop reverts on server errors with proper toast messages
+  - Inspector panel shows slot details with inline edit capabilities
+- **Status**: OPEN - Ready for implementation
+
 ### Timeline Accessibility Testing (August 14, 2025) - UPDATED
 - **Severity**: Low
 - **Description**: Comprehensive accessibility testing needed for timeline pill interactions
@@ -175,5 +215,5 @@ This file tracks issues, technical debt, and any violations of the governance ru
 - Move resolved issues to "Resolved" section with resolution details
 - Review monthly or after major changes
 
-**Last Updated**: August 13, 2025  
-**Next Review**: After LSP issues resolved and frontend integration complete
+**Last Updated**: August 15, 2025  
+**Next Review**: After Admin Addendum implementation tasks completed

@@ -2,6 +2,8 @@ Unified App Blueprint – Grower & Agri Supply Chain (Replit)
 
 Single, consolidated blueprint that merges the original slot‑booking MVP with the extensible addendum. Designed for Replit, Supabase (Postgres + Auth), and FastAPI (or Node as an alt). This file is the source of truth for how the app should work and evolve.
 
+**See also**: [Admin_Addendum.md](./Admin_Addendum.md)
+
 ## 1) Product Overview
 
 ### 1.1 Problem
@@ -471,6 +473,38 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 ---
 
+## Admin Addendum (15 Aug 2025) — Delta
+
+**Reference**: [Admin_Addendum.md](./Admin_Addendum.md)
+
+This addendum introduces enhancements to the Admin experience with templates, preview/publish workflows, and enhanced calendar management. The following additions extend (do not replace) existing blueprint sections:
+
+### Frontend Plan (§7) Additions:
+- **Admin Calendar Month/Week/Day views** with right-hand Inspector panel for slot details and quick actions
+- **Preview & Publish workflow** for template applications and bulk operations with change preview before commit
+- **No client-side fabrication rule** - all UI renders only backend-provided data, no placeholder or phantom slots
+- **Next Available finder** - server-side search across future slots respecting restrictions and capacity
+
+### API (§6) Additions:
+- **Template CRUD**: `GET/POST/PATCH/DELETE /v1/admin/templates`
+- **Template Application**: `POST /v1/slots/apply-template` with preview/publish modes and idempotency
+- **Booking Updates**: `PATCH /v1/bookings/{id}` for admin booking moves with 409/403 validation
+
+### Data Model (§4) Additions:
+- **templates table**: tenant-scoped reusable availability patterns with JSON config (weekday blocks, cultivar windows, buffers)
+- **template_runs table** (optional): audit trail for template applications and idempotency tracking
+
+### Testing (§11) Additions:
+- **Template apply tests**: preview vs publish idempotency, no duplication on re-runs
+- **No-fabrication guarantees**: UI renders only authentic backend data, no client-side slot generation
+- **Admin drag-drop tests**: booking moves with proper 403/409 error handling and UI revert behavior
+
+### Security/Tenancy (§8) Clarifications:
+- **RBAC for admin routes**: templates, bulk operations, and calendar management admin-only
+- **Template operations**: all scoped by tenant_id with proper access controls
+
+---
+
 ## Changelog
 
 ### August 14, 2025 - Repository Audit & Fix Pass: Complete Blueprint Compliance
@@ -523,6 +557,9 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 - **gaps:** Minor API versioning discrepancy (/api/ vs /v1/) and missing CSV export endpoint
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
+
+### August 15, 2025 - Admin Addendum Adoption
+- **docs:** Admin Addendum adopted (docs-only); code rollout in next PR behind flags
 
 ### August 13, 2025 - Calendar Grid Implementation
 - **feat:** Added GET /api/slots/range endpoint for multi-day slot fetching (max 14 days)

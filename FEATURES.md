@@ -68,6 +68,30 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 
 ## In-Progress Features 🔄
 
+### Admin Calendar Extensions (August 15, 2025)
+- **Admin full calendar (Month/Week/Day)** (August 15, 2025)
+  - Status: 🔄 Planning phase - docs adopted, implementation next
+  - Location: Enhancement of existing `/client/src/features/admin/`
+  - Scope: Inspector panel, drag-drop booking management, enhanced UX
+  - Reference: Admin_Addendum.md for full specification
+
+- **Templates + Apply Template** (August 15, 2025)
+  - Status: 🔄 Planning phase - awaiting implementation
+  - Scope: Reusable availability patterns, preview/publish workflow
+  - API: Template CRUD endpoints, apply-template with idempotency
+  - Feature flag: VITE_FEATURE_ADMIN_TEMPLATES
+
+- **Next Available finder** (August 15, 2025)
+  - Status: 🔄 Planning phase - server-side search design
+  - Scope: Search future slots respecting restrictions and capacity
+  - Feature flag: VITE_FEATURE_NEXT_AVAILABLE
+
+- **Week view calendar** (August 14, 2025)
+  - Status: ✅ Moved from Gaps - Week Overview implementation complete
+  - Location: `/client/src/features/booking/components/WeekOverviewGrid.tsx`
+  - Features: 7 day cards with click-to-navigate, responsive layouts
+  - Verification: Functional in both admin and grower interfaces
+
 ### Dynamic Timeline Range Expansion (August 14, 2025)
 - **Dynamic EPOCH timeline system** (August 14, 2025)
   - Status: ✅ Implementation complete
@@ -193,5 +217,5 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 | Migration system | ✅ | ✅ | ✅ |
 
 ---
-**Last Updated**: August 13, 2025
+**Last Updated**: August 15, 2025
 **Next Review**: When moving features from In-Progress to Implemented
