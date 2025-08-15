@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - M6 Mobile viewport tests & accessibility for 390×844 and 412×915 screen sizes
 - Calendar export & sync roadmap (P1–P3) with ICS feeds, API publishing, and two-way sync phases
 - C1 Create Slots split into single-day vs range creation with past date UI blocking
+- C2 Backend validation for /v1/slots/bulk with 422/400 error codes and comprehensive testing
 - B21 Feature flag rollout checklist and deployment strategy
 - Comprehensive release procedures with staging and production phases
 - Risk assessment and monitoring guidelines for feature rollouts

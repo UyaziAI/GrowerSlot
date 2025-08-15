@@ -1,7 +1,7 @@
 """
 Pydantic schemas for request/response validation
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator, conint
 from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime, date, time
 from decimal import Decimal
@@ -58,6 +58,26 @@ class BulkSlotCreate(BaseModel):
     slot_duration: int = Field(ge=1, description="Duration in hours")
     capacity: Decimal
     notes: Optional[str] = None
+
+class BulkCreateSlotsRequest(BaseModel):
+    start_date: date
+    end_date: date
+    weekdays: List[conint(ge=1, le=7)]  # Mon=1..Sun=7
+    slot_length_min: conint(gt=0, le=1440)
+    capacity: conint(gt=0)
+    notes: Optional[str] = None
+    
+    @validator('end_date')
+    def _end_after_start(cls, v, values):
+        if 'start_date' in values and v < values['start_date']:
+            raise ValueError('end_date must be on or after start_date')
+        return v
+    
+    @validator('weekdays')
+    def _weekdays_not_empty(cls, v):
+        if not v or len(v) == 0:
+            raise ValueError('weekdays must include at least one day (Mon=1..Sun=7)')
+        return v
 
 class SlotsRangeRequest(BaseModel):
     start_date: date = Field(description="Start date for range query")

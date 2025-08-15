@@ -207,6 +207,16 @@ This file tracks the implementation status of all features in the Grower Slot Sa
 - **Past Date Blocking**: Africa/Johannesburg timezone validation with inline error messages and disabled submit buttons
 - **Testing**: 11/11 tests passing for dialog behaviors, validation logic, API calls, and error handling
 
+## C2 - Backend Validation for /v1/slots/bulk (August 15, 2025)
+
+- **Status**: ✅ Implemented and tested
+- **Location**: `/app/backend/schemas.py`, `/app/backend/routers/slots.py`, `/app/backend/tests/test_slots_bulk_validation.py`
+- **Features**: Comprehensive backend validation preventing 500 errors with precise error messaging
+- **Schema Validation**: BulkCreateSlotsRequest with weekdays 1-7 (Mon-Sun), slot_length_min 1-1440, capacity > 0
+- **Date Validation**: Africa/Johannesburg timezone checks for past dates, end_date >= start_date constraints
+- **Error Handling**: 422 for business logic violations, 400 for ValueError conversion, never 500 responses
+- **Testing**: 15/15 tests passing for validation rules, error codes, Pydantic constraints, and edge cases
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

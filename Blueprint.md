@@ -684,6 +684,14 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **documentation:** Created SCAN_REPORT.md and VERIFICATION_REPORT.md for audit tracking
 - **testing ready:** All LSP diagnostics cleared, ready for concurrency and E2E testing
 
+### August 15, 2025 - C2 Backend Validation for /v1/slots/bulk
+- **backend:** Strict validation for bulk slot creation with proper error codes (422/400, never 500)
+- **schema:** BulkCreateSlotsRequest with Pydantic validators for end_date and weekdays constraints
+- **validation:** Africa/Johannesburg timezone checks, weekdays range 1-7 (Mon-Sun), capacity > 0
+- **error handling:** 422 for "start_date cannot be in the past", "end_date must be on or after start_date"
+- **api:** Converts ValueError to 400, prevents 500 errors with comprehensive exception handling
+- **testing:** Complete test suite covering past dates, invalid ranges, empty weekdays, malformed data
+
 ### August 15, 2025 - C1 Create Slots Split + Past Date Blocking
 - **ui:** Split "Create Slots" into single-day vs range creation with distinct dialogs
 - **create slots:** CreateSlotsDialog for focused date (start=end=selectedDate), hides weekdays UI

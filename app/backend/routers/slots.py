@@ -6,10 +6,12 @@ from datetime import datetime, date, time, timedelta
 from typing import List, Optional
 from decimal import Decimal
 import uuid
+import pytz
+from pydantic import ValidationError
 
 from ..db import execute_query, execute_one, execute_transaction, get_db_pool
 from ..security import get_current_user, require_role
-from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult, BlackoutRequest, NextAvailableRequest
+from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, BulkCreateSlotsRequest, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult, BlackoutRequest, NextAvailableRequest
 from ..services.templates import plan_slots, diff_against_db, publish_plan
 from ..services.availability import find_next_available_slots
 
@@ -76,50 +78,99 @@ async def get_slots(
 
 @router.post("/bulk")
 async def bulk_create_slots(
-    bulk_request: BulkSlotCreate,
+    request: BulkCreateSlotsRequest,
     current_user: dict = Depends(require_role("admin"))
 ):
-    """Create multiple slots for a date range"""
+    """Create multiple slots for a date range with strict validation"""
     tenant_id = current_user["tenant_id"]
     
-    slots_created = 0
-    current_date = bulk_request.start_date
+    # Get today in Africa/Johannesburg timezone
+    sa_tz = pytz.timezone('Africa/Johannesburg')
+    today = datetime.now(sa_tz).date()
     
-    queries = []
+    # Validate start_date is not in the past
+    if request.start_date < today:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "start_date cannot be in the past"}
+        )
     
-    while current_date <= bulk_request.end_date:
-        # Generate time slots for this date
-        current_time = datetime.combine(current_date, bulk_request.start_time)
-        end_datetime = datetime.combine(current_date, bulk_request.end_time)
+    # Validate weekdays is not empty (additional check beyond Pydantic)
+    if not request.weekdays:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "weekdays must include at least one day (Mon=1..Sun=7)"}
+        )
+    
+    try:
+        slots_created = 0
+        current_date = request.start_date
         
-        while current_time + timedelta(hours=bulk_request.slot_duration) <= end_datetime:
-            slot_end_time = current_time + timedelta(hours=bulk_request.slot_duration)
-            
-            query = """
-                INSERT INTO slots (tenant_id, date, start_time, end_time, capacity, notes, created_by)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                ON CONFLICT (tenant_id, date, start_time) DO NOTHING
-            """
-            args = (
-                uuid.UUID(tenant_id),
-                current_date,
-                current_time.time(),
-                slot_end_time.time(),
-                bulk_request.capacity,
-                bulk_request.notes,
-                uuid.UUID(current_user["sub"])
-            )
-            queries.append((query, args))
-            
-            current_time = slot_end_time
-            slots_created += 1
+        queries = []
         
-        current_date += timedelta(days=1)
-    
-    # Execute all queries in a transaction
-    await execute_transaction(queries)
-    
-    return {"count": slots_created, "message": f"Created {slots_created} slots"}
+        while current_date <= request.end_date:
+            # Check if this day's weekday is in the selected weekdays
+            # Python's weekday(): Monday=0, Sunday=6
+            # Our weekdays: Monday=1, Sunday=7
+            python_weekday = current_date.weekday() + 1  # Convert to 1-7
+            if python_weekday == 7:  # Sunday special case
+                python_weekday = 7
+            
+            if python_weekday in request.weekdays:
+                # Generate time slots for this date based on slot_length_min
+                slot_duration_minutes = request.slot_length_min
+                start_time = time(8, 0)  # Default 8 AM start
+                end_time = time(17, 0)   # Default 5 PM end
+                
+                current_time = datetime.combine(current_date, start_time)
+                end_datetime = datetime.combine(current_date, end_time)
+                
+                while current_time + timedelta(minutes=slot_duration_minutes) <= end_datetime:
+                    slot_end_time = current_time + timedelta(minutes=slot_duration_minutes)
+                    
+                    query = """
+                        INSERT INTO slots (tenant_id, date, start_time, end_time, capacity, notes, created_by)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        ON CONFLICT (tenant_id, date, start_time) DO NOTHING
+                    """
+                    args = (
+                        uuid.UUID(tenant_id),
+                        current_date,
+                        current_time.time(),
+                        slot_end_time.time(),
+                        Decimal(str(request.capacity)),
+                        request.notes,
+                        uuid.UUID(current_user["sub"])
+                    )
+                    queries.append((query, args))
+                    
+                    current_time = slot_end_time
+                    slots_created += 1
+            
+            current_date += timedelta(days=1)
+        
+        # Execute all queries in a transaction
+        if queries:
+            await execute_transaction(queries)
+        
+        return {
+            "count": slots_created, 
+            "message": f"Created {slots_created} slots",
+            "start_date": str(request.start_date),
+            "end_date": str(request.end_date)
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": str(e)}
+        )
+    except Exception as e:
+        # Prevent 500 errors by catching unexpected exceptions
+        raise HTTPException(
+            status_code=400,
+            detail={"error": f"Failed to create slots: {str(e)}"}
+        )
 
 @router.patch("/{slot_id}", response_model=SlotResponse)
 async def update_slot(
