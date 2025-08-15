@@ -587,6 +587,15 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - Apply-Template Preview Implementation (B1 Complete)
+- **services:** Created /app/backend/services/templates.py with plan_slots and diff_against_db functions
+- **planner:** Implements weekday schedules, slot_length_min, blackout/override exceptions, timezone support
+- **differ:** Classifies desired slots as create/update/skip by comparing against database slots
+- **endpoint:** Updated POST /v1/slots/apply-template to call planner and return deterministic counts
+- **preview:** Returns counts (created/updated/skipped) and first 10 samples per bucket, no database writes
+- **tests:** Created comprehensive test suite in /app/backend/tests/test_apply_template_preview.py
+- **verification:** Plan_slots generates expected slots, diff_against_db classifies correctly, preview mode works
+
 ### August 15, 2025 - Docs consistency pass #2 (FEATURES/ISSUES cleaned; legacy Node paths removed)
 - **docs:** Admin Calendar System moved from Fully Implemented to In-Progress with AdminPage.tsx path
 - **docs:** Export endpoint renamed with FastAPI path /app/backend/routers/exports.py and /v1/ route

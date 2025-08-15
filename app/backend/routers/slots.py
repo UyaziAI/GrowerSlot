@@ -7,9 +7,10 @@ from typing import List, Optional
 from decimal import Decimal
 import uuid
 
-from ..db import execute_query, execute_one, execute_transaction
+from ..db import execute_query, execute_one, execute_transaction, get_db_pool
 from ..security import get_current_user, require_role
 from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult
+from ..services.templates import plan_slots, diff_against_db
 
 router = APIRouter()
 
@@ -292,6 +293,76 @@ async def get_slot_usage(
     }
 
 @router.post("/apply-template", response_model=ApplyTemplateResult)
-def apply_template_stub(body: ApplyTemplateRequest):
-    # scaffold only: no generation, no writes
-    return ApplyTemplateResult()
+async def apply_template_preview(
+    body: ApplyTemplateRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Apply template to generate slots with preview/publish modes"""
+    tenant_id = current_user["tenant_id"]
+    
+    # Require admin role for template operations
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions - admin role required"
+        )
+    
+    # Load template by template_id (query only)
+    template_query = """
+        SELECT id, tenant_id, name, description, config
+        FROM templates
+        WHERE id = $1 AND tenant_id = $2
+    """
+    template_row = await execute_one(
+        template_query, 
+        uuid.UUID(body.template_id), 
+        uuid.UUID(tenant_id)
+    )
+    
+    if not template_row:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Template {body.template_id} not found"
+        )
+    
+    template_config = template_row['config']
+    
+    # Parse dates
+    start_date = datetime.strptime(body.start_date, '%Y-%m-%d').date()
+    end_date = datetime.strptime(body.end_date, '%Y-%m-%d').date()
+    
+    # Generate desired slots using template planner
+    desired_slots = await plan_slots(
+        tenant_id=tenant_id,
+        template=template_config,
+        start_date=start_date,
+        end_date=end_date,
+        tz='Africa/Johannesburg'
+    )
+    
+    # Get database pool and diff against existing slots
+    db_pool = get_db_pool()
+    diff_result = await diff_against_db(tenant_id, desired_slots, db_pool)
+    
+    # Prepare response with counts and samples
+    result = ApplyTemplateResult(
+        created=len(diff_result['create']),
+        updated=len(diff_result['update']),
+        skipped=len(diff_result['skip'])
+    )
+    
+    # Add first 10 samples per bucket for preview mode
+    if body.mode == 'preview':
+        result.samples = {
+            'create': diff_result['create'][:10],
+            'update': diff_result['update'][:10],
+            'skip': diff_result['skip'][:10]
+        }
+    
+    # For preview mode, no database writes are performed
+    if body.mode == 'preview':
+        return result
+    
+    # TODO: Implement publish mode with actual database writes
+    # For now, preview mode only
+    return result

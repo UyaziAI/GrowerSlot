@@ -56,3 +56,10 @@ async def execute_transaction(queries: list):
                 result = await connection.fetch(query, *args)
                 results.append(result)
             return results
+
+
+def get_db_pool():
+    """Get the database connection pool"""
+    if _pool is None:
+        raise RuntimeError("Database pool not initialized. Call init_db() first.")
+    return _pool
