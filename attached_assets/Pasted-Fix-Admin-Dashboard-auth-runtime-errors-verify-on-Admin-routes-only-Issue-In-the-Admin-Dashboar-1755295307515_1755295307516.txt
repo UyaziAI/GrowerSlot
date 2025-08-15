@@ -1,0 +1,34 @@
+Fix Admin Dashboard auth & runtime errors — verify on Admin routes only
+
+Issue
+In the Admin Dashboard, “Access token required” pops up across most actions (switching Week/Day/Month, blackout, restrictions). Opening Edit Day sometimes blanks the screen with a runtime error (isOpen is not defined). Prior passes claimed fixes but the Admin flows still fail.
+
+Intended outcomes
+
+Reproduce the errors on the Admin Dashboard (navigate to the app’s Admin route(s) defined in the router). Use the existing structured logging to capture paired client/server entries with a shared request_id, plus a brief root-cause note naming the exact Admin call path(s)/action(s) and why they were unauthenticated or crashing.
+
+Implement the smallest fix so all Admin requests are gated until auth context is ready and always include the expected auth; the “Access token required” popup no longer appears during Admin usage.
+
+Fix the isOpen is not defined runtime error in the Day Editor and ensure any Day Editor data fetching only runs when its required conditions are defined and truthy (sheet open, valid date/context, auth ready).
+
+Admin actions (switch Week/Day/Month; Day click → Peek/Editor; Set Blackout; Add Restrictions; CSV export) either succeed or show server 422/403/409 verbatim—never auth popups.
+
+Constraints & guardrails
+
+Smallest safe diff; no UI redesign; no new endpoints.
+
+/v1 APIs only; respect feature flags (defaults).
+
+Do not work on Grower routes for this task. Only adjust shared code if necessary, and do not regress Grower behavior.
+
+No fabricated data; do not add a new refresh-token flow if none exists.
+
+Definition of Done
+
+Admin-only automated checks: add/adjust a small tripwire that (a) fails on any unauthenticated Admin request or access-token popup and (b) fails on the Day Editor runtime error; after the fix, these checks pass.
+
+Network/log proof on Admin: during Week/Day/Month navigation, Day click, Set Blackout, Add Restrictions, open/close Day Editor, and CSV export, logs show no Admin 401s after login and the console shows no isOpen/runtime errors.
+
+Docs to truth: update ADMIN_STATUS_REPORT.md with the root-cause note (include example request_ids and named Admin actions that were fixed), add a short Delta note in BLUEPRINT.md, and add an Unreleased entry in CHANGELOG.md. If earlier entries overstated completion, correct them.
+
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md, CHANGELOG.md) as required by the rules. Maintain changelog entries in CHANGELOG.md (and Blueprint’s Delta) for every change.

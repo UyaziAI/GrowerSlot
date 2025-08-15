@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CalendarDays, Plus, Ban, Lock, Copy, X, Check } from 'lucide-react';
 import { fetchJson } from '../lib/http';
 import { useToast } from '@/hooks/use-toast';
+import { authService } from '../core/auth';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 

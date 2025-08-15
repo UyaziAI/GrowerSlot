@@ -2,7 +2,7 @@
  * TanStack Query hook for fetching slots within a date range
  */
 import { useQuery } from "@tanstack/react-query";
-import { slotsApi, type SlotResponse } from "../../../v1/endpoints";
+import { slotsApi, type SlotResponse } from "../../../api/endpoints";
 
 export function useSlotsRange(startDate: string, endDate: string, enabled: boolean = true) {
   return useQuery({

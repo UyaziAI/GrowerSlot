@@ -57,16 +57,16 @@ class ApiClient {
   // Slot endpoints
   async getSlots(date?: string) {
     const params = date ? `?date=${date}` : '';
-    return this.request(`/v1/slots${params}`);
+    return this.request(`/slots${params}`);
   }
 
   async getSlotsRange(startDate: string, endDate: string) {
     const params = `?start=${startDate}&end=${endDate}`;
-    return this.request(`/v1/slots${params}`);
+    return this.request(`/slots${params}`);
   }
 
   async bulkCreateSlots(data: any) {
-    return this.request('/v1/slots/bulk', {
+    return this.request('/slots/bulk', {
       method: 'POST',
       body: JSON.stringify(data),
     });

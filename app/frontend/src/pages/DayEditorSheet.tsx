@@ -16,6 +16,7 @@ import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { useToast } from '../hooks/use-toast';
 import { fetchJson } from '../lib/http';
+import { authService } from '../core/auth';
 
 // Feature flags
 const FEATURE_ADMIN_TEMPLATES = import.meta.env.VITE_FEATURE_ADMIN_TEMPLATES === 'true';
@@ -95,6 +96,11 @@ export default function DayEditorSheet({ dateISO, isOpen, onClose, onToggleBlack
   // Quick create slot mutation
   const quickCreateMutation = useMutation({
     mutationFn: async (formData: QuickCreateForm) => {
+      // Ensure authentication before quick create operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for slot creation');
+      }
+      
       return await fetchJson('/v1/slots/bulk', {
         method: 'POST',
         body: JSON.stringify({
@@ -130,6 +136,11 @@ export default function DayEditorSheet({ dateISO, isOpen, onClose, onToggleBlack
   // Blackout day mutation
   const blackoutDayMutation = useMutation({
     mutationFn: async (blackout: boolean) => {
+      // Ensure authentication before blackout operations
+      if (!authService.isAuthenticated() || !authService.getToken()) {
+        throw new Error('Authentication required for blackout operations');
+      }
+      
       return await fetchJson('/v1/slots/blackout', {
         method: 'POST',
         body: JSON.stringify({
