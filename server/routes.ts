@@ -57,8 +57,8 @@ const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth routes
-  app.post("/api/auth/login", async (req, res) => {
+  // Auth routes - both /api and /v1 for compatibility
+  const loginHandler = async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
       
@@ -92,11 +92,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Login error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
-  });
+  };
 
-  app.get("/api/auth/me", authenticateToken, async (req: AuthRequest, res) => {
+  // Register login handler for both /api and /v1 routes
+  app.post("/api/auth/login", loginHandler);
+  app.post("/v1/auth/login", loginHandler);
+
+  const meHandler = async (req: AuthRequest, res: Response) => {
     res.json({ user: req.user });
-  });
+  };
+
+  // Register me handler for both /api and /v1 routes
+  app.get("/api/auth/me", authenticateToken, meHandler);
+  app.get("/v1/auth/me", authenticateToken, meHandler);
 
   // Growers route
   app.get("/api/growers", authenticateToken, async (req: AuthRequest, res) => {
@@ -312,13 +320,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/slots/:id/usage", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
-      const slot = await storage.getSlotById(id);
+      const slot = await storage.getSlot(id);
       
       if (!slot) {
         return res.status(404).json({ error: "Slot not found" });
       }
 
-      const usage = await storage.getSlotUsage(id);
+      const bookings = await storage.getBookingsBySlot(id);
+      const usage = {
+        slotId: id,
+        bookings: bookings.length,
+        totalBooked: bookings.reduce((sum, b) => sum + (b.quantity || 0), 0)
+      };
       res.json(usage);
     } catch (error) {
       console.error("Get slot usage error:", error);
