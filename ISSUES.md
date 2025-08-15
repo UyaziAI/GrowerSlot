@@ -73,6 +73,28 @@
 - **Acceptance Criteria**:
   - Service can publish a month of slots to a selected external calendar
   - Idempotent operations handle create, update, and delete events correctly
+
+## Admin Calendar V1 Follow-ups (August 15, 2025)
+
+### Implementation Checklist
+- [x] Month view with 42 cells (always full calendar grid)
+- [x] Week view (7 columns) 
+- [x] Day view (vertical list)
+- [x] DayPeekSheet integration (day click opens sheet)
+- [x] DayEditorSheet integration (Edit Day button)
+- [x] BulkBar for multi-day selection
+- [x] SlotSheet for individual slot management
+- [x] Select mode toggle for bulk operations
+- [x] Past date validation
+
+### V2 Enhancements (Future)
+- [ ] Week ribbon with slot count badges
+- [ ] Inspector panel with detailed slot info
+- [ ] Template preview and application
+- [ ] E2E CI tests for admin calendar flows
+- [ ] Data badges showing capacity/booking counts
+- [ ] Advanced filtering and search
+- [ ] Drag-and-drop slot rearrangement
   - Rate-limit safe with graceful handling of API throttling
   - Resilient to external API outages without data loss
   - Updates and deletions sync correctly to external calendar

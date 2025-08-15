@@ -93,6 +93,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Features: Export CSV button in admin top bar, date range filtering, blob download
   - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
 
+- **Admin calendar core UX** (August 15, 2025)
+  - Status: ✅ V1 Implementation Complete
+  - Features: Month/Week/Day views with 42-cell calendar, day click interactions
+  - Components: DayPeekSheet, DayEditorSheet, BulkBar, SlotSheet integrated
+  - Location: `/app/frontend/src/pages/AdminPage.tsx`
+  - Note: Data badges & inspector polish pending for V2
+
 - **Audit Trail & Events System (B17)** (August 15, 2025)
   - Status: ✅ Implemented and tested
   - Location: `/server/services/audit.ts` (domain events, outbox, audit log tables)
