@@ -72,6 +72,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Features: Export CSV button in admin top bar, date range filtering, blob download
   - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
 
+- **Audit Trail & Events System (B17)** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/server/services/audit.ts`, `/shared/schema.ts` (domain events, outbox, audit log tables)
+  - Features: Domain events + outbox pattern, audit logging for all admin actions
+  - Events: SLOTS_BULK_CREATED, SLOT_UPDATED, SLOTS_BLACKED_OUT, TEMPLATE_APPLIED, BOOKING_UPDATED
+  - Verification: 16/16 tests passing in admin_audit_events.spec.ts
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

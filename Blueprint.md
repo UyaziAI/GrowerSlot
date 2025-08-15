@@ -40,7 +40,7 @@ Consignments & Checkpoints (turn bookings into tracked loads; gate/weigh/QC even
 
 Quality Inspections, Compliance docs (GLOBALG.A.P, organic, phytosanitary).
 
-Events & Outbox for audit + integrations (ERP/WMS/weighbridge/ANPR).
+Events & Outbox for audit + integrations (ERP/WMS/weighbridge/ANPR). ✅ IMPLEMENTED (B17)
 
 Rules & Workflows (quotas, state machines) as JSON configs.
 

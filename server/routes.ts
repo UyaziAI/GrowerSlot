@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { AuditService, AdminEventTypes, AuditActions } from "./services/audit";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -239,6 +240,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const created = await storage.bulkCreateSlots(slots);
+
+      // Emit audit event for bulk slot creation
+      const auditContext = {
+        tenantId: req.user!.tenantId,
+        actorId: req.user!.id,
+        actorType: 'user'
+      };
+
+      await AuditService.emitAdminEvent(
+        auditContext,
+        AdminEventTypes.SLOTS_BULK_CREATED,
+        req.user!.tenantId, // aggregate ID is tenant for bulk operations
+        'slots',
+        {
+          operation: 'bulk_create',
+          slotCount: created.length,
+          dateRange: `${data.startDate} to ${data.endDate}`,
+          timeRange: `${data.startTime} to ${data.endTime}`,
+          capacity: data.capacity,
+          duration: data.slotDuration
+        },
+        AuditActions.BULK_CREATE_SLOTS,
+        `Created ${created.length} slots from ${data.startDate} to ${data.endDate}`
+      );
+
       res.json({ success: true, count: created.length });
     } catch (error) {
       console.error("Bulk slots creation error:", error);
@@ -257,6 +283,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updates = updateSchema.parse(req.body);
       const updated = await storage.updateSlot(id, updates);
+
+      // Emit audit event for slot update (with special handling for blackout)
+      const auditContext = {
+        tenantId: req.user!.tenantId,
+        actorId: req.user!.id,
+        actorType: 'user'
+      };
+
+      const eventType = updates.blackout !== undefined 
+        ? AdminEventTypes.SLOTS_BLACKED_OUT 
+        : AdminEventTypes.SLOT_UPDATED;
+      
+      const action = updates.blackout !== undefined 
+        ? AuditActions.BLACKOUT_SLOTS 
+        : AuditActions.UPDATE_SLOT;
+
+      await AuditService.emitAdminEvent(
+        auditContext,
+        eventType,
+        id,
+        'slot',
+        {
+          operation: updates.blackout !== undefined ? 'blackout' : 'update',
+          changes: updates,
+          slotId: id
+        },
+        action,
+        `Updated slot ${id}: ${Object.keys(updates).join(', ')}`
+      );
       
       res.json(updated);
     } catch (error) {
@@ -308,6 +363,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ error: "Booking not found" });
       }
+
+      // Emit audit event for booking cancellation
+      const auditContext = {
+        tenantId: req.user!.tenantId,
+        actorId: req.user!.id,
+        actorType: 'user'
+      };
+
+      await AuditService.emitAdminEvent(
+        auditContext,
+        AdminEventTypes.BOOKING_UPDATED,
+        id,
+        'booking',
+        {
+          operation: 'cancel',
+          bookingId: id,
+          status: 'cancelled'
+        },
+        AuditActions.UPDATE_BOOKING,
+        `Cancelled booking ${id}`
+      );
 
       res.json({ ok: true });
     } catch (error) {
@@ -437,13 +513,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/v1/slots/apply-template", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       // Stub endpoint - returns zero counts
-      const { mode } = req.body;
-      res.json({
+      const { mode, templateId, startDate, endDate } = req.body;
+      
+      const results = {
         created: 0,
         updated: 0,
         skipped: 0,
         preview: mode === 'preview'
-      });
+      };
+
+      // Emit audit event for template application (even for stub)
+      if (mode !== 'preview') {
+        const auditContext = {
+          tenantId: req.user!.tenantId,
+          actorId: req.user!.id,
+          actorType: 'user'
+        };
+
+        await AuditService.emitAdminEvent(
+          auditContext,
+          AdminEventTypes.TEMPLATE_APPLIED,
+          templateId || 'unknown',
+          'template',
+          {
+            operation: 'apply_template',
+            templateId,
+            dateRange: `${startDate} to ${endDate}`,
+            mode,
+            results
+          },
+          AuditActions.APPLY_TEMPLATE,
+          `Applied template ${templateId} to ${startDate}-${endDate} (${results.created} created, ${results.updated} updated)`
+        );
+      }
+
+      res.json(results);
     } catch (error) {
       console.error("Apply template error:", error);
       res.status(500).json({ error: "Internal server error" });

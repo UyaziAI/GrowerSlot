@@ -3,9 +3,12 @@ import { Pool } from "pg";
 import { eq, and, sql, gte, lte, desc, asc } from "drizzle-orm";
 import { 
   tenants, growers, cultivars, slots, bookings, slotRestrictions, users,
+  domainEvents, outbox, auditLog,
   type Tenant, type InsertTenant, type Grower, type InsertGrower, 
   type Cultivar, type InsertCultivar, type Slot, type InsertSlot,
   type Booking, type InsertBooking, type User, type InsertUser,
+  type DomainEvent, type InsertDomainEvent, type OutboxEntry, type InsertOutboxEntry,
+  type AuditLogEntry, type InsertAuditLogEntry,
   type SlotWithUsage, type BookingWithDetails
 } from "@shared/schema";
 
@@ -70,6 +73,11 @@ export interface IStorage {
     status: string;
     notes: string;
   }[]>;
+
+  // Domain Events & Audit
+  createDomainEvent(event: InsertDomainEvent): Promise<DomainEvent>;
+  createOutboxEntry(entry: InsertOutboxEntry): Promise<OutboxEntry>;
+  createAuditLogEntry(entry: InsertAuditLogEntry): Promise<AuditLogEntry>;
 }
 
 export class DbStorage implements IStorage {
@@ -369,6 +377,22 @@ export class DbStorage implements IStorage {
       .orderBy(asc(slots.date), asc(slots.startTime), asc(bookings.createdAt));
     
     return results;
+  }
+
+  // Domain Events & Audit implementation
+  async createDomainEvent(event: InsertDomainEvent): Promise<DomainEvent> {
+    const [created] = await this.db.insert(domainEvents).values(event).returning();
+    return created;
+  }
+
+  async createOutboxEntry(entry: InsertOutboxEntry): Promise<OutboxEntry> {
+    const [created] = await this.db.insert(outbox).values(entry).returning();
+    return created;
+  }
+
+  async createAuditLogEntry(entry: InsertAuditLogEntry): Promise<AuditLogEntry> {
+    const [created] = await this.db.insert(auditLog).values(entry).returning();
+    return created;
   }
 }
 

@@ -106,6 +106,68 @@ export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
+// Domain Events
+export const domainEvents = pgTable("domain_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  eventType: text("event_type").notNull(),
+  aggregateId: uuid("aggregate_id").notNull(),
+  aggregateType: text("aggregate_type").notNull(),
+  eventData: text("event_data").notNull(), // JSON string
+  actorId: uuid("actor_id"),
+  actorType: text("actor_type"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+}, (table) => ({
+  tenantEventTypeIdx: index("domain_events_tenant_event_type_idx").on(table.tenantId, table.eventType),
+  aggregateIdx: index("domain_events_aggregate_idx").on(table.aggregateId, table.aggregateType),
+}));
+
+// Outbox Pattern
+export const outbox = pgTable("outbox", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: uuid("event_id").notNull().references(() => domainEvents.id, { onDelete: "cascade" }),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  eventType: text("event_type").notNull(),
+  payload: text("payload").notNull(), // JSON string
+  status: text("status").notNull().default("pending"), // pending/processed/failed
+  processedAt: timestamp("processed_at"),
+  retryCount: numeric("retry_count").default("0"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+}, (table) => ({
+  statusIdx: index("outbox_status_idx").on(table.status),
+  tenantIdx: index("outbox_tenant_idx").on(table.tenantId),
+}));
+
+// Audit Log
+export const auditLog = pgTable("audit_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id").notNull(),
+  actorType: text("actor_type").notNull().default("user"),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: uuid("resource_id"),
+  payloadSummary: text("payload_summary"), // Brief description/summary
+  eventId: uuid("event_id").references(() => domainEvents.id),
+  createdAt: timestamp("created_at").default(sql`now()`),
+}, (table) => ({
+  tenantActorIdx: index("audit_log_tenant_actor_idx").on(table.tenantId, table.actorId),
+  resourceIdx: index("audit_log_resource_idx").on(table.resourceType, table.resourceId),
+}));
+
+// Insert schemas for new tables
+export const insertDomainEventSchema = createInsertSchema(domainEvents).omit({ id: true, createdAt: true });
+export const insertOutboxSchema = createInsertSchema(outbox).omit({ id: true, createdAt: true, processedAt: true });
+export const insertAuditLogSchema = createInsertSchema(auditLog).omit({ id: true, createdAt: true });
+
+// Types for new tables
+export type DomainEvent = typeof domainEvents.$inferSelect;
+export type InsertDomainEvent = z.infer<typeof insertDomainEventSchema>;
+export type OutboxEntry = typeof outbox.$inferSelect;
+export type InsertOutboxEntry = z.infer<typeof insertOutboxSchema>;
+export type AuditLogEntry = typeof auditLog.$inferSelect;
+export type InsertAuditLogEntry = z.infer<typeof insertAuditLogSchema>;
+
 // Extended types for API responses
 export type SlotWithUsage = Slot & {
   booked: number;
