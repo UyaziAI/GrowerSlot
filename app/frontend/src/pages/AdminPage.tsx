@@ -4,7 +4,7 @@ export default function AdminPage() {
   const [view, setView] = useState<'month'|'week'|'day'>('month');
   
   return (
-    <div>
+    <div data-testid="admin-page">
       <header className="flex items-center justify-between p-3 border-b">
         <div className="flex gap-2">
           <button onClick={()=>setView('month')}>Month</button>
