@@ -100,6 +100,12 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Events: SLOTS_BULK_CREATED, SLOT_UPDATED, SLOTS_BLACKED_OUT, TEMPLATE_APPLIED, BOOKING_UPDATED
   - Verification: 16/16 tests passing in admin_audit_events.spec.ts
 
+- **M1 Toolbar cleanup + DayPeek bottom sheet** (August 15, 2025)
+  - Status: 🔄 In-Progress → Testing
+  - Location: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/DayPeekSheet.tsx`
+  - Features: Mobile-first admin calendar with simplified toolbar, DayPeek bottom sheet for context actions
+  - Testing: Component structure implemented, integration testing in progress
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

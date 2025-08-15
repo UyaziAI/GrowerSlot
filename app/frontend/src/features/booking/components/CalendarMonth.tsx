@@ -17,6 +17,7 @@ interface CalendarMonthProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   onSlotClick?: (slot: SlotResponse) => void;
+  onDayClick?: (dateISO: string) => void;
   isLoading?: boolean;
   className?: string;
 }
@@ -27,6 +28,7 @@ interface WeekProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   onSlotClick?: (slot: SlotResponse) => void;
+  onDayClick?: (dateISO: string) => void;
 }
 
 interface DayCellProps {
@@ -37,6 +39,7 @@ interface DayCellProps {
   isCurrentMonth: boolean;
   onDateSelect: (date: Date) => void;
   onSlotClick?: (slot: SlotResponse) => void;
+  onDayClick?: (dateISO: string) => void;
 }
 
 function DayCell({ 
@@ -46,7 +49,8 @@ function DayCell({
   isToday, 
   isCurrentMonth, 
   onDateSelect, 
-  onSlotClick 
+  onSlotClick,
+  onDayClick 
 }: DayCellProps) {
   const dateStr = date.toISOString().split('T')[0];
   
@@ -77,7 +81,10 @@ function DayCell({
         ${!isCurrentMonth ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'}
         ${totalSlots === 0 ? 'bg-gray-25' : ''}
       `}
-      onClick={() => onDateSelect(date)}
+      onClick={() => {
+        onDateSelect(date);
+        onDayClick?.(dateStr);
+      }}
       data-testid={`day-cell-${dateStr}`}
     >
       <CardContent className="p-2">
@@ -130,7 +137,7 @@ function DayCell({
   );
 }
 
-function WeekRow({ weekDates, slots, selectedDate, onDateSelect, onSlotClick }: WeekProps) {
+function WeekRow({ weekDates, slots, selectedDate, onDateSelect, onSlotClick, onDayClick }: WeekProps) {
   const selectedDateStr = selectedDate.toISOString().split('T')[0];
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -170,6 +177,7 @@ function WeekRow({ weekDates, slots, selectedDate, onDateSelect, onSlotClick }: 
             isCurrentMonth={isCurrentMonth}
             onDateSelect={onDateSelect}
             onSlotClick={onSlotClick}
+            onDayClick={onDayClick}
           />
         );
       })}
@@ -182,6 +190,7 @@ export default function CalendarMonth({
   selectedDate,
   onDateSelect,
   onSlotClick,
+  onDayClick,
   isLoading = false,
   className = ""
 }: CalendarMonthProps) {
@@ -341,6 +350,7 @@ export default function CalendarMonth({
                   selectedDate={selectedDate}
                   onDateSelect={onDateSelect}
                   onSlotClick={onSlotClick}
+                  onDayClick={onDayClick}
                 />
               </div>
             </div>
