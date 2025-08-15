@@ -82,9 +82,10 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Feature flag: VITE_FEATURE_ADMIN_TEMPLATES
 
 - **Next Available finder** (August 15, 2025)
-  - Status: 🔄 Planning phase - server-side search design
+  - Status: ✅ Implemented - B11 Backend + B12 Frontend complete
   - Scope: Search future slots respecting restrictions and capacity
   - Feature flag: VITE_FEATURE_NEXT_AVAILABLE
+  - Implementation: POST /v1/slots/next-available endpoint, NextAvailableDialog component with slot jump functionality
 
 - **Week view calendar** (August 14, 2025)
   - Status: 🔄 Week Overview implementation complete - kept in In-Progress per task requirements

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ChevronLeft, ChevronRight, Calendar, CalendarDays, BarChart3, Settings, Plus, Edit2, Trash2, FileText, Ban, Shield, Move } from "lucide-react";
 import InspectorPanel from "./InspectorPanel";
+import NextAvailableDialog from "@/components/NextAvailableDialog";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverEvent, useDraggable, useDroppable, DragOverlay } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useLocation } from "wouter";
@@ -432,6 +433,30 @@ export default function AdminDashboard() {
   const handleSlotClick = (slot: SlotWithUsage) => {
     setSelectedSlot(slot);
     setShowInspector(true);
+  };
+
+  // Handle slot jump from Next Available dialog
+  const handleSlotJump = (slotId: string, date: string) => {
+    // Set the selected date to focus on the target slot's date
+    setSelectedDate(new Date(date));
+    
+    // Switch to day view for focused slot viewing
+    setViewMode('day');
+    
+    // Invalidate and refetch slots to ensure fresh data
+    queryClient.invalidateQueries({ queryKey: ['slots'] });
+    queryClient.invalidateQueries({ queryKey: ['slotsRange'] });
+    
+    // Open inspector panel for the jumped slot
+    setShowInspector(true);
+    
+    // Try to find and select the specific slot after refetch
+    setTimeout(() => {
+      const targetSlot = slots.find(slot => slot.id === slotId);
+      if (targetSlot) {
+        setSelectedSlot(targetSlot);
+      }
+    }, 500);
   };
 
   // Booking update mutation for drag-drop
@@ -916,6 +941,11 @@ export default function AdminDashboard() {
                   <Shield className="h-4 w-4 mr-2" />
                   Restrictions
                 </Button>
+
+                {/* Next Available Dialog - Feature Gated */}
+                <NextAvailableDialog
+                  onSlotJump={handleSlotJump}
+                />
               </div>
             </div>
           </div>
