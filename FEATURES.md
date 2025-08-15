@@ -113,6 +113,14 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - API Integration: /v1/slots/bulk, /v1/slots/blackout, /v1/restrictions/apply endpoints
   - Testing: 6/6 tests passing for editor functionality and API integration
 
+- **M3 Selection mode + Bulk actions (week/month)** (August 15, 2025)
+  - Status: ✅ Implemented and tested
+  - Location: `/app/frontend/src/pages/AdminPage.tsx`, `/app/frontend/src/pages/BulkBar.tsx`
+  - Features: Multi-day selection with checkmark overlays, sticky BulkBar with scoped actions
+  - Bulk Actions: Create Slots — Range, Blackout — Selected days, Apply Restrictions — Selected days, Duplicate From…
+  - Week Integration: "Bulk actions (week)" button preselects visible week for bulk operations
+  - Testing: 7/7 tests passing for selection mode, bulk operations, and API integration
+
 ## In-Progress Features 🔄
 
 ### Admin Calendar Extensions (August 15, 2025)

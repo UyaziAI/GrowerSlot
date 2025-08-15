@@ -19,6 +19,8 @@ interface CalendarMonthProps {
   onSlotClick?: (slot: SlotResponse) => void;
   onDayClick?: (dateISO: string) => void;
   isLoading?: boolean;
+  selectionMode?: boolean;
+  selectedDates?: string[];
   className?: string;
 }
 
@@ -29,6 +31,8 @@ interface WeekProps {
   onDateSelect: (date: Date) => void;
   onSlotClick?: (slot: SlotResponse) => void;
   onDayClick?: (dateISO: string) => void;
+  selectionMode?: boolean;
+  selectedDates?: string[];
 }
 
 interface DayCellProps {
@@ -40,6 +44,8 @@ interface DayCellProps {
   onDateSelect: (date: Date) => void;
   onSlotClick?: (slot: SlotResponse) => void;
   onDayClick?: (dateISO: string) => void;
+  selectionMode?: boolean;
+  isDateSelected?: boolean;
 }
 
 function DayCell({ 
@@ -50,7 +56,9 @@ function DayCell({
   isCurrentMonth, 
   onDateSelect, 
   onSlotClick,
-  onDayClick 
+  onDayClick,
+  selectionMode,
+  isDateSelected
 }: DayCellProps) {
   const dateStr = date.toISOString().split('T')[0];
   
@@ -75,11 +83,12 @@ function DayCell({
   return (
     <Card 
       className={`
-        min-h-[100px] cursor-pointer transition-all duration-200 border
+        min-h-[100px] cursor-pointer transition-all duration-200 border relative
         ${isSelected ? 'ring-2 ring-blue-500 border-blue-300' : ''}
         ${isToday ? 'bg-blue-50 border-blue-200' : ''}
         ${!isCurrentMonth ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'}
         ${totalSlots === 0 ? 'bg-gray-25' : ''}
+        ${selectionMode && isDateSelected ? 'ring-2 ring-green-500 border-green-300 bg-green-50' : ''}
       `}
       onClick={() => {
         onDateSelect(date);
@@ -87,6 +96,14 @@ function DayCell({
       }}
       data-testid={`day-cell-${dateStr}`}
     >
+      {/* Selection Mode Checkmark Overlay */}
+      {selectionMode && isDateSelected && (
+        <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )}
       <CardContent className="p-2">
         {/* Date header */}
         <div className="flex justify-between items-start mb-1">
@@ -137,7 +154,7 @@ function DayCell({
   );
 }
 
-function WeekRow({ weekDates, slots, selectedDate, onDateSelect, onSlotClick, onDayClick }: WeekProps) {
+function WeekRow({ weekDates, slots, selectedDate, onDateSelect, onSlotClick, onDayClick, selectionMode, selectedDates }: WeekProps) {
   const selectedDateStr = selectedDate.toISOString().split('T')[0];
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -178,6 +195,8 @@ function WeekRow({ weekDates, slots, selectedDate, onDateSelect, onSlotClick, on
             onDateSelect={onDateSelect}
             onSlotClick={onSlotClick}
             onDayClick={onDayClick}
+            selectionMode={selectionMode}
+            isDateSelected={selectionMode ? selectedDates?.includes(dateStr) : false}
           />
         );
       })}
@@ -192,6 +211,8 @@ export default function CalendarMonth({
   onSlotClick,
   onDayClick,
   isLoading = false,
+  selectionMode = false,
+  selectedDates = [],
   className = ""
 }: CalendarMonthProps) {
   const parentRef = useRef<HTMLDivElement>(null);
@@ -351,6 +372,8 @@ export default function CalendarMonth({
                   onDateSelect={onDateSelect}
                   onSlotClick={onSlotClick}
                   onDayClick={onDayClick}
+                  selectionMode={selectionMode}
+                  selectedDates={selectedDates}
                 />
               </div>
             </div>

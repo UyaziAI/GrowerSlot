@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, ChevronDown, Calendar, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, ChevronDown, Calendar, Download, CheckSquare, Square } from 'lucide-react';
 import CalendarMonth from '@/features/booking/components/CalendarMonth';
 import { DayPeekSheet } from './DayPeekSheet';
 import { FilterDrawer } from './FilterDrawer';
 import { DayEditorSheet } from './DayEditorSheet';
+import { BulkBar } from './BulkBar';
 import { format, addDays, subDays } from 'date-fns';
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -29,6 +30,8 @@ export default function AdminPage() {
   } | null>(null);
   const [dayEditorOpen, setDayEditorOpen] = useState(false);
   const [dayEditorDate, setDayEditorDate] = useState<string>('');
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     grower: '',
@@ -70,16 +73,58 @@ export default function AdminPage() {
   };
 
   const handleDayClick = (dateISO: string) => {
-    // Mock summary data - in real implementation, calculate from slots
-    const summary: DayPeekSummary = {
-      remaining: 15,
-      booked: 8,
-      blackout: false,
-      restricted: false
-    };
+    if (selectionMode) {
+      // Toggle day selection
+      setSelectedDates(prev => 
+        prev.includes(dateISO) 
+          ? prev.filter(date => date !== dateISO)
+          : [...prev, dateISO]
+      );
+    } else {
+      // Normal day peek behavior
+      const summary: DayPeekSummary = {
+        remaining: 15,
+        booked: 8,
+        blackout: false,
+        restricted: false
+      };
 
-    setDayPeekData({ dateISO, summary });
-    setDayPeekOpen(true);
+      setDayPeekData({ dateISO, summary });
+      setDayPeekOpen(true);
+    }
+  };
+
+  const handleToggleSelectionMode = () => {
+    setSelectionMode(prev => !prev);
+    if (selectionMode) {
+      setSelectedDates([]);
+    }
+  };
+
+  const handleSelectWeek = () => {
+    // Select all 7 days of the current week
+    const currentDate = new Date(selectedDate);
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      weekDates.push(date.toISOString().split('T')[0]);
+    }
+    
+    setSelectedDates(weekDates);
+    setSelectionMode(true);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedDates([]);
+  };
+
+  const handleDoneSelection = () => {
+    setSelectionMode(false);
+    setSelectedDates([]);
   };
 
   const handleCreateSlots = () => {
@@ -158,6 +203,29 @@ export default function AdminPage() {
               cultivars={cultivars}
             />
 
+            {/* Selection Mode Toggle */}
+            <Button
+              variant={selectionMode ? "default" : "outline"}
+              size="sm"
+              onClick={handleToggleSelectionMode}
+              data-testid="button-selection-mode"
+            >
+              {selectionMode ? <CheckSquare className="h-4 w-4 mr-2" /> : <Square className="h-4 w-4 mr-2" />}
+              {selectionMode ? 'Exit Select' : 'Select'}
+            </Button>
+
+            {/* Week Selection (only show in week view) */}
+            {viewMode === 'week' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSelectWeek}
+                data-testid="button-select-week"
+              >
+                Bulk actions (week)
+              </Button>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" data-testid="button-create-dropdown">
@@ -224,6 +292,8 @@ export default function AdminPage() {
               onSlotClick={(slot) => handleDayClick(slot.date)}
               onDayClick={handleDayClick}
               isLoading={slotsLoading}
+              selectionMode={selectionMode}
+              selectedDates={selectedDates}
               className="h-full"
             />
           </TabsContent>
@@ -283,6 +353,13 @@ export default function AdminPage() {
           setDayEditorOpen(false);
           setDayEditorDate('');
         }}
+      />
+
+      {/* Bulk Bar */}
+      <BulkBar
+        selectedDates={selectedDates}
+        onClearSelection={handleClearSelection}
+        onDone={handleDoneSelection}
       />
     </div>
   );
