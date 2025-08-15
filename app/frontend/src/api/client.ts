@@ -63,8 +63,8 @@ class ApiClient {
   }
 
   async getSlotsRange(startDate: string, endDate: string) {
-    const params = `?start_date=${startDate}&end_date=${endDate}`;
-    return this.request(`/v1/slots/range${params}`);
+    const params = `?start=${startDate}&end=${endDate}`;
+    return this.request(`/v1/slots${params}`);
   }
 
   async bulkCreateSlots(data: any) {

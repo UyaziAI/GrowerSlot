@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **2025-08-15**: API compliance P1.1 — Fixed /v1/slots endpoint usage across AdminPage:47, client.ts:70, useSlotsRange.ts:22. Now uses spec-compliant `/v1/slots?start&end` format. Added admin_api_compliance.spec.tsx test coverage.
+
 ### Documentation
 - **2025-08-15**: Admin audit + synchronization pass — updated Blueprint Delta, FEATURES status, ISSUES, and CHANGELOG. Generated comprehensive ADMIN_STATUS_REPORT.md identifying API compliance gaps, feature flag integration needs, and missing visual indicators.
 

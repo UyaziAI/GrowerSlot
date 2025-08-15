@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Fixed /v1/slots endpoint usage — AdminPage, client.ts, useSlotsRange.ts now use spec-compliant /v1/slots?start&end format.
+
 ### August 15, 2025 - Admin audit + doc sync — Status report generated, API compliance gaps identified, feature flag integration needed.
 
 ### August 15, 2025 - UI reconcile — Admin uses existing app shell, theme, and mobile layout (no new files).

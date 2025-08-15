@@ -41,7 +41,7 @@ export default function AdminPage() {
                      view === 'week' ? format(endOfWeek(parseISO(focusedDate)), 'yyyy-MM-dd') :
                      format(endOfMonth(parseISO(focusedDate)), 'yyyy-MM-dd');
       
-      const res = await fetch(`/v1/slots/range?start=${startDate}&end=${endDate}`);
+      const res = await fetch(`/v1/slots?start=${startDate}&end=${endDate}`);
       if (res.ok) {
         const data = await res.json();
         setSlots(data.slots || []);
