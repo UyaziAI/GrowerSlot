@@ -587,6 +587,11 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
 
+### August 15, 2025 - Docs consistency pass #2 (FEATURES/ISSUES cleaned; legacy Node paths removed)
+- **docs:** Admin Calendar System moved from Fully Implemented to In-Progress with AdminPage.tsx path
+- **docs:** Export endpoint renamed with FastAPI path /app/backend/routers/exports.py and /v1/ route
+- **docs:** Legacy Node paths removed, all references updated to FastAPI/React structure
+
 ### August 15, 2025 - Templates System Testing Infrastructure Complete
 - **testing:** Implemented comprehensive smoke test suite with React Testing Library and vitest
 - **frontend:** 4/5 frontend tests passing for Templates drawer, Apply Template dialog, empty state

@@ -67,12 +67,14 @@ This file tracks issues, technical debt, and any violations of the governance ru
 
 
 
-### Missing CSV Export Endpoint
+### Export endpoint design
 - **Severity**: Medium  
 - **Description**: Blueprint specifies CSV export endpoint but not implemented
-- **Details**: GET /api/export/bookings.csv endpoint missing from server routes
+- **Details**: GET /v1/exports/bookings.csv endpoint missing from FastAPI backend
+- **Path**: `/app/backend/routers/exports.py`
+- **Route**: GET /v1/exports/bookings.csv
+- **Status**: Open (Backlog)
 - **Impact**: Admin data export functionality unavailable
-- **Solution Required**: Implement CSV endpoint in server/routes.ts
 
 ### Timeline Navigation and Clean Pill Design (August 14, 2025) - RESOLVED
 - **Issue**: Pills cluttered with info icons, lack of month context during horizontal scrolling, suboptimal sizing
