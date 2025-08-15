@@ -75,6 +75,13 @@ class SlotsRangeRequest(BaseModel):
         
         return instance
 
+
+class NextAvailableRequest(BaseModel):
+    from_datetime: str         # ISO '2025-08-15T08:00:00+02:00'
+    grower_id: Optional[str] = None
+    cultivar_id: Optional[str] = None
+    limit: int = 10
+
 # Booking schemas
 class BookingCreate(BaseModel):
     slot_id: str

@@ -548,6 +548,7 @@ POST   /v1/admin/templates                 -> { id, tenant_id, name, config, ...
 PATCH  /v1/admin/templates/{id}            -> { id, tenant_id, name, config, ... } 
 DELETE /v1/admin/templates/{id}            -> { ok: true }
 POST   /v1/slots/apply-template            -> { created: 0, updated: 0, skipped: 0, samples: {...} }
+POST   /v1/slots/next-available            -> { slots: [{slot_id,date,start_time,end_time,remaining,notes}], total:int }
 
 **Publish idempotency guaranteed**: Template publishing uses update-then-insert pattern within single transaction to ensure atomicity and prevent partial writes.
 PATCH  /v1/bookings/{id}                -> { id, updated: true }
@@ -620,6 +621,15 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
+
+### August 15, 2025 - Backend "Next Available" Finder (B11 Complete)
+- **endpoint:** POST /v1/slots/next-available with deterministic logic for eligible slots after from_datetime
+- **filtering:** Respects capacity (remaining > 0), blackout exclusion, grower/cultivar restrictions, tenant isolation
+- **ordering:** Proper chronological sorting by date/time with configurable limit parameter
+- **timezone:** Handles Africa/Johannesburg timezone with ISO datetime parsing (2025-08-15T08:00:00+02:00)
+- **restrictions:** Implements grower_allowlist and cultivar_allowlist via slot_restrictions table
+- **testing:** Comprehensive test suite covering all filtering, ordering, capacity, and restriction scenarios
+- **advance notice:** TODO placeholder for per-slot advance_notice_min enforcement when implemented
 
 ### August 15, 2025 - Backend Apply-Template Publish Transaction (B10 Complete)
 - **transaction:** Wrapped publish_plan in single DB transaction with proper update-then-insert pattern

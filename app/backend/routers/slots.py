@@ -9,8 +9,9 @@ import uuid
 
 from ..db import execute_query, execute_one, execute_transaction, get_db_pool
 from ..security import get_current_user, require_role
-from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult, BlackoutRequest
+from ..schemas import SlotResponse, SlotUpdate, BulkSlotCreate, SlotsRangeRequest, ApplyTemplateRequest, ApplyTemplateResult, BlackoutRequest, NextAvailableRequest
 from ..services.templates import plan_slots, diff_against_db, publish_plan
+from ..services.availability import find_next_available_slots
 
 router = APIRouter()
 
@@ -558,6 +559,35 @@ async def apply_template_preview(
             updated=publish_result['updated'],
             skipped=publish_result['skipped']
         )
+
+
+@router.post("/next-available")
+async def get_next_available_slots(
+    request: NextAvailableRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Find next available slots after from_datetime respecting capacity, restrictions, and advance notice.
+    
+    Returns first N eligible slots with remaining capacity > 0.
+    """
+    tenant_id = current_user["tenant_id"]
+    db_pool = get_db_pool()
+    
+    try:
+        result = await find_next_available_slots(
+            tenant_id=tenant_id,
+            from_datetime=request.from_datetime,
+            db_pool=db_pool,
+            grower_id=request.grower_id,
+            cultivar_id=request.cultivar_id,
+            limit=request.limit
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error finding available slots: {str(e)}")
     
     # Default fallback (should not reach here)
     return result
