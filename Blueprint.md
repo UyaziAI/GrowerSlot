@@ -690,7 +690,7 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
-### August 15, 2025 - Admin auth fix — Fixed "Access token required" popup by adding Bearer token headers to admin API calls and proper auth error handling.
+### August 15, 2025 - Admin auth fix (complete) — Eliminated "Access token required" popup by replacing all unauthenticated fetch() calls with authenticated fetchJson() in BulkBar.tsx, DayEditorSheet.tsx, SlotSheet.tsx, and AdminPage.tsx. All admin operations now include Bearer token headers.
 
 ### August 15, 2025 - Test coverage pack P3.1 — Implemented comprehensive test suite for API compliance, error handling, accessibility, and feature flags.
 

@@ -136,9 +136,8 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
     mutationFn: async () => {
       if (!slot) return;
       
-      const response = await fetch('/v1/restrictions/apply', {
+      return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slot_ids: [slot.id],
           restrictions: {
@@ -148,12 +147,6 @@ export function SlotSheet({ slot, isOpen, onClose }: SlotSheetProps) {
           }
         })
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-      return response.json();
     },
     onSuccess: () => {
       toast({

@@ -166,7 +166,11 @@ The Admin calendar interface has been **partially implemented** with core UI arc
 4. ✅ **Feature flag test pack**: Template and next available feature gating validation
 
 ### Validation & Safety
-1. ✅ **Admin authentication**: Fixed "Access token required" popup by adding Bearer token to fetchJson in http.ts and auth checks in AdminPage
+1. ✅ **Admin authentication**: Fixed "Access token required" popup completely by:
+   - Added Bearer token headers to fetchJson utility in app/frontend/src/lib/http.ts
+   - Replaced all direct fetch() calls in BulkBar.tsx, DayEditorSheet.tsx, SlotSheet.tsx with authenticated fetchJson()
+   - Added auth validation in AdminPage.tsx with graceful 401 redirect instead of popup
+   - Verified: Admin initial load, view switches, sheet opening, bulk actions now use authentication
 2. **Past date blocking**: Add comprehensive `min=today` attributes to all date inputs
 3. **Blackout prevention**: Implement booking prevention on blackout slots with 409 handling
 4. **Capacity validation**: Ensure positive integer validation for slot creation forms

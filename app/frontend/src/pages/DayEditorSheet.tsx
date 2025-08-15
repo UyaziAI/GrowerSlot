@@ -90,9 +90,10 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Quick create slot mutation
   const quickCreateMutation = useMutation({
     mutationFn: async (formData: QuickCreateForm) => {
-      const response = await fetch('/v1/slots/bulk', {
+      const { fetchJson } = await import('../lib/http');
+      
+      return await fetchJson('/v1/slots/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           startDate: dateISO,
           endDate: dateISO,
@@ -104,9 +105,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
           weekdays: weekdayMask
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to create slot');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -129,9 +127,10 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Blackout day mutation
   const blackoutDayMutation = useMutation({
     mutationFn: async (blackout: boolean) => {
-      const response = await fetch('/v1/slots/blackout', {
+      const { fetchJson } = await import('../lib/http');
+      
+      return await fetchJson('/v1/slots/blackout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           start_date: dateISO,
           end_date: dateISO,
@@ -139,12 +138,6 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
           note: blackout ? 'Day blackout from editor' : 'Blackout removed from editor'
         })
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update blackout');
-      }
-      return response.json();
     },
     onSuccess: () => {
       setApiError('');
@@ -169,17 +162,15 @@ export default function DayEditorSheet({ dateISO, onClose, onToggleBlackout, onQ
   // Restrictions mutation
   const restrictionsMutation = useMutation({
     mutationFn: async (restrictions: any) => {
-      const response = await fetch('/v1/restrictions/apply', {
+      const { fetchJson } = await import('../lib/http');
+      
+      return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date_scope: [dateISO],
           restrictions: restrictions
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to apply restrictions');
-      return response.json();
     },
     onSuccess: () => {
       toast({

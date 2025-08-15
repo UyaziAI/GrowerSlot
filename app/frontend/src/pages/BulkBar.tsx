@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CalendarDays, Plus, Ban, Lock, Copy, X, Check } from 'lucide-react';
-import { fetchWithVerbatimErrors } from '../lib/http';
+import { fetchJson } from '../lib/http';
 import { useToast } from '@/hooks/use-toast';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
@@ -83,9 +83,8 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
       const { startDate, endDate } = getDateRange(selectedDates);
       const weekdays = getWeekdayMask(selectedDates);
       
-      const response = await fetch('/v1/slots/bulk', {
+      return await fetchJson('/v1/slots/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           startDate,
           endDate,
@@ -97,9 +96,6 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
           weekdays
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to create slots');
-      return response.json();
     },
     onSuccess: (result) => {
       toast({
@@ -124,9 +120,8 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
     mutationFn: async () => {
       const { startDate, endDate } = getDateRange(selectedDates);
       
-      const response = await fetch('/v1/slots/blackout', {
+      return await fetchJson('/v1/slots/blackout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           start_date: startDate,
           end_date: endDate,
@@ -135,12 +130,6 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
           selected_dates: selectedDates
         })
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-      return response.json();
     },
     onSuccess: () => {
       setApiError('');
@@ -164,9 +153,8 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
   // Bulk restrictions mutation
   const restrictionsMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/v1/restrictions/apply', {
+      return await fetchJson('/v1/restrictions/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date_scope: selectedDates,
           restrictions: {
@@ -176,9 +164,6 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
           }
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to apply restrictions');
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -202,17 +187,13 @@ export function BulkBar({ selectedDates, onClearSelection, onDone }: BulkBarProp
     mutationFn: async () => {
       if (!sourceDate) throw new Error('Please select a source date');
       
-      const response = await fetch('/v1/slots/duplicate', {
+      return await fetchJson('/v1/slots/duplicate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source_date: sourceDate,
           target_dates: selectedDates
         })
       });
-      
-      if (!response.ok) throw new Error('Failed to duplicate slots');
-      return response.json();
     },
     onSuccess: () => {
       toast({
