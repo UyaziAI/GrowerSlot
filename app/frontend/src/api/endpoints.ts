@@ -110,3 +110,12 @@ export const logisticsApi = {
   getConsignments: (date?: string): Promise<ConsignmentResponse[]> => apiClient.getConsignments(date),
   createCheckpoint: (consignmentId: string, data: any): Promise<any> => apiClient.createCheckpoint(consignmentId, data),
 };
+
+export const ADMIN_TEMPLATES = {
+  list: '/v1/admin/templates',
+  create: '/v1/admin/templates',
+  update: (id:string) => `/v1/admin/templates/${id}`,
+  delete: (id:string) => `/v1/admin/templates/${id}`,
+};
+export const APPLY_TEMPLATE = '/v1/slots/apply-template';
+export const PATCH_BOOKING = (id:string) => `/v1/bookings/${id}`;

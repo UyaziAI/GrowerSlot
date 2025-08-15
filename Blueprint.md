@@ -574,6 +574,10 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **quality:** Application stable, transactional booking safe, multi-tenancy enforced
 - **compliance:** RBAC working, Day/Week toggle functional, MVP requirements met
 
+### August 15, 2025 - Frontend Feature Flags & Endpoint Constants
+- **flags:** Add VITE_FEATURE_ADMIN_TEMPLATES and VITE_FEATURE_NEXT_AVAILABLE to .env.example
+- **endpoints:** Add ADMIN_TEMPLATES, APPLY_TEMPLATE, PATCH_BOOKING constants to endpoints.ts
+
 ### August 15, 2025 - PATCH Bookings Endpoint Stub
 - **endpoint:** Add PATCH /v1/bookings/{id} returning success placeholder
 
