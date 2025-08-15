@@ -690,6 +690,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
 
+### August 15, 2025 - Fix: /admin renders AdminPage (not Grower).
+
 ### August 15, 2025 - FE endpoints migrated to /v1.
 
 ### August 15, 2025 - Re-enable Admin day interactions (peek/editor/bulk).
