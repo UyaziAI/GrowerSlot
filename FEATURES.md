@@ -94,13 +94,13 @@ This file tracks the implementation status of all features in the Grower Slot Sa
   - Verification: 15/15 tests passing in admin_export_unit.spec.tsx
 
 - **Admin calendar core UX** (August 15, 2025)
-  - Status: ✅ V1 Implementation Complete
-  - Features: Month/Week/Day views with 42-cell calendar, day click interactions
-  - Components: DayPeekSheet, DayEditorSheet, BulkBar, SlotSheet integrated
-  - Location: `/app/frontend/src/pages/AdminPage.tsx` and `/client/src/pages/AdminPage.tsx`
-  - Note: Data badges & inspector polish pending for V2
-  - API: Uses GET /v1/slots?start=YYYY-MM-DD&end=YYYY-MM-DD per blueprint
-  - Errors: Displays json.error verbatim on non-OK responses
+  - Status: ⚠️ V1 Partial Implementation - Core structure complete, compliance gaps identified
+  - Features: Month/Week/Day views with 42-cell calendar, day click interactions, component integration
+  - Components: DayPeekSheet, DayEditorSheet, BulkBar, SlotSheet fully wired
+  - Location: `/app/frontend/src/pages/AdminPage.tsx` (primary), `/client/src/pages/AdminPage.tsx` (reconciled)
+  - **Compliance Issues**: Uses `/v1/slots/range` instead of spec-required `/v1/slots?start&end`
+  - **Missing**: Feature flag integration, verbatim error display, visual blackout/restriction indicators
+  - **Next**: API endpoint correction, error handling enhancement, badge implementation
 
 - **Audit Trail & Events System (B17)** (August 15, 2025)
   - Status: ✅ Implemented and tested

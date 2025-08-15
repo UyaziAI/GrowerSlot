@@ -583,7 +583,7 @@ This file replaces separate blueprints and should be saved at repo root as "Blue
 
 **Reference**: [Admin_Addendum.md](./Admin_Addendum.md)
 
-This addendum introduces enhancements to the Admin experience with templates, preview/publish workflows, and enhanced calendar management. The following additions extend (do not replace) existing blueprint sections:
+This addendum introduces enhancements to the Admin experience with templates, preview/publish workflows, and enhanced calendar management. **Status as of 2025-08-15**: Core UI architecture implemented, API compliance needs correction (`/v1/slots` endpoint), feature flags require integration. The following additions extend (do not replace) existing blueprint sections:
 
 ### Frontend Plan (§7) Additions:
 - **Admin Calendar Month/Week/Day views** with right-hand Inspector panel for slot details and quick actions
@@ -689,6 +689,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 - **legacy removal:** Renamed admin-dashboard.tsx to .bak to prevent accidental re-import
 - **header validation:** Added admin_route_wires_new_ui.spec.tsx test ensuring Create ▾ and More ▾ buttons exist with no legacy header buttons
 - **testids:** Updated AdminPage header buttons to use admin-header-create and admin-header-more data-testids
+
+### August 15, 2025 - Admin audit + doc sync — Status report generated, API compliance gaps identified, feature flag integration needed.
 
 ### August 15, 2025 - UI reconcile — Admin uses existing app shell, theme, and mobile layout (no new files).
 

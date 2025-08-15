@@ -87,16 +87,37 @@
 - [x] Select mode toggle for bulk operations
 - [x] Past date validation
 
+### Admin V1 Compliance Issues (August 15, 2025)
+
+#### API Endpoint Violations
+- [ ] **Fix slot fetching endpoint**: Change `/v1/slots/range?start&end` to `/v1/slots?start&end` in AdminPage:44
+- [ ] **Standardize blackout endpoints**: Ensure all blackout operations use spec-compliant format
+- [ ] **Error message passthrough**: Replace generic toast messages with verbatim `json.error` display
+
+#### Feature Flag Integration Required  
+- [ ] **Template functionality gating**: Implement `VITE_FEATURE_ADMIN_TEMPLATES=false` checks
+- [ ] **Next Available integration**: Add `VITE_FEATURE_NEXT_AVAILABLE=false` conditional rendering
+- [ ] **Environment file compliance**: Ensure .env.example includes required admin feature flags
+
+#### Visual Indicator Gaps
+- [ ] **Month view badges**: Add slot count/remaining capacity indicators per cell
+- [ ] **Blackout icons**: Implement ⛔ visual indicator for blackout days/slots  
+- [ ] **Restriction icons**: Add 🔒 indicator for restricted access periods
+- [ ] **42-cell guarantee**: Add test coverage ensuring month always shows full 6×7 grid
+
+#### Validation & Safety
+- [ ] **Past date prevention**: Add `min=today` (Africa/Johannesburg) to all admin date inputs
+- [ ] **Blackout booking prevention**: Implement 409 error handling for blackout slot booking attempts
+- [ ] **Audit event emission**: Add event logging for admin CRUD operations
+
 ### V2 Enhancements (Future)
 - [ ] Week ribbon with slot count badges
-- [ ] Inspector panel with detailed slot info
-- [ ] Template preview and application (feature flagged)
+- [ ] Inspector panel with detailed slot info  
+- [ ] Template preview and application drawer
 - [ ] E2E CI tests for admin calendar flows
-- [ ] Data badges showing capacity/booking counts
 - [ ] Advanced filtering and search
 - [ ] Drag-and-drop slot rearrangement
 - [ ] Calendar virtualization for performance
-- [ ] Template drawer (feature flagged)
   - Rate-limit safe with graceful handling of API throttling
   - Resilient to external API outages without data loss
   - Updates and deletions sync correctly to external calendar

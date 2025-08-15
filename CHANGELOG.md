@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- **2025-08-15**: Admin audit + synchronization pass — updated Blueprint Delta, FEATURES status, ISSUES, and CHANGELOG. Generated comprehensive ADMIN_STATUS_REPORT.md identifying API compliance gaps, feature flag integration needs, and missing visual indicators.
+
 ### Added
 - M4 Day view FAB + Slot sheet for mobile-first slot management
 - SlotSheet bottom drawer with overview stats, capacity/notes editing, blackout toggle
