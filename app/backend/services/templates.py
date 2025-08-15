@@ -206,41 +206,42 @@ async def diff_against_db(
 
 async def publish_plan(
     tenant_id: str,
-    plan: List[Dict],
+    desired_slots: List[Dict],
     db_pool: asyncpg.Pool
 ) -> Dict[str, int]:
     """
-    Persist plan idempotently in a single transaction using update-then-insert pattern.
+    Publish slots in a single transaction with idempotency guarantee.
+    
+    Uses update-then-insert pattern for each (date, start_time, end_time) combination.
+    If UPDATE affects 0 rows, performs INSERT. Transaction ensures atomicity.
     
     Args:
         tenant_id: Tenant identifier
-        plan: List of planned slot dictionaries
+        desired_slots: List of slot configurations to publish
         db_pool: Database connection pool
         
     Returns:
-        Dictionary with created, updated, skipped counts
+        Dictionary with counts: {'created': int, 'updated': int, 'skipped': int}
     """
-    if not plan:
+    if not desired_slots:
         return {'created': 0, 'updated': 0, 'skipped': 0}
     
     created_count = 0
     updated_count = 0
+    skipped_count = 0
     
     async with db_pool.acquire() as conn:
         async with conn.transaction():
-            for slot in plan:
-                # First attempt UPDATE
-                update_query = """
-                    UPDATE slots
+            for slot in desired_slots:
+                # First, attempt UPDATE for existing slot
+                update_result = await conn.execute("""
+                    UPDATE slots 
                     SET capacity = $5, resource_unit = $6, blackout = $7, notes = $8
                     WHERE tenant_id = $1 AND date = $2 AND start_time = $3 AND end_time = $4
-                """
-                
-                update_result = await conn.execute(
-                    update_query,
-                    tenant_id,
-                    slot['date'],
-                    slot['start_time'],
+                """, 
+                    tenant_id, 
+                    slot['date'], 
+                    slot['start_time'], 
                     slot['end_time'],
                     slot['capacity'],
                     slot['resource_unit'],
@@ -248,21 +249,18 @@ async def publish_plan(
                     slot['notes']
                 )
                 
-                # Extract row count from result string like "UPDATE 1" or "UPDATE 0"
+                # Extract affected row count from result (format: "UPDATE n")
                 rows_updated = int(update_result.split()[-1])
                 
                 if rows_updated == 0:
-                    # No existing row found, perform INSERT
-                    insert_query = """
-                        INSERT INTO slots (id, tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes)
-                        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
-                    """
-                    
-                    await conn.execute(
-                        insert_query,
+                    # No existing slot found, INSERT new one
+                    await conn.execute("""
+                        INSERT INTO slots (tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    """,
                         tenant_id,
                         slot['date'],
-                        slot['start_time'],
+                        slot['start_time'], 
                         slot['end_time'],
                         slot['capacity'],
                         slot['resource_unit'],
@@ -270,8 +268,18 @@ async def publish_plan(
                         slot['notes']
                     )
                     created_count += 1
-                else:
+                elif rows_updated == 1:
+                    # Successfully updated existing slot
                     updated_count += 1
+                else:
+                    # Should never happen with unique constraint, but track as skipped
+                    skipped_count += 1
+    
+    return {
+        'created': created_count,
+        'updated': updated_count, 
+        'skipped': skipped_count
+    }
     
     # Calculate skipped count
     total_planned = len(plan)

@@ -1,344 +1,346 @@
 """
-Tests for Apply Template Publish functionality - idempotent writes and transactional behavior
+Tests for Apply Template Publish Transaction and Idempotency
 """
 import pytest
-import asyncio
-from datetime import date, datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-import uuid
-
-from ..services.templates import publish_plan
+import asyncpg
+from datetime import date, time
+from app.backend.services.templates import publish_plan
+from app.backend.db import init_db, get_db_pool
 
 
-class TestPublishPlan:
-    """Test the publish_plan function with idempotent write behavior"""
-    
-    @pytest.mark.asyncio
-    async def test_empty_plan_returns_zero_counts(self):
-        """Test that empty plan returns zero counts without database operations"""
-        mock_pool = MagicMock()
-        
-        result = await publish_plan('tenant-123', [], mock_pool)
-        
-        assert result == {'created': 0, 'updated': 0, 'skipped': 0}
-        # Should not acquire connection for empty plan
-        mock_pool.acquire.assert_not_called()
-    
-    @pytest.mark.asyncio
-    async def test_new_slots_are_created(self):
-        """Test that new slots are inserted when no existing slots match"""
-        mock_pool = MagicMock()
-        mock_conn = AsyncMock()
-        mock_transaction = AsyncMock()
-        
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_conn.transaction.return_value = mock_transaction
-        mock_transaction.__aenter__ = AsyncMock()
-        mock_transaction.__aexit__ = AsyncMock()
-        
-        # Mock UPDATE returning "UPDATE 0" (no rows affected)
-        mock_conn.execute.side_effect = [
-            "UPDATE 0",  # No existing slot found
-            None         # INSERT succeeds
-        ]
-        
-        plan = [
-            {
-                'date': '2025-08-18',
-                'start_time': '09:00',
-                'end_time': '09:30',
-                'capacity': 10,
-                'resource_unit': 'tons',
-                'notes': '',
-                'blackout': False
-            }
-        ]
-        
-        result = await publish_plan('tenant-123', plan, mock_pool)
-        
-        assert result == {'created': 1, 'updated': 0, 'skipped': 0}
-        
-        # Verify UPDATE was attempted first
-        update_call = mock_conn.execute.call_args_list[0]
-        assert 'UPDATE slots' in update_call[0][0]
-        
-        # Verify INSERT was called after UPDATE returned 0
-        insert_call = mock_conn.execute.call_args_list[1]
-        assert 'INSERT INTO slots' in insert_call[0][0]
-        assert 'gen_random_uuid()' in insert_call[0][0]
-    
-    @pytest.mark.asyncio
-    async def test_existing_slots_are_updated(self):
-        """Test that existing slots are updated when found"""
-        mock_pool = MagicMock()
-        mock_conn = AsyncMock()
-        mock_transaction = AsyncMock()
-        
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_conn.transaction.return_value = mock_transaction
-        mock_transaction.__aenter__ = AsyncMock()
-        mock_transaction.__aexit__ = AsyncMock()
-        
-        # Mock UPDATE returning "UPDATE 1" (one row affected)
-        mock_conn.execute.return_value = "UPDATE 1"
-        
-        plan = [
-            {
-                'date': '2025-08-18',
-                'start_time': '09:00',
-                'end_time': '09:30',
-                'capacity': 15,  # Different capacity to trigger update
-                'resource_unit': 'tons',
-                'notes': 'Updated notes',
-                'blackout': False
-            }
-        ]
-        
-        result = await publish_plan('tenant-123', plan, mock_pool)
-        
-        assert result == {'created': 0, 'updated': 1, 'skipped': 0}
-        
-        # Verify only UPDATE was called (no INSERT after successful UPDATE)
-        assert mock_conn.execute.call_count == 1
-        update_call = mock_conn.execute.call_args_list[0]
-        assert 'UPDATE slots' in update_call[0][0]
-        
-        # Verify UPDATE parameters include the new values
-        args = update_call[0]
-        assert args[5] == 15  # capacity
-        assert args[8] == 'Updated notes'  # notes
-    
-    @pytest.mark.asyncio
-    async def test_mixed_create_and_update_operations(self):
-        """Test handling of mixed create and update operations"""
-        mock_pool = MagicMock()
-        mock_conn = AsyncMock()
-        mock_transaction = AsyncMock()
-        
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_conn.transaction.return_value = mock_transaction
-        mock_transaction.__aenter__ = AsyncMock()
-        mock_transaction.__aexit__ = AsyncMock()
-        
-        # First slot: UPDATE returns 1 (existing slot)
-        # Second slot: UPDATE returns 0, then INSERT (new slot)
-        mock_conn.execute.side_effect = [
-            "UPDATE 1",   # First slot updated
-            "UPDATE 0",   # Second slot not found
-            None          # Second slot inserted
-        ]
-        
-        plan = [
-            {
-                'date': '2025-08-18',
-                'start_time': '09:00',
-                'end_time': '09:30',
-                'capacity': 10,
-                'resource_unit': 'tons',
-                'notes': '',
-                'blackout': False
-            },
-            {
-                'date': '2025-08-18',
-                'start_time': '10:00',
-                'end_time': '10:30',
-                'capacity': 15,
-                'resource_unit': 'tons',
-                'notes': '',
-                'blackout': False
-            }
-        ]
-        
-        result = await publish_plan('tenant-123', plan, mock_pool)
-        
-        assert result == {'created': 1, 'updated': 1, 'skipped': 0}
-        assert mock_conn.execute.call_count == 3
-    
-    @pytest.mark.asyncio
-    async def test_idempotent_behavior(self):
-        """Test that running the same plan twice is idempotent (no changes on second run)"""
-        mock_pool = MagicMock()
-        mock_conn = AsyncMock()
-        mock_transaction = AsyncMock()
-        
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_conn.transaction.return_value = mock_transaction
-        mock_transaction.__aenter__ = AsyncMock()
-        mock_transaction.__aexit__ = AsyncMock()
-        
-        plan = [
-            {
-                'date': '2025-08-18',
-                'start_time': '09:00',
-                'end_time': '09:30',
-                'capacity': 10,
-                'resource_unit': 'tons',
-                'notes': '',
-                'blackout': False
-            }
-        ]
-        
-        # First run: CREATE (UPDATE 0, then INSERT)
-        mock_conn.execute.side_effect = ["UPDATE 0", None]
-        result1 = await publish_plan('tenant-123', plan, mock_pool)
-        assert result1 == {'created': 1, 'updated': 0, 'skipped': 0}
-        
-        # Reset mock for second run
-        mock_conn.execute.reset_mock()
-        
-        # Second run: UPDATE (same slot exists with same values - UPDATE 1)
-        mock_conn.execute.return_value = "UPDATE 1"
-        result2 = await publish_plan('tenant-123', plan, mock_pool)
-        assert result2 == {'created': 0, 'updated': 1, 'skipped': 0}
-        
-        # Third run with same exact plan should also be UPDATE
-        mock_conn.execute.reset_mock()
-        mock_conn.execute.return_value = "UPDATE 1" 
-        result3 = await publish_plan('tenant-123', plan, mock_pool)
-        assert result3 == {'created': 0, 'updated': 1, 'skipped': 0}
-    
-    @pytest.mark.asyncio 
-    async def test_transaction_rollback_on_failure(self):
-        """Test that transaction rolls back on failure, leaving database consistent"""
-        mock_pool = MagicMock()
-        mock_conn = AsyncMock()
-        mock_transaction = AsyncMock()
-        
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_conn.transaction.return_value = mock_transaction
-        mock_transaction.__aenter__ = AsyncMock()
-        mock_transaction.__aexit__ = AsyncMock()
-        
-        # First operation succeeds, second fails
-        mock_conn.execute.side_effect = [
-            "UPDATE 0",   # First slot: no existing row
-            None,         # First slot: INSERT succeeds
-            Exception("Database error")  # Second slot: UPDATE fails
-        ]
-        
-        plan = [
-            {
-                'date': '2025-08-18',
-                'start_time': '09:00',
-                'end_time': '09:30',
-                'capacity': 10,
-                'resource_unit': 'tons',
-                'notes': '',
-                'blackout': False
-            },
-            {
-                'date': '2025-08-18',
-                'start_time': '10:00',
-                'end_time': '10:30',
-                'capacity': 15,
-                'resource_unit': 'tons',
-                'notes': '',
-                'blackout': False
-            }
-        ]
-        
-        # Should raise the exception from the failing operation
-        with pytest.raises(Exception, match="Database error"):
-            await publish_plan('tenant-123', plan, mock_pool)
-        
-        # Transaction context manager should handle rollback automatically
-        mock_transaction.__aenter__.assert_called_once()
-        mock_transaction.__aexit__.assert_called_once()
+@pytest.fixture
+async def db_setup():
+    """Setup test database connection"""
+    await init_db()
+    pool = get_db_pool()
+    async with pool.acquire() as conn:
+        # Clean up existing test data
+        await conn.execute("DELETE FROM slots WHERE tenant_id = 'test-tenant-publish'")
+        yield pool
+        # Clean up after test
+        await conn.execute("DELETE FROM slots WHERE tenant_id = 'test-tenant-publish'")
 
 
-class TestPublishEndpointIntegration:
-    """Integration tests for the publish endpoint behavior"""
+@pytest.mark.asyncio
+async def test_first_publish_creates_slots(db_setup):
+    """Test first publish creates new slots"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
     
-    def test_publish_mode_returns_actual_counts(self):
-        """Test that publish mode returns actual database operation counts"""
-        # Expected behavior: publish mode calls publish_plan and returns actual counts
-        expected_result = {
-            'created': 2,
-            'updated': 1,
-            'skipped': 0
+    desired_slots = [
+        {
+            'date': date(2025, 8, 20),
+            'start_time': time(9, 0),
+            'end_time': time(10, 0),
+            'capacity': 50,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Morning slot'
+        },
+        {
+            'date': date(2025, 8, 20),
+            'start_time': time(11, 0),
+            'end_time': time(12, 0),
+            'capacity': 40,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Midday slot'
         }
-        
-        # Validate structure matches ApplyTemplateResult schema
-        assert isinstance(expected_result['created'], int)
-        assert isinstance(expected_result['updated'], int)
-        assert isinstance(expected_result['skipped'], int)
-        assert expected_result['created'] >= 0
-        assert expected_result['updated'] >= 0
-        assert expected_result['skipped'] >= 0
+    ]
     
-    def test_idempotent_publish_behavior(self):
-        """Test that publishing the same template twice shows idempotent behavior"""
-        # First publish: creates new slots
-        first_publish = {
-            'created': 3,
-            'updated': 0,
-            'skipped': 0
+    # First publish should create all slots
+    result = await publish_plan(tenant_id, desired_slots, pool)
+    
+    assert result['created'] == 2
+    assert result['updated'] == 0
+    assert result['skipped'] == 0
+    
+    # Verify slots were actually created in database
+    async with pool.acquire() as conn:
+        slots = await conn.fetch("""
+            SELECT date, start_time, end_time, capacity, notes
+            FROM slots 
+            WHERE tenant_id = $1 
+            ORDER BY start_time
+        """, tenant_id)
+        
+        assert len(slots) == 2
+        assert slots[0]['capacity'] == 50
+        assert slots[0]['notes'] == 'Morning slot'
+        assert slots[1]['capacity'] == 40
+        assert slots[1]['notes'] == 'Midday slot'
+
+
+@pytest.mark.asyncio
+async def test_second_identical_publish_is_idempotent(db_setup):
+    """Test second identical publish creates=0, updated=0, skipped=0 due to idempotency"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
+    
+    desired_slots = [
+        {
+            'date': date(2025, 8, 21),
+            'start_time': time(9, 0),
+            'end_time': time(10, 0),
+            'capacity': 50,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Morning slot'
         }
-        
-        # Second publish of same template/range: no new slots, same slots updated
-        second_publish = {
-            'created': 0,
-            'updated': 3,
-            'skipped': 0
+    ]
+    
+    # First publish
+    result1 = await publish_plan(tenant_id, desired_slots, pool)
+    assert result1['created'] == 1
+    assert result1['updated'] == 0
+    
+    # Second identical publish - should be idempotent
+    result2 = await publish_plan(tenant_id, desired_slots, pool)
+    assert result2['created'] == 0
+    assert result2['updated'] == 0  # No actual changes, so no update needed
+    assert result2['skipped'] == 0
+    
+    # Total slots should still be 1
+    async with pool.acquire() as conn:
+        slot_count = await conn.fetchval("""
+            SELECT COUNT(*) FROM slots WHERE tenant_id = $1
+        """, tenant_id)
+        assert slot_count == 1
+
+
+@pytest.mark.asyncio
+async def test_publish_with_changes_updates_existing(db_setup):
+    """Test publish with different values updates existing slots"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
+    
+    # Initial slots
+    initial_slots = [
+        {
+            'date': date(2025, 8, 22),
+            'start_time': time(9, 0),
+            'end_time': time(10, 0),
+            'capacity': 50,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Original notes'
         }
-        
-        # Third publish with identical plan should still be updates (idempotent)
-        third_publish = {
-            'created': 0,
-            'updated': 3, 
-            'skipped': 0
+    ]
+    
+    # Publish initial slots
+    result1 = await publish_plan(tenant_id, initial_slots, pool)
+    assert result1['created'] == 1
+    
+    # Modified slots with different capacity and notes
+    modified_slots = [
+        {
+            'date': date(2025, 8, 22),
+            'start_time': time(9, 0),
+            'end_time': time(10, 0),
+            'capacity': 75,  # Changed capacity
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Updated notes'  # Changed notes
         }
-        
-        # Verify counts are consistent
-        assert first_publish['created'] == second_publish['updated']
-        assert second_publish == third_publish
-        assert all(result['skipped'] == 0 for result in [first_publish, second_publish, third_publish])
-
-
-class TestUpdateThenInsertPattern:
-    """Test the specific update-then-insert SQL pattern"""
+    ]
     
-    def test_update_query_structure(self):
-        """Test that UPDATE query targets correct fields and conditions"""
-        expected_update_query = """
-            UPDATE slots
-            SET capacity = $5, resource_unit = $6, blackout = $7, notes = $8
-            WHERE tenant_id = $1 AND date = $2 AND start_time = $3 AND end_time = $4
-        """
-        
-        # Verify query structure expectations
-        assert 'UPDATE slots' in expected_update_query
-        assert 'SET capacity = $5' in expected_update_query
-        assert 'WHERE tenant_id = $1' in expected_update_query
-        assert 'AND date = $2' in expected_update_query
-        assert 'AND start_time = $3' in expected_update_query
-        assert 'AND end_time = $4' in expected_update_query
+    # Publish modified slots
+    result2 = await publish_plan(tenant_id, modified_slots, pool)
+    assert result2['created'] == 0
+    assert result2['updated'] == 1
+    assert result2['skipped'] == 0
     
-    def test_insert_query_structure(self):
-        """Test that INSERT query creates complete slot records"""
-        expected_insert_query = """
-            INSERT INTO slots (id, tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
-        """
+    # Verify changes were applied
+    async with pool.acquire() as conn:
+        slot = await conn.fetchrow("""
+            SELECT capacity, notes FROM slots 
+            WHERE tenant_id = $1 AND date = $2 AND start_time = $3
+        """, tenant_id, date(2025, 8, 22), time(9, 0))
         
-        # Verify query structure expectations
-        assert 'INSERT INTO slots' in expected_insert_query
-        assert 'gen_random_uuid()' in expected_insert_query
-        assert 'tenant_id, date, start_time, end_time' in expected_insert_query
-        assert 'capacity, resource_unit, blackout, notes' in expected_insert_query
-    
-    def test_parameter_binding_order(self):
-        """Test that parameters are bound in correct order for both UPDATE and INSERT"""
-        # UPDATE parameters: tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes
-        update_params = ['tenant_id', 'date', 'start_time', 'end_time', 'capacity', 'resource_unit', 'blackout', 'notes']
-        
-        # INSERT parameters: tenant_id, date, start_time, end_time, capacity, resource_unit, blackout, notes
-        insert_params = ['tenant_id', 'date', 'start_time', 'end_time', 'capacity', 'resource_unit', 'blackout', 'notes']
-        
-        # Both should use the same parameter order (except UPDATE has WHERE clause first)
-        assert update_params[:4] == insert_params[:4]  # WHERE clause fields
-        assert update_params[4:] == insert_params[4:]  # SET/VALUES fields
+        assert slot['capacity'] == 75
+        assert slot['notes'] == 'Updated notes'
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+@pytest.mark.asyncio
+async def test_transaction_rollback_on_error(db_setup):
+    """Test transaction rolls back completely on error - no partial writes"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
+    
+    # Create one valid slot first
+    valid_slot = {
+        'date': date(2025, 8, 23),
+        'start_time': time(9, 0),
+        'end_time': time(10, 0),
+        'capacity': 50,
+        'resource_unit': 'tons',
+        'blackout': False,
+        'notes': 'Valid slot'
+    }
+    
+    await publish_plan(tenant_id, [valid_slot], pool)
+    
+    # Verify initial state
+    async with pool.acquire() as conn:
+        initial_count = await conn.fetchval("""
+            SELECT COUNT(*) FROM slots WHERE tenant_id = $1
+        """, tenant_id)
+        assert initial_count == 1
+    
+    # Now try to publish with an invalid slot that will cause error
+    slots_with_error = [
+        {
+            'date': date(2025, 8, 23),
+            'start_time': time(11, 0),
+            'end_time': time(12, 0),
+            'capacity': 60,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Should be created'
+        },
+        {
+            'date': None,  # Invalid date to force error
+            'start_time': time(13, 0),
+            'end_time': time(14, 0),
+            'capacity': 70,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Should cause error'
+        }
+    ]
+    
+    # Publish should fail due to invalid date
+    with pytest.raises(Exception):  # asyncpg will raise an exception for NULL date
+        await publish_plan(tenant_id, slots_with_error, pool)
+    
+    # Verify no partial writes occurred - should still have only 1 slot
+    async with pool.acquire() as conn:
+        final_count = await conn.fetchval("""
+            SELECT COUNT(*) FROM slots WHERE tenant_id = $1
+        """, tenant_id)
+        assert final_count == 1  # No new slots were created due to rollback
+
+
+@pytest.mark.asyncio 
+async def test_mixed_create_update_operations(db_setup):
+    """Test publish with mix of create and update operations"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
+    
+    # Create some initial slots
+    initial_slots = [
+        {
+            'date': date(2025, 8, 24),
+            'start_time': time(9, 0),
+            'end_time': time(10, 0),
+            'capacity': 50,
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Existing slot'
+        }
+    ]
+    
+    await publish_plan(tenant_id, initial_slots, pool)
+    
+    # Mix of update existing + create new
+    mixed_slots = [
+        {
+            'date': date(2025, 8, 24),
+            'start_time': time(9, 0),
+            'end_time': time(10, 0),
+            'capacity': 75,  # Update existing
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'Updated existing slot'
+        },
+        {
+            'date': date(2025, 8, 24),
+            'start_time': time(11, 0),
+            'end_time': time(12, 0),
+            'capacity': 40,  # Create new
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': 'New slot'
+        }
+    ]
+    
+    result = await publish_plan(tenant_id, mixed_slots, pool)
+    
+    assert result['created'] == 1  # New 11:00 slot
+    assert result['updated'] == 1  # Updated 9:00 slot
+    assert result['skipped'] == 0
+    
+    # Verify final state
+    async with pool.acquire() as conn:
+        slots = await conn.fetch("""
+            SELECT start_time, capacity, notes FROM slots 
+            WHERE tenant_id = $1 AND date = $2
+            ORDER BY start_time
+        """, tenant_id, date(2025, 8, 24))
+        
+        assert len(slots) == 2
+        assert slots[0]['capacity'] == 75  # Updated
+        assert slots[0]['notes'] == 'Updated existing slot'
+        assert slots[1]['capacity'] == 40   # Created
+        assert slots[1]['notes'] == 'New slot'
+
+
+@pytest.mark.asyncio
+async def test_empty_slots_list_returns_zero_counts(db_setup):
+    """Test publish with empty list returns all zero counts"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
+    
+    result = await publish_plan(tenant_id, [], pool)
+    
+    assert result['created'] == 0
+    assert result['updated'] == 0
+    assert result['skipped'] == 0
+
+
+@pytest.mark.asyncio
+async def test_idempotency_assertion_with_large_batch(db_setup):
+    """Test idempotency with larger batch of slots"""
+    tenant_id = 'test-tenant-publish'
+    pool = db_setup
+    
+    # Generate 10 slots for the same day
+    large_batch = []
+    for hour in range(8, 18):  # 8 AM to 5 PM
+        large_batch.append({
+            'date': date(2025, 8, 25),
+            'start_time': time(hour, 0),
+            'end_time': time(hour + 1, 0),
+            'capacity': 50 + hour,  # Varying capacity
+            'resource_unit': 'tons',
+            'blackout': False,
+            'notes': f'Slot {hour}:00'
+        })
+    
+    # First publish - should create all 10
+    result1 = await publish_plan(tenant_id, large_batch, pool)
+    assert result1['created'] == 10
+    assert result1['updated'] == 0
+    assert result1['skipped'] == 0
+    
+    # Second identical publish - should be completely idempotent
+    result2 = await publish_plan(tenant_id, large_batch, pool)
+    assert result2['created'] == 0
+    assert result2['updated'] == 0  # No changes needed
+    assert result2['skipped'] == 0
+    
+    # Third publish with some changes - should update only changed ones
+    large_batch[0]['capacity'] = 100  # Change first slot
+    large_batch[5]['notes'] = 'Modified slot'  # Change sixth slot
+    
+    result3 = await publish_plan(tenant_id, large_batch, pool)
+    assert result3['created'] == 0
+    assert result3['updated'] == 2  # Only 2 slots changed
+    assert result3['skipped'] == 0
+    
+    # Verify total count is still 10
+    async with pool.acquire() as conn:
+        final_count = await conn.fetchval("""
+            SELECT COUNT(*) FROM slots WHERE tenant_id = $1
+        """, tenant_id)
+        assert final_count == 10

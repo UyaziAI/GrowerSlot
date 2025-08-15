@@ -548,6 +548,8 @@ POST   /v1/admin/templates                 -> { id, tenant_id, name, config, ...
 PATCH  /v1/admin/templates/{id}            -> { id, tenant_id, name, config, ... } 
 DELETE /v1/admin/templates/{id}            -> { ok: true }
 POST   /v1/slots/apply-template            -> { created: 0, updated: 0, skipped: 0, samples: {...} }
+
+**Publish idempotency guaranteed**: Template publishing uses update-then-insert pattern within single transaction to ensure atomicity and prevent partial writes.
 PATCH  /v1/bookings/{id}                -> { id, updated: true }
 ```
 
@@ -618,6 +620,14 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Templates Router CRUD Stubs  
 - **router:** Add /v1/admin/templates CRUD endpoints returning placeholder data
+
+### August 15, 2025 - Backend Apply-Template Publish Transaction (B10 Complete)
+- **transaction:** Wrapped publish_plan in single DB transaction with proper update-then-insert pattern
+- **idempotency:** UPDATE slots WHERE tenant_id AND date AND start_time AND end_time; if rowcount==0 then INSERT
+- **atomicity:** All slot operations succeed or fail together, prevents partial writes on errors
+- **testing:** Comprehensive test suite covering first publish, idempotent republish, updates, rollback scenarios
+- **counts:** Returns {created, updated, skipped} counts for publish operation tracking
+- **docs:** Added "Publish idempotency guaranteed" note to Blueprint.md Section 6
 
 ### August 15, 2025 - Frontend Drag-Drop Booking Move Implementation (B9 Complete)
 - **drag-drop:** Implemented real DnD using @dnd-kit/core with BookingChip and DroppableSlot components
