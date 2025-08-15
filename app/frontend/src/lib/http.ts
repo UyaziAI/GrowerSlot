@@ -72,12 +72,24 @@ export async function fetchWithVerbatimErrors(
     throw new Error('Authentication required');
   }
 
-  // Log the request
-  logger.debug('api_request', `${method} ${url}`, {
+  // Enhanced request context logging with call stack
+  const stack = new Error().stack;
+  const callerLine = stack?.split('\n')[3] || 'unknown';
+  
+  logger.info('admin_api_call_context', `${method} ${url}`, {
     url,
     method,
-    has_token: !!token
-  }, requestId);
+    request_id: requestId,
+    caller_context: callerLine,
+    has_token: !!token,
+    auth_header_type: token ? 'Bearer' : null,
+    gating_snapshot: {
+      tokenPresent: !!token,
+      authReady: !!authService.getToken(),
+      localStorage_token: !!localStorage.getItem('token'),
+      timestamp: new Date().toISOString()
+    }
+  });
 
   try {
     const response = await fetch(url, {

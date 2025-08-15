@@ -712,7 +712,7 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Structured Logging & Diagnostics — Implemented comprehensive logging infrastructure: frontend JSON logger with ring buffer and debug overlay (flag-gated), backend request logging with correlation IDs, global error capture, PII redaction, and tripwire tests for auth validation.
 
-### August 15, 2025 - Admin recurring errors + DayEditor runtime fix — Structured logging identified auth patterns + runtime error. Fixed api/client.ts auth bypass and DayEditorSheet missing isOpen prop (line 83 "isOpen is not defined"). Enhanced query gating with isOpen && dateISO validation. Added pattern-specific tripwire tests.
+### August 15, 2025 - Unauthenticated calls pinpointed & eliminated — Request ID ib4csz1ucmedcsdz6 traced to grower-dashboard.tsx useQuery race condition. Enhanced logging with caller context & gating snapshots. Fixed with isAuthReady gating on useQuery calls. Added ultimate tripwire test for 100% auth coverage.
 
 ### August 15, 2025 - Test coverage pack P3.1 — Implemented comprehensive test suite for API compliance, error handling, accessibility, and feature flags.
 

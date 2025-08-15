@@ -19,14 +19,19 @@ export default function GrowerDashboard() {
   const queryClient = useQueryClient();
   const user = authService.getUser();
 
+  // Enhanced authentication gating for all queries
+  const isAuthReady = authService.isAuthenticated() && !!authService.getToken();
+
   const { data: slots = [], isLoading: slotsLoading } = useQuery<SlotWithUsage[]>({
     queryKey: ["/v1/slots", selectedDate],
     queryFn: () => api.getSlots(selectedDate),
+    enabled: isAuthReady && !!selectedDate,
   });
 
   const { data: bookings = [] } = useQuery<BookingWithDetails[]>({
     queryKey: ["/v1/bookings"],
     queryFn: () => api.getBookings(),
+    enabled: isAuthReady,
   });
 
   const cancelBookingMutation = useMutation({
