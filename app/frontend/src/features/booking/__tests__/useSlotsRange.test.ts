@@ -4,10 +4,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useSlotsRange, groupSlotsByDate, getTimeSegments } from '../hooks/useSlotsRange';
-import { slotsApi } from '../../../api/endpoints';
+import { slotsApi } from '../../../v1/endpoints';
 
 // Mock the API
-jest.mock('../../../api/endpoints', () => ({
+jest.mock('../../../v1/endpoints', () => ({
   slotsApi: {
     getSlotsRange: jest.fn()
   }

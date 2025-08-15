@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { Lock, AlertTriangle, Clock, User } from "lucide-react";
-import { type SlotResponse } from "../../../api/endpoints";
+import { type SlotResponse } from "../../../v1/endpoints";
 import { getTimeSegments } from "../hooks/useSlotsRange";
 
 interface CalendarGridProps {

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import CalendarGrid from "./components/CalendarGrid";
 import { useSlotsRange, useSlotsSingle } from "./hooks/useSlotsRange";
-import { type SlotResponse } from "../../api/endpoints";
+import { type SlotResponse } from "../../v1/endpoints";
 import { authService } from "../../core/auth";
 
 type ViewMode = 'day' | 'week';

@@ -106,7 +106,7 @@ export default function AdminPage() {
   const { data: slots = [] } = useQuery<Slot[]>({
     queryKey: ['slots', selectedDate],
     queryFn: async () => {
-      const response = await fetch(`/api/slots?date=${selectedDate}`);
+      const response = await fetch(`/v1/slots?date=${selectedDate}`);
       if (!response.ok) throw new Error('Failed to fetch slots');
       return response.json();
     },

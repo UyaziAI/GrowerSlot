@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Truck, Package, Clock, MapPin } from "lucide-react";
-import { logisticsApi, type ConsignmentResponse } from "../../api/endpoints";
+import { logisticsApi, type ConsignmentResponse } from "../../v1/endpoints";
 import { useState } from "react";
 
 const statusColors = {

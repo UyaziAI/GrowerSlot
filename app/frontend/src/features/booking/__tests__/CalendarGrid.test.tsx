@@ -4,7 +4,7 @@
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CalendarGrid from '../components/CalendarGrid';
-import { type SlotResponse } from '../../../api/endpoints';
+import { type SlotResponse } from '../../../v1/endpoints';
 
 // Mock data
 const mockSlots: SlotResponse[] = [

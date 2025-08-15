@@ -10,7 +10,7 @@ import { Badge } from "../../../components/ui/badge";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Calendar, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "../../../components/ui/button";
-import { type SlotResponse } from "../../../api/endpoints";
+import { type SlotResponse } from "../../../v1/endpoints";
 
 interface CalendarMonthProps {
   slots: SlotResponse[];
