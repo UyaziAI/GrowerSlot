@@ -712,6 +712,8 @@ PATCH  /v1/bookings/{id}                -> { id, updated: true }
 
 ### August 15, 2025 - Structured Logging & Diagnostics — Implemented comprehensive logging infrastructure: frontend JSON logger with ring buffer and debug overlay (flag-gated), backend request logging with correlation IDs, global error capture, PII redaction, and tripwire tests for auth validation.
 
+### August 16, 2025 - Repository Audit (comprehensive) — Generated complete system audit with architecture mapping, dependency analysis, and optimization roadmap. Created machine-readable inventories (inventory.json, routes.json, deps-graph.json, features.json, dead_code.json) identifying 235 TypeScript files, 15+ API endpoints, 4 feature flags, and prioritized Keep/Refactor/Remove recommendations for technical debt reduction.
+
 ### August 15, 2025 - Admin authentication fixed (comprehensive) — Request IDs wwd0c4nt4medd4rjm, w4k3xb5h5medd4vym, conh6w30qmedd4yij, 9d6rvi3upmedd4zba traced to Admin components: CalendarPage.tsx hooks, BulkBar.tsx mutations, DayEditorSheet.tsx queries missing auth gating. Enhanced logging with caller context. Added comprehensive authentication validation across all Admin flows.
 
 ### August 15, 2025 - Test coverage pack P3.1 — Implemented comprehensive test suite for API compliance, error handling, accessibility, and feature flags.

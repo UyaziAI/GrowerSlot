@@ -1,0 +1,50 @@
+Audit: Identify key files, routes, functions & dead code
+
+Issue
+We’ve accumulated legacy and redundant code. Refactors keep breaking core flows. We need a read-only audit that maps the current system before we remove anything.
+
+Intended outcomes
+
+Generate a single, human-readable report (/_reports/REPO_AUDIT.md) that explains architecture, entry points, and execution flow end-to-end
+
+Produce machine-readable inventories in /_reports/:
+
+inventory.json (files, purpose, size, last modified)
+
+routes.json (API + frontend route map with handlers/controllers/components)
+
+deps-graph.json (module import graph; identify cyclic deps & heavy hotspots)
+
+features.json (feature flags, env vars, config surfaces, defaults)
+
+dead_code.json (unreferenced files/exports, unused assets, orphan styles)
+
+Call out critical paths (auth, booking/slots, admin actions) and the exact files/functions they depend on
+
+Identify bloat/removal candidates with justification (why safe to remove, or what to verify)
+
+Flag risk areas (tight coupling, global state, side effects, duplicate logic) and propose a minimal greenfield skeleton we could build alongside v1
+
+Constraints & guardrails
+
+Read-only on app code: you may create files only under /_reports/
+
+Smallest safe diff; no UI redesign; no new endpoints
+
+Use /v1 APIs for any runtime probing; respect feature flags (assume defaults)
+
+No fabricated data; surface any server 4xx/5xx messages verbatim in the report
+
+Definition of Done
+
+/_reports/REPO_AUDIT.md includes: architecture overview, route maps, data models/migrations, third-party services, build/runtime config, and mobile/responsiveness notes
+
+JSON artifacts present (inventory.json, routes.json, deps-graph.json, features.json, dead_code.json) and internally consistent (IDs/paths resolve)
+
+A prioritized Keep / Refactor / Remove table listing top 20 candidates with impact/risk and required tests to protect removals
+
+No changes outside /_reports/ (CI/lint/typecheck unchanged)
+
+Update docs delta: add a short “Audit” section to BLUEPRINT.md Delta and an “Unreleased” note in CHANGELOG.md describing the audit artifacts and no functional changes
+
+Follow the rules in rules.md when making any changes. Update all relevant documentation (BLUEPRINT.md, FEATURES.md, ISSUES.md, CHANGELOG.md) as required by the rules. Maintain changelog entries in CHANGELOG.md (and Blueprint’s Delta) for every change.

@@ -1,0 +1,218 @@
+{
+  "generated": "2025-08-16T09:29:00Z",
+  "frontend_routes": {
+    "router": "wouter",
+    "entry_point": "app/frontend/src/App.tsx",
+    "routes": [
+      {
+        "path": "/",
+        "component": "AdminPage | GrowerDashboard",
+        "handler": "app/frontend/src/App.tsx:Router()",
+        "auth_required": true,
+        "role_based": true,
+        "description": "Root route - redirects based on user role"
+      },
+      {
+        "path": "/dashboard", 
+        "component": "AdminPage | GrowerDashboard",
+        "handler": "app/frontend/src/App.tsx:Router()",
+        "auth_required": true,
+        "role_based": true,
+        "description": "Dashboard route - role-based component rendering"
+      },
+      {
+        "path": "/admin",
+        "component": "AdminPage",
+        "handler": "app/frontend/src/pages/AdminPage.tsx",
+        "auth_required": true,
+        "role_required": "admin",
+        "description": "Admin-only calendar management interface"
+      },
+      {
+        "path": "*",
+        "component": "NotFound",
+        "handler": "app/frontend/src/pages/not-found.tsx",
+        "auth_required": false,
+        "description": "404 fallback route"
+      }
+    ],
+    "protected_routes": {
+      "middleware": "app/frontend/src/App.tsx:Router()",
+      "authentication_check": "authService.isAuthenticated()",
+      "role_check": "authService.isAdmin()",
+      "redirect_on_failure": "LoginPage"
+    }
+  },
+  "api_routes": {
+    "base_path": "/v1",
+    "entry_point": "server/routes.ts",
+    "middleware": [
+      "cors",
+      "express.json",
+      "requestLogger",
+      "authenticateToken (protected routes)"
+    ],
+    "routes": {
+      "auth": [
+        {
+          "method": "POST",
+          "path": "/v1/auth/login",
+          "handler": "server/routes.ts:login",
+          "auth_required": false,
+          "description": "User authentication with JWT token generation",
+          "body_schema": "{ email: string, password: string }"
+        },
+        {
+          "method": "GET", 
+          "path": "/v1/auth/me",
+          "handler": "server/routes.ts:getCurrentUser",
+          "auth_required": true,
+          "description": "Get current authenticated user profile"
+        }
+      ],
+      "slots": [
+        {
+          "method": "GET",
+          "path": "/v1/slots",
+          "handler": "server/routes.ts:getSlots",
+          "auth_required": true,
+          "query_params": "?date=YYYY-MM-DD | ?start=YYYY-MM-DD&end=YYYY-MM-DD",
+          "description": "Fetch available slots for date range"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/slots/bulk", 
+          "handler": "server/routes.ts:bulkCreateSlots",
+          "auth_required": true,
+          "role_required": "admin",
+          "description": "Bulk create slots across date range",
+          "body_schema": "BulkCreateSlotsSchema"
+        },
+        {
+          "method": "PATCH",
+          "path": "/v1/slots/:id",
+          "handler": "server/routes.ts:updateSlot",
+          "auth_required": true,
+          "role_required": "admin", 
+          "description": "Update individual slot properties"
+        },
+        {
+          "method": "DELETE",
+          "path": "/v1/slots/:id",
+          "handler": "server/routes.ts:deleteSlot",
+          "auth_required": true,
+          "role_required": "admin",
+          "description": "Delete empty slot"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/slots/blackout",
+          "handler": "server/routes.ts:blackoutSlots",
+          "auth_required": true,
+          "role_required": "admin",
+          "description": "Apply blackout to date range or specific slots"
+        },
+        {
+          "method": "PATCH",
+          "path": "/v1/slots/:id/blackout",
+          "handler": "server/routes.ts:toggleSlotBlackout", 
+          "auth_required": true,
+          "role_required": "admin",
+          "description": "Toggle blackout status for individual slot"
+        }
+      ],
+      "bookings": [
+        {
+          "method": "GET",
+          "path": "/v1/bookings",
+          "handler": "server/routes.ts:getBookings",
+          "auth_required": true,
+          "query_params": "?date=YYYY-MM-DD&grower_id=uuid",
+          "description": "Fetch bookings with optional filtering"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/bookings",
+          "handler": "server/routes.ts:createBooking",
+          "auth_required": true,
+          "description": "Create new delivery booking",
+          "body_schema": "CreateBookingSchema"
+        },
+        {
+          "method": "PATCH",
+          "path": "/v1/bookings/:id",
+          "handler": "server/routes.ts:updateBooking", 
+          "auth_required": true,
+          "description": "Update booking details or cancel"
+        }
+      ],
+      "restrictions": [
+        {
+          "method": "POST",
+          "path": "/v1/restrictions/apply",
+          "handler": "server/routes.ts:applyRestrictions",
+          "auth_required": true,
+          "role_required": "admin",
+          "description": "Apply grower/cultivar restrictions to slots"
+        }
+      ],
+      "admin": [
+        {
+          "method": "GET",
+          "path": "/v1/admin/day-overview",
+          "handler": "server/routes.ts:getDayOverview",
+          "auth_required": true,
+          "role_required": "admin",
+          "query_params": "?date=YYYY-MM-DD",
+          "description": "Get day summary for admin dashboard"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/admin/templates",
+          "handler": "server/routes.ts:getTemplates",
+          "auth_required": true,
+          "role_required": "admin",
+          "feature_flag": "VITE_FEATURE_ADMIN_TEMPLATES",
+          "description": "List slot templates (feature flagged)"
+        }
+      ]
+    }
+  },
+  "authentication_flow": {
+    "client_side": {
+      "entry": "app/frontend/src/lib/auth.ts",
+      "token_storage": "localStorage",
+      "automatic_refresh": false,
+      "role_detection": "JWT payload parsing"
+    },
+    "server_side": {
+      "middleware": "server/routes.ts:authenticateToken",
+      "jwt_secret": "process.env.JWT_SECRET",
+      "token_verification": "jsonwebtoken.verify()",
+      "tenant_isolation": "req.user.tenantId filtering"
+    }
+  },
+  "error_handling": {
+    "authentication_failures": {
+      "401": "Missing or invalid token",
+      "403": "Insufficient role permissions",
+      "client_redirect": "window.location.href = '/login'"
+    },
+    "validation_errors": {
+      "422": "Request body validation failed",
+      "response_format": "Zod validation messages"
+    },
+    "server_errors": {
+      "500": "Database or internal server errors",
+      "logging": "Structured JSON with request correlation"
+    }
+  },
+  "real_time_updates": {
+    "method": "polling",
+    "intervals": {
+      "slots": "30 seconds",
+      "bookings": "30 seconds"
+    },
+    "future_consideration": "WebSocket implementation for live updates"
+  }
+}

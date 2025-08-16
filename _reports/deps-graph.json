@@ -1,0 +1,229 @@
+{
+  "generated": "2025-08-16T09:29:00Z",
+  "analysis_scope": "app/frontend/src, server/, shared/",
+  "dependency_hotspots": [
+    {
+      "file": "app/frontend/src/lib/http.ts",
+      "incoming_dependencies": 47,
+      "purpose": "Global HTTP client with authentication",
+      "risk": "high",
+      "reason": "Single point of failure for all API communication"
+    },
+    {
+      "file": "app/frontend/src/lib/auth.ts", 
+      "incoming_dependencies": 23,
+      "purpose": "Authentication service and role management",
+      "risk": "high",
+      "reason": "Central authentication logic used across app"
+    },
+    {
+      "file": "shared/schema.ts",
+      "incoming_dependencies": 15,
+      "purpose": "Database schema and type definitions",
+      "risk": "medium", 
+      "reason": "Database contract shared between frontend/backend"
+    },
+    {
+      "file": "app/frontend/src/components/ui/button.tsx",
+      "incoming_dependencies": 31,
+      "purpose": "Base button component", 
+      "risk": "low",
+      "reason": "Stable UI primitive with consistent API"
+    }
+  ],
+  "circular_dependencies": [
+    {
+      "cycle": [
+        "app/frontend/src/api/client.ts",
+        "app/frontend/src/lib/http.ts"
+      ],
+      "description": "API client imports HTTP utilities that reference API client",
+      "risk": "medium",
+      "resolution": "Consolidate into single authentication layer"
+    }
+  ],
+  "heavy_dependencies": [
+    {
+      "file": "app/frontend/src/pages/AdminPage.tsx",
+      "import_count": 24,
+      "external_deps": [
+        "@tanstack/react-query",
+        "date-fns", 
+        "framer-motion",
+        "lucide-react"
+      ],
+      "internal_deps": [
+        "components/ui/*",
+        "lib/auth",
+        "lib/http", 
+        "features/booking/*"
+      ],
+      "risk": "high",
+      "reason": "Monolithic component with many concerns"
+    },
+    {
+      "file": "server/routes.ts",
+      "import_count": 18,
+      "external_deps": [
+        "express",
+        "bcrypt",
+        "jsonwebtoken", 
+        "zod"
+      ],
+      "internal_deps": [
+        "./storage",
+        "./services/audit",
+        "@shared/schema"
+      ],
+      "risk": "medium",
+      "reason": "Single file handling all API routes"
+    }
+  ],
+  "external_dependencies": {
+    "critical": [
+      {
+        "name": "@tanstack/react-query",
+        "version": "^5.x",
+        "purpose": "Server state management",
+        "usage_count": 25,
+        "alternatives": "SWR, Apollo Client"
+      },
+      {
+        "name": "drizzle-orm",
+        "version": "^0.x", 
+        "purpose": "Database ORM",
+        "usage_count": 8,
+        "alternatives": "Prisma, TypeORM"
+      },
+      {
+        "name": "wouter",
+        "version": "^3.x",
+        "purpose": "Client-side routing",
+        "usage_count": 4,
+        "alternatives": "React Router"
+      }
+    ],
+    "ui_framework": [
+      {
+        "name": "@radix-ui/*",
+        "version": "^1.x",
+        "purpose": "Headless UI primitives",
+        "usage_count": 35,
+        "bundle_impact": "large"
+      },
+      {
+        "name": "tailwindcss",
+        "version": "^3.x",
+        "purpose": "Utility-first CSS",
+        "usage_count": "all_components",
+        "bundle_impact": "medium (purged)"
+      },
+      {
+        "name": "framer-motion", 
+        "version": "^11.x",
+        "purpose": "Animation library",
+        "usage_count": 8,
+        "bundle_impact": "large",
+        "optimization": "Consider lighter alternatives"
+      }
+    ],
+    "utilities": [
+      {
+        "name": "date-fns",
+        "version": "^3.x", 
+        "purpose": "Date manipulation",
+        "usage_count": 15,
+        "bundle_impact": "medium"
+      },
+      {
+        "name": "zod",
+        "version": "^3.x",
+        "purpose": "Schema validation",
+        "usage_count": 12,
+        "bundle_impact": "small"
+      }
+    ]
+  },
+  "import_patterns": {
+    "problematic": [
+      {
+        "pattern": "import * as React",
+        "occurrences": 45,
+        "issue": "Unnecessary with modern React + Vite",
+        "solution": "Remove unused React imports"
+      },
+      {
+        "pattern": "import { cn } from '@/lib/utils'",
+        "occurrences": 67,
+        "issue": "Heavy reliance on utility function",
+        "solution": "Consider CSS modules or styled-components"
+      }
+    ],
+    "good": [
+      {
+        "pattern": "import type { ... }",
+        "occurrences": 23,
+        "benefit": "Type-only imports for better tree shaking"
+      },
+      {
+        "pattern": "import { specific } from 'library'",
+        "occurrences": 189,
+        "benefit": "Named imports enable tree shaking"
+      }
+    ]
+  },
+  "module_boundaries": {
+    "violations": [
+      {
+        "file": "app/frontend/src/pages/AdminPage.tsx",
+        "violation": "Directly imports from features/booking/hooks",
+        "should_use": "Abstract through api/ layer",
+        "risk": "tight coupling"
+      },
+      {
+        "file": "app/frontend/src/components/ui/",
+        "violation": "Some components import business logic",
+        "should_use": "Pure presentation components only",
+        "risk": "component reusability"
+      }
+    ],
+    "good_boundaries": [
+      {
+        "layer": "shared/",
+        "purpose": "Database schema and common types",
+        "access": "Frontend and backend can import"
+      },
+      {
+        "layer": "app/frontend/src/lib/",
+        "purpose": "Frontend utilities and services", 
+        "access": "Frontend only"
+      },
+      {
+        "layer": "server/",
+        "purpose": "Backend API and business logic",
+        "access": "Backend only"
+      }
+    ]
+  },
+  "refactoring_opportunities": [
+    {
+      "type": "consolidation",
+      "description": "Merge app/frontend/src/lib/api.ts and app/frontend/src/api/client.ts",
+      "benefit": "Eliminate authentication duplication",
+      "effort": "medium"
+    },
+    {
+      "type": "extraction",
+      "description": "Extract admin calendar state management",
+      "target": "app/frontend/src/pages/AdminPage.tsx",
+      "benefit": "Reduce component complexity",
+      "effort": "high"
+    },
+    {
+      "type": "modularization", 
+      "description": "Split server/routes.ts by domain",
+      "benefit": "Better separation of concerns",
+      "effort": "medium"
+    }
+  ]
+}

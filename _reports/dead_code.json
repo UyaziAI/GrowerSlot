@@ -1,0 +1,215 @@
+{
+  "generated": "2025-08-16T09:29:00Z",
+  "analysis_method": "Static analysis of imports, exports, and file references",
+  "unreferenced_files": [
+    {
+      "path": "legacy/quarantined/",
+      "type": "directory",
+      "size": "~12KB",
+      "last_modified": "2025-08-13T09:11:00Z",
+      "reason": "Explicitly quarantined legacy components",
+      "removal_safe": true,
+      "risk": "none"
+    },
+    {
+      "path": "app/frontend/src/components/NextAvailableDialog.tsx",
+      "type": "component",
+      "size": "2.1KB", 
+      "feature_flag": "VITE_FEATURE_NEXT_AVAILABLE=false",
+      "reason": "Feature flag disabled, component unused",
+      "removal_safe": true,
+      "risk": "low"
+    },
+    {
+      "path": "tools/admin_runtime_probe.cjs",
+      "type": "utility",
+      "size": "0.8KB",
+      "reason": "Development probe script not referenced in build",
+      "removal_safe": true,
+      "risk": "none"
+    }
+  ],
+  "unused_exports": [
+    {
+      "file": "app/frontend/src/features/booking/hooks/useSlotsRange.ts",
+      "exports": ["groupSlotsByDate", "getTimeSegments"],
+      "reason": "Helper functions defined but never imported",
+      "removal_safe": true,
+      "impact": "reduce bundle size"
+    },
+    {
+      "file": "app/frontend/src/lib/validation.ts",
+      "exports": ["blackoutFormSchema"],
+      "reason": "Zod schema defined but validation not implemented",
+      "removal_safe": false,
+      "impact": "may be needed for future validation"
+    },
+    {
+      "file": "shared/schema.ts",
+      "exports": ["domainEventsTable", "outboxTable"],
+      "reason": "Extensibility tables defined but not used in current features",
+      "removal_safe": false,
+      "impact": "architectural future-proofing"
+    }
+  ],
+  "duplicate_implementations": [
+    {
+      "files": [
+        "app/frontend/src/lib/api.ts",
+        "app/frontend/src/api/client.ts"
+      ],
+      "functionality": "API client with authentication",
+      "reason": "Two different approaches to API communication",
+      "consolidation_target": "app/frontend/src/lib/http.ts",
+      "removal_safe": true,
+      "effort": "medium"
+    },
+    {
+      "files": [
+        "app/frontend/src/pages/AdminPage.tsx (checkAuth)",
+        "app/frontend/src/lib/auth.ts (authService)"
+      ],
+      "functionality": "Authentication checking logic",
+      "reason": "Inline auth check duplicates service logic",
+      "consolidation_target": "app/frontend/src/lib/auth.ts",
+      "removal_safe": true,
+      "effort": "low"
+    }
+  ],
+  "orphaned_assets": [
+    {
+      "path": "attached_assets/",
+      "type": "directory",
+      "size": "~2MB",
+      "contents": "Development task descriptions and blueprints",
+      "reason": "Working files not part of production bundle",
+      "removal_safe": true,
+      "cleanup_after": "project completion"
+    }
+  ],
+  "unused_dependencies": {
+    "production": [
+      {
+        "package": "csv-stringify",
+        "reason": "CSV export functionality not yet implemented", 
+        "removal_safe": false,
+        "note": "Keep for planned CSV export feature"
+      }
+    ],
+    "development": [
+      {
+        "package": "@testing-library/user-event",
+        "reason": "Testing utility not used in current test suite",
+        "removal_safe": true,
+        "impact": "Reduce dev dependency footprint"
+      }
+    ]
+  },
+  "feature_flag_cleanup": [
+    {
+      "flag": "VITE_FEATURE_ADMIN_TEMPLATES",
+      "status": "disabled",
+      "affected_files": [
+        "app/frontend/src/pages/BulkBar.tsx",
+        "app/frontend/src/pages/DayEditorSheet.tsx"
+      ],
+      "cleanup_action": "Remove template-related UI sections",
+      "removal_safe": true,
+      "effort": "low"
+    },
+    {
+      "flag": "VITE_FEATURE_NEXT_AVAILABLE", 
+      "status": "disabled",
+      "affected_files": [
+        "app/frontend/src/components/NextAvailableDialog.tsx",
+        "app/frontend/src/pages/DayEditorSheet.tsx"
+      ],
+      "cleanup_action": "Remove component and imports",
+      "removal_safe": true,
+      "effort": "low"
+    }
+  ],
+  "css_orphans": [
+    {
+      "type": "unused_classes",
+      "description": "Tailwind classes in components that may be purged",
+      "analysis": "Requires build-time purge analysis",
+      "risk": "low",
+      "note": "Tailwind's purge process handles automatically"
+    }
+  ],
+  "test_file_coverage": {
+    "total_test_files": 32,
+    "production_files": 235,
+    "coverage_ratio": "13.6%",
+    "orphaned_tests": [
+      {
+        "file": "app/frontend/src/__tests__/admin_route_wire.spec.tsx",
+        "reason": "Tests deprecated routing approach",
+        "removal_safe": true
+      }
+    ],
+    "missing_critical_tests": [
+      {
+        "file": "app/frontend/src/lib/auth.ts",
+        "reason": "Authentication service lacks unit tests",
+        "priority": "high"
+      },
+      {
+        "file": "server/storage.ts",
+        "reason": "Database layer lacks comprehensive tests",
+        "priority": "high" 
+      }
+    ]
+  },
+  "removal_priorities": {
+    "immediate": [
+      {
+        "target": "legacy/quarantined/",
+        "impact": "Reduce repository size, eliminate confusion",
+        "effort": "trivial",
+        "verification": "none"
+      },
+      {
+        "target": "VITE_FEATURE_NEXT_AVAILABLE + NextAvailableDialog.tsx",
+        "impact": "Remove unused feature flag complexity",
+        "effort": "low",
+        "verification": "Ensure no imports remain"
+      }
+    ],
+    "short_term": [
+      {
+        "target": "API client consolidation (lib/api.ts + api/client.ts)", 
+        "impact": "Eliminate authentication duplication",
+        "effort": "medium",
+        "verification": "Comprehensive auth testing required"
+      },
+      {
+        "target": "VITE_FEATURE_ADMIN_TEMPLATES cleanup",
+        "impact": "Simplify admin UI, reduce conditional complexity",
+        "effort": "low",
+        "verification": "Admin UI regression testing"
+      }
+    ],
+    "long_term": [
+      {
+        "target": "AdminPage.tsx refactoring",
+        "impact": "Reduce component complexity, improve maintainability", 
+        "effort": "high",
+        "verification": "Full admin workflow testing"
+      }
+    ]
+  },
+  "false_positives": [
+    {
+      "file": "shared/schema.ts (extensibility tables)",
+      "reason": "Future-proofing architecture, not currently used but intentional",
+      "keep": true
+    },
+    {
+      "file": "app/frontend/src/components/DebugOverlay.tsx",
+      "reason": "Development utility, only loaded when debug flag enabled",
+      "keep": true
+    }
+  ]
+}

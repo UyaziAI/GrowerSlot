@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **2025-08-16**: Repository Audit (comprehensive) — Complete system analysis with architecture mapping, dependency graph, and optimization roadmap. Generated machine-readable inventories (235 files, 15+ API endpoints, 4 feature flags) and prioritized Keep/Refactor/Remove recommendations. Created _reports/ directory with detailed JSON artifacts for dead code detection and technical debt reduction.
 - **2025-08-15**: Structured Logging & Diagnostics — Comprehensive logging infrastructure with frontend JSON logger, request correlation, React Error Boundary, debug overlay (flag-gated), backend request logging with X-Request-ID headers, and tripwire tests for auth validation. Includes PII redaction and production-safe sampling.
 
 ### Fixed  

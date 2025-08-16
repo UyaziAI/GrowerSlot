@@ -1,0 +1,213 @@
+{
+  "generated": "2025-08-16T09:29:00Z",
+  "feature_flags": {
+    "frontend": {
+      "prefix": "VITE_",
+      "location": ".env, .env.local, .env.example",
+      "flags": [
+        {
+          "name": "VITE_FEATURE_WEEKVIEW",
+          "default": "false",
+          "description": "Enable week view in calendar components",
+          "impact": "app/frontend/src/features/booking/CalendarPage.tsx",
+          "status": "disabled",
+          "removal_safe": false
+        },
+        {
+          "name": "VITE_FEATURE_ADMIN_TEMPLATES",
+          "default": "false", 
+          "description": "Admin slot template management",
+          "impact": "app/frontend/src/pages/BulkBar.tsx, DayEditorSheet.tsx",
+          "status": "disabled",
+          "removal_safe": true
+        },
+        {
+          "name": "VITE_FEATURE_NEXT_AVAILABLE",
+          "default": "false",
+          "description": "Next available slot finder dialog",
+          "impact": "app/frontend/src/components/NextAvailableDialog.tsx",
+          "status": "disabled", 
+          "removal_safe": true
+        },
+        {
+          "name": "VITE_DEBUG_OVERLAY",
+          "default": "false",
+          "description": "Frontend debug overlay with log inspection",
+          "impact": "app/frontend/src/components/DebugOverlay.tsx",
+          "status": "development_only",
+          "removal_safe": false
+        }
+      ]
+    },
+    "backend": {
+      "location": "process.env",
+      "flags": [
+        {
+          "name": "NODE_ENV",
+          "default": "development",
+          "description": "Runtime environment (development|production)",
+          "impact": "Logging verbosity, error handling",
+          "status": "required"
+        }
+      ]
+    }
+  },
+  "environment_variables": {
+    "required": [
+      {
+        "name": "DATABASE_URL",
+        "description": "PostgreSQL connection string",
+        "example": "postgresql://user:pass@host:port/db",
+        "critical": true
+      },
+      {
+        "name": "JWT_SECRET", 
+        "description": "JWT token signing secret",
+        "example": "your-super-secret-jwt-key",
+        "critical": true
+      }
+    ],
+    "optional": [
+      {
+        "name": "SENDGRID_API_KEY",
+        "description": "Email service API key",
+        "impact": "Email notifications (not yet implemented)",
+        "critical": false
+      },
+      {
+        "name": "PGHOST",
+        "description": "PostgreSQL host (auto-detected from DATABASE_URL)",
+        "critical": false
+      },
+      {
+        "name": "PGPORT",
+        "description": "PostgreSQL port (auto-detected from DATABASE_URL)", 
+        "critical": false
+      },
+      {
+        "name": "PGUSER",
+        "description": "PostgreSQL username (auto-detected from DATABASE_URL)",
+        "critical": false
+      },
+      {
+        "name": "PGPASSWORD",
+        "description": "PostgreSQL password (auto-detected from DATABASE_URL)",
+        "critical": false
+      },
+      {
+        "name": "PGDATABASE",
+        "description": "PostgreSQL database name (auto-detected from DATABASE_URL)",
+        "critical": false
+      }
+    ]
+  },
+  "configuration_surfaces": {
+    "build_time": [
+      {
+        "file": "vite.config.ts",
+        "purpose": "Frontend build configuration",
+        "key_settings": [
+          "alias resolution (@/ → src/)",
+          "plugin configuration (React, Tailwind)",
+          "dev server proxy setup"
+        ]
+      },
+      {
+        "file": "tailwind.config.ts",
+        "purpose": "CSS framework configuration", 
+        "key_settings": [
+          "custom color palette",
+          "dark mode configuration",
+          "responsive breakpoints",
+          "animation definitions"
+        ]
+      },
+      {
+        "file": "drizzle.config.ts",
+        "purpose": "Database ORM configuration",
+        "key_settings": [
+          "connection URL sourcing",
+          "migration directory",
+          "schema introspection"
+        ]
+      }
+    ],
+    "runtime": [
+      {
+        "file": ".env",
+        "purpose": "Environment-specific variables",
+        "security": "contains secrets - not committed"
+      },
+      {
+        "file": ".env.local", 
+        "purpose": "Local development overrides",
+        "security": "local only - not committed"
+      },
+      {
+        "file": ".env.example",
+        "purpose": "Template for required environment variables",
+        "security": "safe to commit - no actual values"
+      }
+    ]
+  },
+  "deployment_configuration": {
+    "replit": {
+      "file": ".replit",
+      "purpose": "Replit deployment configuration",
+      "run_command": "npm run dev",
+      "auto_restart": true
+    },
+    "package_management": {
+      "file": "package.json",
+      "scripts": {
+        "dev": "Frontend + backend concurrent development",
+        "build": "Production build compilation",
+        "test": "Unit and integration tests",
+        "test:e2e": "Playwright end-to-end tests",
+        "db:push": "Database schema migration",
+        "db:studio": "Drizzle database inspector"
+      }
+    }
+  },
+  "experimental_features": {
+    "disabled": [
+      {
+        "name": "Admin Templates",
+        "flag": "VITE_FEATURE_ADMIN_TEMPLATES",
+        "description": "Slot template creation and application",
+        "completion": "UI complete, backend partial",
+        "removal_impact": "Remove BulkBar template sections"
+      },
+      {
+        "name": "Next Available Finder",
+        "flag": "VITE_FEATURE_NEXT_AVAILABLE", 
+        "description": "Auto-suggest next available slots",
+        "completion": "UI skeleton only",
+        "removal_impact": "Remove NextAvailableDialog component"
+      }
+    ],
+    "partial": [
+      {
+        "name": "Week View",
+        "flag": "VITE_FEATURE_WEEKVIEW",
+        "description": "Calendar week view mode",
+        "completion": "Backend support, partial frontend",
+        "removal_impact": "Simplify CalendarPage view modes"
+      }
+    ]
+  },
+  "configuration_recommendations": {
+    "remove_unused_flags": [
+      "VITE_FEATURE_ADMIN_TEMPLATES - incomplete implementation",
+      "VITE_FEATURE_NEXT_AVAILABLE - skeleton only"
+    ],
+    "promote_to_stable": [
+      "VITE_DEBUG_OVERLAY - valuable for development"
+    ],
+    "environment_hardening": [
+      "Use proper JWT_SECRET in production",
+      "Enable SSL for DATABASE_URL in production",
+      "Add rate limiting configuration"
+    ]
+  }
+}

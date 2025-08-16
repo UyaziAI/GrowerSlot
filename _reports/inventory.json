@@ -1,0 +1,213 @@
+{
+  "generated": "2025-08-16T09:29:00Z",
+  "total_files": 235,
+  "categories": {
+    "frontend": {
+      "count": 142,
+      "purpose": "React TypeScript UI components, pages, hooks, utilities",
+      "key_files": [
+        {
+          "path": "app/frontend/src/App.tsx",
+          "size": 3848,
+          "last_modified": "2025-08-15T22:32:00Z",
+          "purpose": "Main application entry point with routing and providers",
+          "critical": true
+        },
+        {
+          "path": "app/frontend/src/pages/AdminPage.tsx", 
+          "size": 15842,
+          "last_modified": "2025-08-15T21:14:00Z",
+          "purpose": "Admin dashboard - calendar management interface",
+          "critical": true
+        },
+        {
+          "path": "app/frontend/src/pages/grower-dashboard.tsx",
+          "size": 8635,
+          "last_modified": "2025-08-15T18:45:00Z", 
+          "purpose": "Grower booking interface - slot discovery and reservation",
+          "critical": true
+        },
+        {
+          "path": "app/frontend/src/lib/auth.ts",
+          "size": 2847,
+          "last_modified": "2025-08-15T09:35:00Z",
+          "purpose": "JWT authentication service with role-based access",
+          "critical": true
+        },
+        {
+          "path": "app/frontend/src/lib/http.ts",
+          "size": 4269,
+          "last_modified": "2025-08-15T21:14:00Z",
+          "purpose": "Global HTTP client with authentication enforcement",
+          "critical": true
+        }
+      ]
+    },
+    "backend": {
+      "count": 8,
+      "purpose": "Express.js API server, database layer, business logic",
+      "key_files": [
+        {
+          "path": "server/index.ts",
+          "size": 2066,
+          "last_modified": "2025-08-13T09:11:00Z",
+          "purpose": "Express server initialization and middleware setup",
+          "critical": true
+        },
+        {
+          "path": "server/routes.ts",
+          "size": 21998,
+          "last_modified": "2025-08-15T21:14:00Z",
+          "purpose": "API route definitions - all /v1/* endpoints",
+          "critical": true
+        },
+        {
+          "path": "server/storage.ts",
+          "size": 13731,
+          "last_modified": "2025-08-15T09:35:00Z",
+          "purpose": "Database abstraction layer with Drizzle ORM",
+          "critical": true
+        },
+        {
+          "path": "server/services/audit.ts",
+          "size": 3849,
+          "last_modified": "2025-08-15T09:35:00Z",
+          "purpose": "Admin action audit trail and event logging",
+          "critical": false
+        }
+      ]
+    },
+    "shared": {
+      "count": 3,
+      "purpose": "Common schema, types, and utilities",
+      "key_files": [
+        {
+          "path": "shared/schema.ts",
+          "size": 8614,
+          "last_modified": "2025-08-15T09:34:00Z",
+          "purpose": "Database schema definitions with Drizzle ORM",
+          "critical": true
+        }
+      ]
+    },
+    "configuration": {
+      "count": 12,
+      "purpose": "Build tools, database, testing, and deployment config",
+      "key_files": [
+        {
+          "path": "package.json",
+          "size": 4328,
+          "last_modified": "2025-08-15T13:05:00Z",
+          "purpose": "Node.js dependencies and scripts",
+          "critical": true
+        },
+        {
+          "path": "vite.config.ts",
+          "size": 971,
+          "last_modified": "2025-08-13T09:11:00Z",
+          "purpose": "Frontend build configuration",
+          "critical": true
+        },
+        {
+          "path": "drizzle.config.ts",
+          "size": 325,
+          "last_modified": "2025-08-13T09:11:00Z",
+          "purpose": "Database migration and introspection config",
+          "critical": true
+        },
+        {
+          "path": "tailwind.config.ts",
+          "size": 2766,
+          "last_modified": "2025-08-13T09:11:00Z",
+          "purpose": "CSS framework configuration with custom themes",
+          "critical": false
+        }
+      ]
+    },
+    "tests": {
+      "count": 25,
+      "purpose": "Unit, integration, and E2E test coverage",
+      "key_files": [
+        {
+          "path": "e2e/admin_core.spec.ts",
+          "size": 8642,
+          "last_modified": "2025-08-15T12:30:00Z",
+          "purpose": "Admin dashboard E2E tests - critical user flows",
+          "critical": false
+        },
+        {
+          "path": "app/frontend/src/__tests__/admin_auth_tripwire.spec.tsx",
+          "size": 6847,
+          "last_modified": "2025-08-15T22:00:00Z",
+          "purpose": "Authentication regression prevention",
+          "critical": false
+        }
+      ]
+    },
+    "documentation": {
+      "count": 15,
+      "purpose": "Architecture docs, feature specs, and audit reports",
+      "key_files": [
+        {
+          "path": "Blueprint.md",
+          "size": 45682,
+          "last_modified": "2025-08-15T21:14:00Z",
+          "purpose": "System architecture and development history",
+          "critical": false
+        },
+        {
+          "path": "README.md",
+          "size": 3241,
+          "last_modified": "2025-08-13T09:11:00Z",
+          "purpose": "Project overview and setup instructions",
+          "critical": false
+        }
+      ]
+    },
+    "legacy": {
+      "count": 8,
+      "purpose": "Deprecated components marked for removal",
+      "removal_safe": true,
+      "key_files": [
+        {
+          "path": "legacy/quarantined/",
+          "size": 12847,
+          "last_modified": "2025-08-13T09:11:00Z",
+          "purpose": "Quarantined legacy components - safe to remove",
+          "critical": false
+        }
+      ]
+    }
+  },
+  "size_analysis": {
+    "total_size_kb": 1847,
+    "largest_files": [
+      {
+        "path": "server/routes.ts",
+        "size": 21998,
+        "purpose": "API route definitions"
+      },
+      {
+        "path": "app/frontend/src/pages/AdminPage.tsx",
+        "size": 15842,
+        "purpose": "Admin dashboard"
+      },
+      {
+        "path": "server/storage.ts", 
+        "size": 13731,
+        "purpose": "Database layer"
+      }
+    ],
+    "growth_hotspots": [
+      "server/routes.ts - API endpoint additions",
+      "app/frontend/src/pages/AdminPage.tsx - Feature accumulation",
+      "shared/schema.ts - Database schema evolution"
+    ]
+  },
+  "dependency_hotspots": [
+    "app/frontend/src/lib/http.ts - Used by all API calls",
+    "app/frontend/src/lib/auth.ts - Authentication dependency",
+    "shared/schema.ts - Database type definitions",
+    "app/frontend/src/components/ui/ - UI component library"
+  ]
+}
