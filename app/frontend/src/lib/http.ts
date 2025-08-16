@@ -6,6 +6,7 @@
  */
 
 import { logger, generateRequestId } from './logger';
+import { authService } from './auth';
 
 export interface ApiError {
   status: number;
@@ -17,32 +18,22 @@ export interface ApiError {
  * Checks for valid auth before making any request
  */
 function enforceAuthentication(): string | null {
-  const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
-  
-  if (!token || !userStr) {
-    // Clear any stale auth data and redirect
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const token = authService.getToken();
+  const user = authService.getUser();
+
+  if (!token) {
+    // No token at all – clear auth state and redirect to login
+    authService.logout();
     window.location.href = '/login';
     return null;
   }
-  
-  try {
-    const user = JSON.parse(userStr);
-    if (user.role !== 'admin') {
-      // Not an admin, redirect to appropriate page
-      window.location.href = '/';
-      return null;
-    }
-  } catch {
-    // Invalid user data, clear and redirect
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+
+  // If we have user info, ensure it's an admin account
+  if (user && user.role !== 'admin') {
+    window.location.href = '/';
     return null;
   }
-  
+
   return token;
 }
 
